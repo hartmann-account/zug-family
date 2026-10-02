@@ -125,9 +125,16 @@ function occText(o, withYear) {
   else if (e && hasTime(o.e) && hasTime(o.s) && o.e !== o.s) t += '–' + fmtHM.format(e);
   return t;
 }
+/* Zeitpunkt in ms: Angaben ohne Zeitzone gelten als Ortszeit Zürich, ein Datum ohne Uhrzeit als Mitternacht (Ende: Tagesende) */
+function zMs(iso, endOfDay) {
+  var m = /^(\d{4})-(\d\d)-(\d\d)(?:[T ](\d\d):(\d\d)(?::(\d\d)(?:\.\d+)?)?)?(Z|[+-]\d\d:?\d\d)?$/.exec(iso || '');
+  if (!m || m[7]) return +new Date(iso);
+  var day = { y: +m[1], m: +m[2] - 1, d: +m[3] }, t = Date.UTC(day.y, day.m, day.d, +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)) - tzOff(day) * 3600e3;
+  return endOfDay && !m[4] ? t + 86400e3 - 1 : t;
+}
 function normEvent(e) {
-  var occ = (e.dates && e.dates.length ? e.dates : [{ s: e.start, e: e.end }]).filter(function (o) { return o && o.s && !isNaN(new Date(o.s)); })
-    .map(function (o) { return { s: o.s, e: o.e || null, t0: +new Date(o.s), t1: o.e ? +new Date(o.e) : +new Date(o.s) + (hasTime(o.s) ? 3 * 3600e3 : 86400e3 - 1) }; })
+  var occ = (e.dates && e.dates.length ? e.dates : [{ s: e.start, e: e.end }]).filter(function (o) { return o && o.s && !isNaN(zMs(o.s)); })
+    .map(function (o) { var t0 = zMs(o.s); return { s: o.s, e: o.e || null, t0: t0, t1: o.e ? zMs(o.e, true) : t0 + (hasTime(o.s) ? 3 * 3600e3 : 86400e3 - 1) }; })
     .sort(function (a, b) { return a.t0 - b.t0; });
   var gem = e.gem && GEMBY[e.gem] ? GEMBY[e.gem].name : (e.gem || '');
   return { type: 'event', id: String(e.id), mk: MK_EVENT, title: e.title || '', name: e.title || '', kind: e.cat || 'Veranstaltung', gem: gem, town: e.town || '',
@@ -147,7 +154,8 @@ function tzOff(day) {
   if (m === 2) return d >= lastSunday(day.y, 2) ? 2 : 1;
   return d < lastSunday(day.y, 9) ? 2 : 1;
 }
-function resolveDay(k) {
+function resolveDay(k, dt) {
+  if (k === 'termin' && dt) { var q = dt.split('-'); return { k: 'termin', y: +q[0], m: +q[1] - 1, d: +q[2], ymd: dt }; }
   if (k === 'heute') { var p = fmtYMD.format(new Date()).split('-'); return { k: 'heute', y: +p[0], m: +p[1] - 1, d: +p[2] }; }
   if (k === 'winter') return { k: 'winter', y: 2026, m: 11, d: 21 };
   return { k: 'sommer', y: 2026, m: 6, d: 21 };
@@ -193,6 +201,7 @@ function dayLabel(day) {
 function fail(msg) {
   document.documentElement.classList.add('noscene');
   statusEl.textContent = msg; hudA.textContent = 'Relief nicht verfügbar'; hudB.textContent = '';
+  var n = document.getElementById('noGL'); if (n) { n.textContent = msg + ' Listen, Details und Links funktionieren weiter.'; n.hidden = false; }
 }
 
 /* ---------------- sun UI (built before WebGL so it works without 3D) ---------------- */
@@ -214,7 +223,8 @@ function buildSunUI(el, opts) {
   el.classList.toggle('compact', !!opts.compact);
   el.innerHTML = '<div class="sun-top"><button class="sun-play" type="button" aria-label="Tagesverlauf abspielen">' + playIcon(false) + '</button>' +
     '<div class="sun-read"><b class="sun-time">15:00</b><span class="sun-pos"></span></div><span class="uv" data-c="3"><i></i><span class="uv-t"></span></span></div>' +
-    (opts.noDate ? '' : '<div class="sun-date" role="group" aria-label="Datum">' + ['sommer', 'heute', 'winter'].map(function (k) {
+    (opts.noDate ? '' : '<div class="sun-date" role="group" aria-label="Datum">' + (opts.termin ? '<button type="button" data-day="termin" data-ymd="' + opts.termin.ymd + '" aria-pressed="' + (sunDay.k === 'termin') + '">' + esc(opts.termin.label) + '</button>' : '') +
+      ['sommer', 'heute', 'winter'].map(function (k) {
       return '<button type="button" data-day="' + k + '" aria-pressed="' + (sunDay.k === k) + '">' + (k === 'sommer' ? '21. Juli' : k === 'heute' ? 'Heute' : '21. Dez.') + '</button>'; }).join('') + '</div>') +
     '<svg class="sun-arc" viewBox="0 0 300 46" aria-hidden="true"><line class="horizon" x1="0" x2="300" y1="' + arcY(0).toFixed(1) + '" y2="' + arcY(0).toFixed(1) + '"/><path class="path" d="' + ap[0] + '"/><path class="day" d="' + ap[1] + '"/><circle class="dot" r="6" cx="0" cy="0"/></svg>' +
     '<input type="range" min="7" max="21" step="0.25" value="15" aria-label="Uhrzeit">' +
@@ -225,7 +235,7 @@ function buildSunUI(el, opts) {
     days: el.querySelectorAll('.sun-date button'), z: opts.z || 425 };
   ui.range.addEventListener('input', function () { stopPlay(); setSunT(parseFloat(ui.range.value), 'ui'); });
   ui.play.addEventListener('click', function () { if (playing) stopPlay(); else { playing = true; playLast = performance.now(); sunUIs.forEach(function (u) { u.play.setAttribute('aria-label', 'Tagesverlauf anhalten'); u.play.innerHTML = playIcon(true); }); } });
-  Array.prototype.forEach.call(ui.days, function (b) { b.addEventListener('click', function () { setSunDay(b.dataset.day); }); });
+  Array.prototype.forEach.call(ui.days, function (b) { b.addEventListener('click', function () { setSunDay(b.dataset.day, b.dataset.ymd); }); });
   sunUIs = sunUIs.filter(function (u) { return u.el.isConnected && u.el !== el; });
   sunUIs.push(ui);
   updateSunUI();
@@ -256,8 +266,8 @@ function setSunT(t, src) {
   if (src !== 'play' || now - lastUIupd > 60) { lastUIupd = now; updateSunUI(); }
   listDirty = true; markerShadeDirty = true;
 }
-function setSunDay(k) {
-  sunDay = resolveDay(k);
+function setSunDay(k, dt) {
+  sunDay = resolveDay(k, dt);
   ARC = arcPts();
   var ap = arcPaths();
   sunUIs.forEach(function (u) {
@@ -315,11 +325,17 @@ function parseHash() {
   var parts = h.split('/').filter(Boolean);
   return { mode: PATHMODE[parts[0] || ''] || 'home', id: parts[1] || null, q: q };
 }
+function gemSlug(g) { return g === '_out' ? 'ausserhalb' : slug(g); }
+function catsQ(arr) { return arr.every(Boolean) ? '' : arr.map(function (v, i) { return v ? i : -1; }).filter(function (i) { return i >= 0; }).join(','); }
+function catsFromQ(q, n) { var on = (q || '').split(',').filter(function (x) { return /^\d+$/.test(x); }).map(Number).filter(function (i) { return i < n; }), a = []; for (var i = 0; i < n; i++) a.push(!on.length || on.indexOf(i) >= 0); return a; }
 function curQuery(mode) {
-  var q = [];
-  if (mode === 'sights' && filt.sights.gem) q.push('g=' + slug(filt.sights.gem));
-  if (mode === 'familie' && filt.familie.gem) q.push('g=' + slug(filt.familie.gem));
-  if (mode === 'events') { if (filt.events.gem) q.push('g=' + slug(filt.events.gem)); if (filt.events.win !== 'alle') q.push('w=' + filt.events.win); }
+  var q = [], f;
+  if (mode === 'sights') { f = filt.sights; if (f.gem) q.push('g=' + gemSlug(f.gem)); if (catsQ(f.cats)) q.push('c=' + catsQ(f.cats)); }
+  if (mode === 'familie') {
+    f = filt.familie; if (f.gem) q.push('g=' + gemSlug(f.gem)); if (catsQ(f.cats)) q.push('c=' + catsQ(f.cats));
+    if (f.sunMax < 100) q.push('s=' + f.sunMax + (f.sunScope === 'day' ? 't' : '')); if (f.zt) q.push('t=1');
+  }
+  if (mode === 'events') { f = filt.events; if (f.gem) q.push('g=' + gemSlug(f.gem)); if (f.win !== 'alle') q.push('w=' + f.win); if (f.cat) q.push('k=' + encodeURIComponent(f.cat)); }
   return q.length ? '?' + q.join('&') : '';
 }
 function hashFor(mode, id) { var p = MODEPATH[mode]; return '#/' + p + (p && id ? '/' + encodeURIComponent(id) : '') + (id ? '' : curQuery(mode)); }
@@ -329,17 +345,30 @@ function go(mode, id, replace) {
   if (replace) { history.replaceState(null, '', h); applyRoute(); }
   else location.hash = h;
 }
-function syncHash() { var h = hashFor(MODE, SEL ? SEL.id : selGem ? selGem.id : null); if (location.hash !== h) history.replaceState(null, '', h); }
-function gemFromSlug(s) { return s && GEMBY[s] ? GEMBY[s].name : ''; }
-var lastRoute = '';
+function syncHash() { var h = hashFor(MODE, SEL ? SEL.id : selGem ? selGem.id : null); if (location.hash !== h) history.replaceState(null, '', h); updTabs(); }
+/* Reiter und Einstiege führen zur Liste mit den zuletzt gewählten Filtern */
+function updTabs() {
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs a[data-mode], a.entry'), function (a) {
+    var m = a.dataset.mode || PATHMODE[(a.getAttribute('href') || '').replace(/^#\/?/, '').split(/[/?]/)[0]];
+    if (m && m !== 'home') { if (!a.dataset.mode) a.dataset.mode = m; a.setAttribute('href', hashFor(m)); }
+  });
+}
+function gemFromSlug(s) { return s === 'ausserhalb' ? '_out' : s && GEMBY[s] ? GEMBY[s].name : ''; }
+var lastRoute = '', lastQ = '';
 function applyRoute() {
   var r = parseHash();
   if (r.mode === 'info') { if (!/\bm-\w/.test(document.body.className)) setMode('home', true); openInfo(); return; }
   closeInfo();
   if (touring) stopTour(true);
-  if (r.mode === 'sights' && 'g' in r.q) filt.sights.gem = gemFromSlug(r.q.g);
-  if (r.mode === 'familie' && 'g' in r.q) filt.familie.gem = gemFromSlug(r.q.g);
-  if (r.mode === 'events') { if ('g' in r.q) filt.events.gem = gemFromSlug(r.q.g); if (r.q.w) filt.events.win = r.q.w; }
+  if (r.mode === 'sights' && !r.id) { filt.sights.gem = gemFromSlug(r.q.g); filt.sights.cats = catsFromQ(r.q.c, SCATS.length); }
+  if (r.mode === 'familie' && !r.id) {
+    var ff = filt.familie; ff.gem = gemFromSlug(r.q.g); ff.cats = catsFromQ(r.q.c, CATS.length); ff.zt = r.q.t === '1';
+    var sm = /^(\d+)(t?)$/.exec(r.q.s || ''); ff.sunMax = sm ? clamp(+sm[1], 0, 100) : 100; ff.sunScope = sm && sm[2] ? 'day' : 'now';
+  }
+  if (r.mode === 'events' && !r.id) { filt.events.gem = gemFromSlug(r.q.g); filt.events.win = r.q.w || 'alle'; filt.events.cat = r.q.k ? decodeURIComponent(r.q.k) : ''; }
+  var qkey = r.mode + JSON.stringify(r.q);
+  if (!r.id && r.mode === MODE && qkey !== lastQ && MODE !== 'home') { renderHead(); listDirty = true; markerVisDirty = true; }
+  lastQ = qkey;
   var changed = r.mode !== MODE;
   setMode(r.mode, changed);
   var it = r.id ? findItem(r.mode, r.id) : null;
@@ -349,6 +378,7 @@ function applyRoute() {
     closeDetail(true);
   } else if (changed) flyContext();
   lastRoute = location.hash;
+  updTabs();
 }
 function findItem(mode, id) {
   if (mode === 'gemeinden') return GEMBY[id] || null;
@@ -448,11 +478,12 @@ function wireHead() {
     $('#fMore').addEventListener('click', function () { ff.more = !ff.more; this.setAttribute('aria-expanded', String(ff.more)); $('#fBox').hidden = !ff.more; });
     var fs = $('#fSun');
     fs.addEventListener('input', function () { ff.sunMax = +fs.value; $('#fSunV').innerHTML = ff.sunMax >= 100 ? 'alle Orte' : ff.sunMax + '&nbsp;%'; updMoreBadge(); listDirty = true; markerVisDirty = true; renderList(); });
+    fs.addEventListener('change', syncHash);
     Array.prototype.forEach.call(document.querySelectorAll('#fBox .fdate button'), function (b) { b.addEventListener('click', function () { setSunDay(b.dataset.day); }); });
     Array.prototype.forEach.call(document.querySelectorAll('#fBox .sunflt > .seg button'), function (b) {
-      b.addEventListener('click', function () { ff.sunScope = b.dataset.scope; Array.prototype.forEach.call(b.parentNode.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); listDirty = true; markerVisDirty = true; renderList(); });
+      b.addEventListener('click', function () { ff.sunScope = b.dataset.scope; Array.prototype.forEach.call(b.parentNode.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); listDirty = true; markerVisDirty = true; renderList(); syncHash(); });
     });
-    $('#fZT').addEventListener('click', function () { ff.zt = !ff.zt; this.setAttribute('aria-pressed', String(ff.zt)); updMoreBadge(); listDirty = true; markerVisDirty = true; renderList(); });
+    $('#fZT').addEventListener('click', function () { ff.zt = !ff.zt; this.setAttribute('aria-pressed', String(ff.zt)); updMoreBadge(); listDirty = true; markerVisDirty = true; renderList(); syncHash(); });
     $('#tWater').addEventListener('click', function () { showWater = !showWater; this.setAttribute('aria-pressed', String(showWater)); updMoreBadge(); markerVisDirty = true; });
     $('#tWC').addEventListener('click', function () { showWC = !showWC; this.setAttribute('aria-pressed', String(showWC)); updMoreBadge(); markerVisDirty = true; });
     buildSunUI($('#sunFam'), { compact: true });
@@ -461,7 +492,7 @@ function wireHead() {
     onGem($('#fGemE'), filt.events);
     $('#winE').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; filt.events.win = b.dataset.win;
       Array.prototype.forEach.call(this.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', String(c === b)); }); listDirty = true; markerVisDirty = true; renderList(); syncHash(); });
-    var fc = $('#fCatE'); if (fc) fc.addEventListener('change', function () { filt.events.cat = fc.value; listDirty = true; markerVisDirty = true; renderList(); });
+    var fc = $('#fCatE'); if (fc) fc.addEventListener('change', function () { filt.events.cat = fc.value; listDirty = true; markerVisDirty = true; renderList(); syncHash(); });
   }
 }
 function updMoreBadge() {
@@ -474,7 +505,7 @@ function toggleCat(arr, k, wrap) {
   if (allOn) { for (var j = 0; j < arr.length; j++) arr[j] = j === k; }
   else { arr[k] = !arr[k]; if (!arr.some(Boolean)) for (j = 0; j < arr.length; j++) arr[j] = true; }
   Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', arr[+c.dataset.cat] ? 'true' : 'false'); });
-  listDirty = true; markerVisDirty = true; renderList();
+  listDirty = true; markerVisDirty = true; renderList(); syncHash();
 }
 
 /* ---------------- filters ---------------- */
@@ -584,9 +615,10 @@ function renderList() {
     if (EVMETA.state === 'loading') html = '<p class="empty">Veranstaltungen werden geladen …</p>';
     else if (EVMETA.state === 'error') html = '<p class="empty">Die Veranstaltungen konnten nicht geladen werden. Den vollständigen Kalender finden Sie bei <a href="https://www.zug-tourismus.ch/de/event-calendar/" target="_blank" rel="noopener">Zug Tourismus</a>.</p>';
     else {
-      var now = Date.now(), ve = EVENTS.filter(matchEvent).sort(function (a, b) { return nextOcc(a, now).t0 - nextOcc(b, now).t0 || a.title.localeCompare(b.title, 'de'); });
+      var now = Date.now(), wr = winRange(filt.events.win), occIn = function (e) { for (var i = 0; i < e.occ.length; i++) { var x = e.occ[i]; if (x.t1 >= wr[0] && x.t0 < wr[1]) return x; } return nextOcc(e, now); };
+      var ve = EVENTS.filter(matchEvent).sort(function (a, b) { return Math.max(occIn(a).t0, now) - Math.max(occIn(b).t0, now) || a.title.localeCompare(b.title, 'de'); });
       ve.slice(0, evShown).forEach(function (e) {
-        var o = nextOcc(e, now), more = e.occ.filter(function (x) { return x.t1 >= now; }).length - 1;
+        var o = occIn(e), more = e.occ.filter(function (x) { return x.t1 >= now; }).length - 1;
         html += '<button type="button" class="it ev" data-k="e' + esc(e.id) + '">' + (e.thumb ? '<img class="thumb" src="' + esc(e.thumb) + '" alt="" loading="lazy" decoding="async">' : '<span class="thumb"></span>') +
           '<span class="tx"><span class="when">' + esc(occText(o)) + (more > 0 ? ' · +' + more + ' Termine' : '') + '</span><b>' + esc(e.title) + '</b><span>' + esc(itemSub(e)) + '</span></span></button>';
       });
@@ -599,6 +631,9 @@ function renderList() {
   listEl.innerHTML = html;
   var mb = $('#moreEv'); if (mb) mb.addEventListener('click', function () { evShown += 60; renderList(); });
 }
+// Bildserver nicht erreichbar: Platzhalter statt kaputtem Bild
+listEl.addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'IMG' && t.classList.contains('thumb')) { var sp = document.createElement('span'); sp.className = 'thumb'; t.replaceWith(sp); } }, true);
+detailEl.addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'IMG') { var fg = t.closest('figure.ev'); if (fg) fg.remove(); } }, true);
 listEl.addEventListener('click', function (e) {
   var b = e.target.closest('.it'); if (!b) return;
   var k = b.dataset.k, t = k[0], id = k.slice(1);
@@ -713,8 +748,17 @@ function openItem(it) {
   fillWx(it);
   detailEl.hidden = false; listEl.hidden = true; pscroll.scrollTop = 0; panel.classList.add('has-detail');
   $('#back').addEventListener('click', backFromDetail);
-  var sd = $('#sunDet');
-  if (sd) buildSunUI(sd, { z: it.z || 425, hint: it.type === 'fam' && it.s ? '' : 'Beim Heranzoomen zeigt die Karte Licht und Schatten für die gewählte Zeit.' });
+  var sd = $('#sunDet'), termin = null;
+  if (it.type === 'event') {
+    var o = nextOcc(it, Date.now());
+    if (o) {
+      var dt = ymd(new Date(Math.max(o.t0, Date.now()))), lab = new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'short', timeZone: TZ }).format(new Date(Math.max(o.t0, Date.now())));
+      termin = { ymd: dt, label: 'Termin ' + lab };
+      setSunDay('termin', dt);
+      if (hasTime(o.s) && o.t0 > Date.now()) { var hm = fmtHM.format(new Date(o.t0)).split(':'); setSunT(clamp(+hm[0] + (+hm[1]) / 60, 7, 21), 'ui'); }
+    }
+  } else if (sunDay.k === 'termin') setSunDay('sommer');
+  if (sd) buildSunUI(sd, { z: it.z || 425, termin: termin, hint: it.type === 'fam' && it.s ? '' : 'Beim Heranzoomen zeigt die Karte Licht und Schatten für die gewählte Zeit.' });
   markerVisDirty = true;
   if (it.type === 'event') loadEventDetail(it);
   if (pushedDetail) { var bk = $('#back'); if (bk) bk.focus({ preventScroll: true }); }
@@ -738,6 +782,7 @@ function backFromDetail() {
 }
 function closeDetail(silent) {
   SEL = null; selGem = null; pushedDetail = false;
+  if (sunDay.k === 'termin') setSunDay('sommer');
   if (GL) { clearOutline(); calloutEl.classList.remove('on'); }
   detailEl.hidden = true; detailEl.innerHTML = ''; listEl.hidden = false; panel.classList.remove('has-detail');
   markerVisDirty = true; listDirty = true;
@@ -745,7 +790,7 @@ function closeDetail(silent) {
 }
 function updateDetailLive(full) {
   if (!SEL || detailEl.hidden) return;
-  if (full && SEL.type === 'fam') { var keep = pscroll.scrollTop; detailEl.innerHTML = detailHTML(SEL); $('#back').addEventListener('click', backFromDetail); var sd = $('#sunDet'); if (sd) buildSunUI(sd, { z: SEL.z || 425 }); pscroll.scrollTop = keep; return; }
+  if (full && SEL.type === 'fam') { var keep = pscroll.scrollTop; detailEl.innerHTML = detailHTML(SEL); fillWx(SEL); $('#back').addEventListener('click', backFromDetail); var sd = $('#sunDet'); if (sd) buildSunUI(sd, { z: SEL.z || 425 }); pscroll.scrollTop = keep; return; }
   var p = SEL, s = shadeAt(p, sunT), u = uvi(sun.alt, p.z), uc = uvCat(u);
   var d1 = $('#dShade'), d2 = $('#dUV'), sn = $('#sparkNow');
   if (d1 && s != null) { d1.textContent = Math.round(s * 100) + ' %'; d1.previousElementSibling.textContent = 'Schatten ' + fmtTime(sunT); }
@@ -830,6 +875,13 @@ function openInfo() { if (!infoDlg.hidden) return; infoFrom = document.activeEle
 function closeInfo() { if (infoDlg.hidden) return; infoDlg.hidden = true; if (infoFrom && infoFrom.focus) infoFrom.focus(); }
 $('#infoClose').addEventListener('click', function () { if (lastRoute && lastRoute !== location.hash) history.back(); else go(MODE, null, true); });
 infoDlg.addEventListener('click', function (e) { if (e.target === infoDlg) $('#infoClose').click(); });
+infoDlg.addEventListener('keydown', function (e) {
+  if (e.key !== 'Tab' || infoDlg.hidden) return;
+  var f = infoDlg.querySelectorAll('a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])'); if (!f.length) return;
+  var first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape') return;
   if (!infoDlg.hidden) { $('#infoClose').click(); return; }
