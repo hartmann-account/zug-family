@@ -84,6 +84,7 @@ var PL = F.places.map(function (p, i) {
   var p = PL[l.i]; if (!p) return;
   p.zt = (p.zt || []).concat(l.t.filter(function (x) { return !(p.zt || []).some(function (y) { return y[1] === x[1]; }); }));
   if (l.n && !p.name) { p.name = l.n; p.title = l.n; }
+  if (l.x) p.note = l.x;
 });
 (PD.famExtra || []).forEach(function (p) {
   var i = PL.length;
@@ -1480,6 +1481,190 @@ function updateTrees() {
   smState.need = true;
 }
 
+/* ---------------- Strandbad Zug 2026: Neubauten als 3D-Modell (Luftbild zeigt noch die Baustelle) ---------------- */
+var SBZ_VS = [
+  'attribute float aG; attribute vec3 aCol; attribute float aK; attribute vec2 aU; uniform float uVZ, uBZ;',
+  'varying vec3 vW; varying vec3 vCol; varying float vK; varying vec2 vU; varying float vDist;',
+  'void main(){ vec3 p = vec3(position.x, aG*uVZ + position.y*uBZ, position.z); vec4 w = modelMatrix*vec4(p, 1.0);',
+  '  vW = w.xyz; vCol = aCol; vK = aK; vU = aU; vDist = distance(w.xyz, cameraPosition); gl_Position = projectionMatrix*viewMatrix*w; }'
+].join('\n');
+var sbzMat = new THREE.ShaderMaterial({
+  side: THREE.DoubleSide,
+  uniforms: Object.assign({}, U),
+  vertexShader: SBZ_VS,
+  fragmentShader: [
+    'uniform vec3 uFog; uniform float uDark, uFogNear, uFogFar;',
+    LIGHT, SHADOW, COMMON,
+    'varying vec3 vW; varying vec3 vCol; varying float vK; varying vec2 vU; varying float vDist;',
+    'void main(){',
+    '  vec3 n = normalize(cross(dFdx(vW), dFdy(vW)));',
+    '  vec3 V = normalize(cameraPosition - vW); if(dot(n, V) < 0.0) n = -n;',
+    '  vec3 alb = vCol; float k = vK; float spec = 0.0;',
+    // 1 Holzlatten senkrecht (Lärche), 2 Verglasung mit Pfosten, 3 Dach (Blech/Kies), 4 Dielen, 5 Stein, 6 Holz glatt
+    '  if(k > 0.5 && k < 1.5){ float c = floor(vU.x/0.13); float f = fract(vU.x/0.13);',
+    '    alb *= (0.9 + 0.2*hash(vec2(c, 1.7)) + 0.06*noise(vec2(c, vU.y*1.5)))*(f < 0.7 ? 1.0 : 0.5); }',
+    '  else if(k > 1.5 && k < 2.5){ float m = fract(vU.x/1.6); float t = step(0.05, m)*step(m, 0.95)*step(0.12, vU.y)*step(vU.y, 3.15);',
+    '    float fr = 1.0 - abs(dot(n, V)); vec3 R = reflect(-V, n);',
+    '    vec3 glass = mix(vec3(0.07, 0.09, 0.11), mix(uFog, uSkyCol, clamp(R.y*2.0, 0.0, 1.0))*0.8, 0.18 + 0.6*fr*fr);',
+    '    alb = mix(vec3(0.86, 0.86, 0.84), glass, t); spec = t; }',
+    '  else if(k > 2.5 && k < 3.5){ alb *= 0.9 + 0.14*noise(vW.xz*2.3) + 0.08*(hash(floor(vW.xz*9.0)) - 0.5); }',
+    '  else if(k > 3.5 && k < 4.5){ float c = floor(vU.x/0.15); float f = fract(vU.x/0.15);',
+    '    alb *= (0.88 + 0.18*hash(vec2(c, 5.3)) + 0.05*noise(vec2(c*3.1, vU.y*0.7)))*(f < 0.88 ? 1.0 : 0.55); }',
+    '  else if(k > 4.5 && k < 5.5){ alb *= 0.8 + 0.28*noise(vW.xz*1.7 + vW.y*1.3) + 0.08*noise(vW.xz*7.0); }',
+    '  else if(k > 5.5 && k < 6.5){ alb *= 0.94 + 0.1*noise(vec2(vU.x*0.6, vU.y*9.0)); }',
+    '  else if(k > 6.5){ alb *= 0.62 + 0.55*noise(vW.xz*1.9 + vec2(vW.y*1.7)) + 0.12*noise(vW.xz*6.0 - vW.y*3.0); }',
+    '  vec3 col;',
+    '  if(uSunMix > 0.001){',
+    '    float lamb = max(dot(n, uSunDir), 0.0);',
+    '    float vis = lamb > 0.0 ? shadowVis(vW, n, lamb) : 0.0;',
+    '    vec3 sky = mix(uSkyCol, vec3(1.0, 0.97, 0.92), 0.45*(1.0 - abs(n.y)));',
+    '    col = alb*(uAmb*sky + uDif*lamb*vis*uSunCol);',
+    '    col += spec*uSunCol*pow(max(dot(reflect(-V, n), uSunDir), 0.0), 90.0)*vis*0.9;',
+    '  } else { vec3 fl = normalize(vec3(-0.55, 0.62, -0.56)); col = alb*(0.62 + 0.38*max(dot(n, fl), 0.0)); }',
+    '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
+    '  gl_FragColor = vec4(col, 1.0);',
+    '}'
+  ].join('\n')
+});
+var sbzDepthMat = new THREE.ShaderMaterial({ uniforms: { uVZ: U.uVZ, uBZ: U.uBZ }, vertexShader: SBZ_VS, fragmentShader: DEPTH_FS, side: THREE.DoubleSide });
+sbzDepthMat.colorWrite = false;
+var sbzMesh = null;
+function buildStrandbad() {
+  var S = window.ZGSBZ; if (!S || sbzMesh) return;
+  var A = S.ARC, Pp = [], Gg = [], Cc = [], Kk = [], Uu = [], Ii = [];
+  var WOOD = [0.80, 0.63, 0.44], WOOD2 = [0.72, 0.55, 0.37], WHITE = [0.93, 0.93, 0.91], ROOF = [0.6, 0.61, 0.6], FASCIA = [0.52, 0.54, 0.55], DECK = [0.76, 0.64, 0.5], STONE = [0.8, 0.78, 0.73];
+  function v(E, N, y, g, c, k, u, w) { Pp.push(X(E), y, Z(N)); Gg.push(g - H0); Cc.push(c[0], c[1], c[2]); Kk.push(k); Uu.push(u, w); return Pp.length / 3 - 1; }
+  function quad(a, b, c, d) { Ii.push(a, b, c, a, c, d); }
+  var gRef = 0, nS = 0;
+  for (var t = 0; t <= 1; t += 0.1) { var q0 = A.at(A.a0 + (A.a1 - A.a0) * t, A.R); gRef += hAt(q0[0], q0[1]); nS++; }
+  gRef = Math.max(gRef / nS, S.ground);
+  var ROOF0 = 3.45, ROOF1 = 3.9, BOT = -1.6;
+  // Wandfläche entlang des Bogens (Radius r, Winkel a0..a1, Höhe y0..y1)
+  function arcWall(r, a0, a1, y0, y1, c, k, n) {
+    var prev = null;
+    for (var i = 0; i <= n; i++) {
+      var a = a0 + (a1 - a0) * i / n, p = A.at(a, A.R + r), u = Math.abs(a - a0) * (A.R + r), gb = hAt(p[0], p[1]);
+      var lo = v(p[0], p[1], y0 === BOT ? BOT + (gb - gRef) : y0, gRef, c, k, u, 0), hi = v(p[0], p[1], y1, gRef, c, k, u, y1 - y0);
+      if (prev) quad(prev[0], lo, hi, prev[1]); prev = [lo, hi];
+    }
+  }
+  // waagrechte Fläche zwischen zwei Radien
+  function arcFlat(r0, r1, a0, a1, y, c, k, n) {
+    var prev = null;
+    for (var i = 0; i <= n; i++) {
+      var a = a0 + (a1 - a0) * i / n, p0 = A.at(a, A.R + r0), p1 = A.at(a, A.R + r1), u = Math.abs(a - a0) * A.R;
+      var i0 = v(p0[0], p0[1], y, gRef, c, k, u, r0), i1 = v(p1[0], p1[1], y, gRef, c, k, u, r1);
+      if (prev) quad(prev[0], i0, i1, prev[1]); prev = [i0, i1];
+    }
+  }
+  function radialWall(a, r0, r1, y0, y1, c, k) {
+    var p0 = A.at(a, A.R + r0), p1 = A.at(a, A.R + r1);
+    quad(v(p0[0], p0[1], y0, gRef, c, k, 0, 0), v(p1[0], p1[1], y0, gRef, c, k, Math.abs(r1 - r0), 0), v(p1[0], p1[1], y1, gRef, c, k, Math.abs(r1 - r0), y1 - y0), v(p0[0], p0[1], y1, gRef, c, k, 0, y1 - y0));
+  }
+  // Quader, ausgerichtet nach Winkel ang (Rad), Länge L entlang, Breite W quer; Höhen über gBase/gTop
+  function box(E, N, ang, L, W, y0, y1, g0, g1, c, k, plankAxis) {
+    var ca = Math.cos(ang), sa = Math.sin(ang), hx = L / 2, hz = W / 2, cs = [[-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]], top = [], bot = [];
+    cs.forEach(function (q) {
+      var e = E + q[0] * ca - q[1] * sa, n = N + q[0] * sa + q[1] * ca, u = plankAxis ? q[1] : q[0];
+      bot.push(v(e, n, y0, g0, c, k, u, 0)); top.push(v(e, n, y1, g1, c, k, u, y1 - y0));
+    });
+    quad(top[0], top[1], top[2], top[3]);
+    for (var j = 0; j < 4; j++) { var m = (j + 1) % 4; quad(bot[j], bot[m], top[m], top[j]); }
+  }
+  var gapW = 2.2 / A.R, dir = A.a1 > A.a0 ? 1 : -1;
+  var aB1 = [A.a0, A.gap - gapW * dir], aB2 = [A.gap + gapW * dir, A.a1];
+  var restA = A.gap + (A.a1 - A.gap) * 0.35; // Restaurant: südlicher Teil von B2, zur Wiese verglast
+  [aB1, aB2].forEach(function (ab, bi) {
+    arcWall(A.body[1], ab[0], ab[1], BOT, ROOF0, WOOD, 1, 24);
+    if (bi === 1) { arcWall(A.body[0], ab[0], restA, BOT, ROOF0, WOOD, 1, 10); arcWall(A.body[0], restA, ab[1], BOT, ROOF0, WOOD, 2, 16); }
+    else arcWall(A.body[0], ab[0], ab[1], BOT, ROOF0, WOOD, 1, 24);
+    radialWall(ab[0], A.body[0], A.body[1], BOT, ROOF0, WOOD, 1); radialWall(ab[1], A.body[0], A.body[1], BOT, ROOF0, WOOD, 1);
+  });
+  // Flachdach mit Vordach zur Wiese, Untersicht Holz, Stirn Blech
+  var r0 = A.roof[0], r1 = A.roof[1], ra0 = A.a0 - dir * 1.0 / A.R, ra1 = A.a1 + dir * 1.0 / A.R;
+  arcFlat(r0, r1, ra0, ra1, ROOF1, ROOF, 3, 40);
+  arcFlat(r0, r1, ra0, ra1, ROOF0, WOOD2, 6, 40);
+  arcWall(r0, ra0, ra1, ROOF0, ROOF1, FASCIA, 6, 40); arcWall(r1, ra0, ra1, ROOF0, ROOF1, FASCIA, 6, 40);
+  radialWall(ra0, r0, r1, ROOF0, ROOF1, FASCIA, 6); radialWall(ra1, r0, r1, ROOF0, ROOF1, FASCIA, 6);
+  // Brettschichtholz-Träger unter dem Vordach und weisse Stützen
+  var nB = Math.round(Math.abs(ra1 - ra0) * A.R / 1.2);
+  for (var i = 0; i <= nB; i++) {
+    var a = ra0 + (ra1 - ra0) * i / nB, pm = A.at(a, A.R + (r0 + A.body[0]) / 2);
+    box(pm[0], pm[1], a, A.body[0] - r0 + 0.2, 0.12, ROOF0 - 0.32, ROOF0, gRef, gRef, WOOD, 6);
+  }
+  var colR = A.R + r0 + 0.5, nC = Math.round(Math.abs(A.a1 - A.a0) * colR / 4.4);
+  for (i = 0; i <= nC; i++) {
+    var ac = A.a0 + (A.a1 - A.a0) * i / nC, pc = A.at(ac, colR - A.R + A.R);
+    var gc = hAt(pc[0], pc[1]); box(pc[0], pc[1], ac, 0.2, 0.2, -0.6, ROOF0 - 0.32, gc, gRef, WHITE, 0);
+  }
+  // Pergola vor dem Restaurant: zwei Träger entlang des Bogens, Latten radial, Stützen aussen
+  var pg0 = A.perg[0], pg1 = A.perg[1], pa0 = restA, pa1 = A.a1;
+  [pg0 + 0.3, (pg0 + pg1) / 2].forEach(function (rr) {
+    var n = 16;
+    for (var j = 0; j < n; j++) {
+      var aa = pa0 + (pa1 - pa0) * (j + 0.5) / n, pp = A.at(aa, A.R + rr), len = Math.abs(pa1 - pa0) * (A.R + rr) / n + 0.05;
+      box(pp[0], pp[1], aa + Math.PI / 2, len, 0.2, 2.95, 3.35, gRef, gRef, WOOD, 6);
+    }
+  });
+  var nSl = Math.round(Math.abs(pa1 - pa0) * (A.R + (pg0 + pg1) / 2) / 0.7);
+  for (i = 0; i <= nSl; i++) {
+    var as = pa0 + (pa1 - pa0) * i / nSl, ps = A.at(as, A.R + (pg0 + pg1) / 2);
+    box(ps[0], ps[1], as, pg1 - pg0 + 0.4, 0.09, 3.35, 3.55, gRef, gRef, WOOD, 6);
+  }
+  var nPc = Math.round(Math.abs(pa1 - pa0) * (A.R + pg0) / 4.6);
+  for (i = 0; i <= nPc; i++) {
+    var ap = pa0 + (pa1 - pa0) * i / nPc, pq = A.at(ap, A.R + pg0 + 0.3), gp = hAt(pq[0], pq[1]);
+    box(pq[0], pq[1], ap, 0.16, 0.16, -0.6, 2.95, gp, gRef, WHITE, 0);
+  }
+  // Holzdecks am Ende der Sandbucht
+  S.decks.forEach(function (d) {
+    var g = Math.max(hAt(d.E, d.N), 413.7);
+    box(d.E, d.N, d.r * DEG, d.s, d.s, -0.9, 0.42, g, g, DECK, 4, true);
+  });
+  // Steinblöcke
+  var seed = 11; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var ico = new THREE.IcosahedronGeometry(1, 0), ip = ico.attributes.position;
+  S.stones.forEach(function (st) {
+    var g = Math.max(hAt(st.E, st.N), 413.4) - 0.25, rot = rnd() * 6.28, base = Pp.length / 3, cr = 0.94 + 0.08 * st.k, col = [STONE[0] * cr, STONE[1] * cr, STONE[2] * cr];
+    for (var j = 0; j < ip.count; j++) {
+      var x = ip.getX(j), y = ip.getY(j), z = ip.getZ(j), hj = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719 + st.k * 91.7) * 43758.5453, j2 = 0.82 + 0.3 * (hj - Math.floor(hj));
+      var e = x * Math.cos(rot) - z * Math.sin(rot), nn = x * Math.sin(rot) + z * Math.cos(rot);
+      v(st.E + e * st.r * j2, st.N + nn * st.r * 0.85 * j2, Math.max(-0.2, (y * 0.5 + 0.5) * st.h * 1.6 * j2), g, col, 5, 0, 0);
+    }
+    for (j = 0; j < ip.count; j += 3) Ii.push(base + j, base + j + 1, base + j + 2);
+  });
+  ico.dispose();
+  // junge Bäume (Stamm, Krone) und Sonnenschirme
+  var crown = new THREE.IcosahedronGeometry(1, 1), cp = crown.attributes.position, LEAF = [0.33, 0.45, 0.2];
+  S.trees.forEach(function (tr, ti) {
+    var g = hAt(tr.E, tr.N), base = Pp.length / 3;
+    box(tr.E, tr.N, ti, 0.16, 0.16, -0.3, tr.h * 0.5, g, g, [0.42, 0.34, 0.26], 6);
+    base = Pp.length / 3;
+    for (var j = 0; j < cp.count; j++) {
+      var x = cp.getX(j), y = cp.getY(j), z = cp.getZ(j), hj = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719 + ti * 3.1) * 43758.5453, jj = 0.85 + 0.3 * (hj - Math.floor(hj));
+      v(tr.E + x * tr.r * jj, tr.N + z * tr.r * jj, tr.h * 0.62 + y * tr.r * 1.25 * jj, g, LEAF, 7, 0, 0);
+    }
+    for (j = 0; j < cp.count; j += 3) Ii.push(base + j, base + j + 1, base + j + 2);
+  });
+  crown.dispose();
+  S.shades.forEach(function (sh) {
+    var g = hAt(sh.E, sh.N), segs = 10, top = v(sh.E, sh.N, 2.6, g, [0.96, 0.95, 0.91], 0, 0, 0), rim = [];
+    box(sh.E, sh.N, 0, 0.06, 0.06, -0.2, 2.6, g, g, [0.85, 0.85, 0.83], 0);
+    for (var j = 0; j <= segs; j++) { var aa = j / segs * Math.PI * 2; rim.push(v(sh.E + Math.cos(aa) * 1.45, sh.N + Math.sin(aa) * 1.45, 2.1, g, [0.96, 0.95, 0.91], 0, 0, 0)); }
+    for (j = 0; j < segs; j++) Ii.push(top, rim[j], rim[j + 1]);
+  });
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(Pp, 3));
+  geo.setAttribute('aG', new THREE.Float32BufferAttribute(Gg, 1));
+  geo.setAttribute('aCol', new THREE.Float32BufferAttribute(Cc, 3));
+  geo.setAttribute('aK', new THREE.Float32BufferAttribute(Kk, 1));
+  geo.setAttribute('aU', new THREE.Float32BufferAttribute(Uu, 2));
+  geo.setIndex(Ii);
+  sbzMesh = new THREE.Mesh(geo, sbzMat); sbzMesh.frustumCulled = false; scene.add(sbzMesh);
+  var dm = new THREE.Mesh(geo, sbzDepthMat); dm.frustumCulled = false; smScene.add(dm); sbzMesh.userData.depth = dm;
+  smState.need = true;
+}
+
 /* ---------------- sun shadow map ---------------- */
 var smScene = new THREE.Scene();
 var smRT = new THREE.WebGLRenderTarget(SM, SM, { depthBuffer: true, stencilBuffer: false, format: THREE.RedFormat, type: THREE.UnsignedByteType, generateMipmaps: false });
@@ -1546,6 +1731,7 @@ function lakeMask(W, x0, z0, size) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S, S);
   ctx.setTransform(sc, 0, 0, -sc, (G.E0 - Emin) * sc, (Nmax - G.N0) * sc);
   ctx.fillStyle = '#fff'; ctx.fill(lakePath, 'evenodd');
+  if (window.ZGSBZ) { ctx.beginPath(); ZGSBZ.bay.forEach(function (p, i) { if (i) ctx.lineTo(p[0] - G.E0, p[1] - G.N0); else ctx.moveTo(p[0] - G.E0, p[1] - G.N0); }); ctx.closePath(); ctx.fill(); }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   W.x0 = x0; W.z0 = z0; W.size = size; W.tex.needsUpdate = true;
 }
@@ -1618,6 +1804,7 @@ function oCompose(L, cx, cz, size, useLB) {
   if (useLB) draw('lb', 500);
   var zr = wZoom(size / S);
   if (zr[1] < 2 && drawWMTS(ctx, zr, Emin, Emax, Nmin, Nmax, scale, cx + EC, NC - cz, useLB ? 4 : 2)) any = true;
+  if (any && window.ZGSBZ) ZGSBZ.paint(ctx, Emin, Nmax, scale, Emax, Nmin);
   L.x0 = x0; L.z0 = z0; L.size = size; L.ok = any;
   L.tex.needsUpdate = true;
   oPump();
@@ -1654,6 +1841,7 @@ function drawCrop(cv, p) {
     }
   });
   if (drawWMTS(ctx, wZoom(size / W), Emin, Emax, Nmin, Nmax, scale, p.E, p.N, 100)) any = true;
+  if (any && window.ZGSBZ) ZGSBZ.paint(ctx, Emin, Nmax, scale, Emax, Nmin);
   oPump();
   if (p.poly) {
     ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 5]);
@@ -2438,6 +2626,7 @@ loadEvents();
     canvas.dataset.buildings = String(count);
     var tb2 = await gunzip(b64(D.treesData));
     canvas.dataset.trees = String(buildTrees(tb2));
+    try { buildStrandbad(); } catch (e) { console.warn('Strandbad', e); }
   } catch (err) {
     console.error(err);
     fail('Das Relief konnte nicht aufgebaut werden. Listen und Texte bleiben nutzbar.');

@@ -1,0 +1,30 @@
+{
+ "_note": "Von Hand gepflegte Ergänzungen zu data/portal.json; src/build.py fügt sie beim Bauen hinzu. Quellen je Eintrag unter src.",
+ "sights": [
+  {
+   "id": "regierungsgebaeude",
+   "n": "Regierungsgebäude",
+   "g": "Zug",
+   "c": 7,
+   "E": 2681586,
+   "N": 1224659,
+   "z": 418,
+   "t": "Das Regierungsgebäude an der Seestrasse 2 entstand zwischen 1868 und 1873 nach Plänen der Zürcher Architekten Johann Caspar Wolff und Caspar Otto Wolff im Stil der Neurenaissance. Es ist der erste eigens errichtete Staatsbau des Kantons Zug. Im Kantonsratssaal tagt einmal im Monat das Kantonsparlament, im Regierungsratszimmer trifft sich wöchentlich der Regierungsrat. Der Garten zum See geht auf einen Plan von Evariste Mertens aus dem Jahr 1889 zurück.",
+   "f": ["Erbaut 1868–1873, Neurenaissance", "Architekten Johann Caspar Wolff und Caspar Otto Wolff", "Sitz von Kantonsrat und Regierungsrat", "Kulturgut von regionaler Bedeutung (KGS-Nr. 7369)", "Gesamtsanierung geplant, Abschluss voraussichtlich 2036"],
+   "web": "https://zg.ch/de/kantonsrat",
+   "wd": "Q29932266",
+   "osm": "w90863447",
+   "big": 1,
+   "ph": {"f": "foto/s/regierungsgebaeude.webp", "a": "JoachimKohler-HB", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Regierungsgeb%C3%A4ude_in_Zug_(Seestr._2_-_West-_und_S%C3%BCdseite).jpg", "lu": "https://creativecommons.org/licenses/by-sa/4.0", "w": "Regierungsgebäude in Zug, West- und Südseite mit Garten"},
+   "src": ["https://kr-geschaefte.zug.ch/dokumente/14827/4129-1-18629_Neugasse2.pdf", "https://zg.ch/de/staat-politik/175jahre-bundesverfassung", "https://zg.ch/en/news/2017/September/denkmaltage-2017-im-zeichen-von-macht-und-pracht", "https://kr-geschaefte.zug.ch/dokumente/14826/4129-1-18629_Beilage-Machbarkeitsstudie.pdf", "https://www.babs.admin.ch/dam/de/sd-web/5PRhUsWCSa4v/ZG.pdf"]
+  }
+ ],
+ "famNotes": [
+  {
+   "i": 221,
+   "x": "Seit dem 9. Mai 2026 erweitert: neue Sandbucht, rund 5000 m² Liegefläche, zwei eingeschossige Holzbauten mit Garderoben, WC und Restaurant mit Pergola, dazu Kiosk und Bar. Saison Mai bis September, Eintritt frei. Die Neubauten und die Bucht sind in der 3D-Karte nach Plänen nachgebildet; das Luftbild stammt noch aus der Bauzeit 2025.",
+   "t": [["Strandbad Zug", "https://strandbadzug.ch/"], ["Projekt der Stadt Zug", "https://www.baudepartement-stadtzug.ch/page/de/projekte/details?prid=5"]],
+   "src": ["https://www.baudepartement-stadtzug.ch/page/de/projekte/details?prid=5", "https://www.nau.ch/ort/zug/doppelt-so-viel-platz-neues-strandbad-ist-bereit-fur-die-saison-67125935", "https://strandbadzug.ch/", "https://www.evz.ch/news/arena/gastronomie/2026/05/sommer-event-mit-evz-gastro/", "https://www.openstreetmap.org/way/1502798337"]
+  }
+ ]
+}

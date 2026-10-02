@@ -1,5 +1,5 @@
 """Baut public/index.html aus template.html, den Geodaten (data/zg-base.js), den Portal-Daten (data/portal.json),
-dem Guidle-Modul (guidle.js) und der Anwendung (app.js). Aufruf: python3 src/build.py"""
+dem Guidle-Modul (guidle.js), dem Strandbad-Modell (strandbad.js) und der Anwendung (app.js). Aufruf: python3 src/build.py"""
 import os, json, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -7,14 +7,25 @@ t = open(os.path.join(HERE, 'template.html'), encoding='utf-8').read()
 data = open(os.path.join(ROOT, 'data', 'zg-base.js'), encoding='utf-8').read()
 pp = os.path.join(ROOT, 'data', 'portal.json')
 if os.path.exists(pp):
-    portal = json.dumps(json.load(open(pp, encoding='utf-8')), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+    P = json.load(open(pp, encoding='utf-8'))
+    # von Hand gepflegte Ergänzungen (data/curated.json): zusätzliche Sehenswürdigkeiten, Notizen zu bestehenden Familienorten
+    cp = os.path.join(ROOT, 'data', 'curated.json')
+    if os.path.exists(cp):
+        CU = json.load(open(cp, encoding='utf-8'))
+        ids = {x.get('id') for x in P.get('sights', [])}
+        for x in CU.get('sights', []):
+            if x['id'] not in ids:
+                P.setdefault('sights', []).append({k: v for k, v in x.items() if k != 'src'})
+        P['famLinks'] = P.get('famLinks', []) + [{k: v for k, v in x.items() if k != 'src'} for x in CU.get('famNotes', [])]
+    portal = json.dumps(P, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     data = data.rstrip() + '\nwindow.ZG.portal=' + portal + ';\n'
 guidle = open(os.path.join(HERE, 'guidle.js'), encoding='utf-8').read()
+strandbad = open(os.path.join(HERE, 'strandbad.js'), encoding='utf-8').read()
 app = open(os.path.join(HERE, 'app.js'), encoding='utf-8').read()
-for name, s in (('data', data), ('guidle', guidle), ('app', app)):
+for name, s in (('data', data), ('guidle', guidle), ('strandbad', strandbad), ('app', app)):
     assert not re.search(r'</script', s, re.I), name + ' contains </script'
 out = (t.replace('<script>/*DATA*/</script>', '<script>' + data + '</script>')
-        .replace('<script>/*APP*/</script>', '<script>' + guidle + '</script>\n<script>' + app + '</script>'))
+        .replace('<script>/*APP*/</script>', '<script>' + guidle + '</script>\n<script>' + strandbad + '</script>\n<script>' + app + '</script>'))
 cut = out.index('</style>') + len('</style>')
 head = ('<!doctype html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
