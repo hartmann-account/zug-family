@@ -1711,6 +1711,7 @@ var U = {
   uShadowMap: { value: blank }, uShadowMat: { value: new THREE.Matrix4() }, uShadowOn: { value: 0 }, uShadowTexel: { value: 1 }, uShadowRange: { value: 50000 }, uSMSize: { value: SM },
   uOrthoF: { value: blank }, uOrthoC: { value: blank }, uOrthoFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uOrthoCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uOrthoMix: { value: 0 }, uOrthoDim: { value: 1 },
+  uWaterF: { value: blank }, uWaterC: { value: blank }, uWaterFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uWaterCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uHgt: { value: blank }, uHgtSize: { value: new THREE.Vector2(nx, ny) }
 };
 sunVector(sun, U.uSunDir.value);
@@ -1755,6 +1756,29 @@ var ORTHO = [
   '  return c;',
   '}'
 ].join('\n');
+/* Seeufer in der Nahansicht: Seeflächen als scharfe Maske aus den Uferlinien (statt der groben 17-m-Maske),
+   dazu Wellen, Himmelsspiegelung (Fresnel) und Sonnenglanz */
+var WATER = [
+  'uniform sampler2D uWaterF, uWaterC; uniform vec4 uWaterFRect, uWaterCRect;',
+  'float waterAt(vec2 xz, float w0){',
+  '  float w = w0;',
+  '  vec2 uc = (xz - uWaterCRect.xy)/uWaterCRect.z;',
+  '  if(uWaterCRect.w > 0.5 && uc.x > 0.0 && uc.x < 1.0 && uc.y > 0.0 && uc.y < 1.0) w = texture2D(uWaterC, uc).r;',
+  '  vec2 uf = (xz - uWaterFRect.xy)/uWaterFRect.z;',
+  '  if(uWaterFRect.w > 0.5){ vec2 e = min(uf, 1.0-uf); float b = smoothstep(0.0, 0.04, min(e.x, e.y)); if(b > 0.0) w = mix(w, texture2D(uWaterF, uf).r, b); }',
+  '  return w;',
+  '}',
+  // Wellen als Gradient von gedrehtem Rauschen in drei Grössen (ca. 7 m, 2.6 m, 1 m), ausgeblendet, sobald ein Pixel grösser ist
+  'vec2 nGrad(vec2 p){ float c = noise(p); return vec2(noise(p + vec2(0.3, 0.0)) - c, noise(p + vec2(0.0, 0.3)) - c)/0.3; }',
+  'vec3 waterNormal(vec2 q, float fp, float t){',
+  '  mat2 r1 = mat2(0.80, -0.60, 0.60, 0.80), r2 = mat2(0.28, 0.96, -0.96, 0.28);',
+  '  vec2 g = nGrad(q/7.0 + vec2(t*0.10, t*0.06))*0.075*(1.0 - smoothstep(2.0, 7.0, fp));',
+  '  g += r1*nGrad(r1*q/2.6 - vec2(t*0.19, -t*0.07))*0.06*(1.0 - smoothstep(0.8, 2.6, fp));',
+  '  g += r2*nGrad(r2*q/1.0 + vec2(-t*0.31, t*0.23))*0.045*(1.0 - smoothstep(0.3, 1.0, fp));',
+  '  g *= 0.5 + noise(q*0.009 + vec2(t*0.006, -t*0.004));',
+  '  return normalize(vec3(-g.x, 1.0, -g.y));',
+  '}'
+].join('\n');
 var LIGHT = 'uniform vec3 uSunDir, uSunCol, uSkyCol; uniform float uSunMix, uAmb, uDif;';
 
 /* terrain */
@@ -1775,7 +1799,7 @@ var terrainMat = new THREE.ShaderMaterial({
     'uniform sampler2D uRelief; uniform sampler2D uMaskL; uniform sampler2D uMaskN; uniform sampler2D uHgt; uniform vec2 uHgtSize;',
     'uniform vec3 uLand, uLit, uShade, uForest, uOut, uWater, uWaterDeep, uContour, uHi, uFog;',
     'uniform float uFocus, uContourA, uHover, uTime, uFogNear, uFogFar, uDark, uHiAny, uVZ; uniform float uHiv[12];',
-    LIGHT, SHADOW, ORTHO, COMMON,
+    LIGHT, SHADOW, ORTHO, COMMON, WATER,
     'varying vec2 vUv; varying vec3 vW; varying float vDist;',
     'vec3 tNormal(vec2 uv){',
     '  vec2 t = 1.0/uHgtSize; vec2 q = (uv*(uHgtSize-1.0)+0.5)/uHgtSize;',
@@ -1823,6 +1847,24 @@ var terrainMat = new THREE.ShaderMaterial({
     '    col = mix(col, lit, uSunMix);',
     '    cont *= (1.0 - oa);',
     '    wc *= mix(1.0, 0.72 + 0.28*vis, uSunMix);',
+    '    if(uOrthoMix > 0.002){',
+    // scharfe Uferlinie, Wasserfarbe aus dem Luftbild, Spiegelung des Himmels und Glanz der Sonne
+    '      water = mix(water, smoothstep(0.25, 0.75, waterAt(vW.xz, water)), uOrthoMix);',
+    '      if(water > 0.001){',
+    '      vec3 Nw = waterNormal(vW.xz, fpx, uTime);',
+    '      float ct = clamp(dot(Nw, V), 0.0, 1.0);',
+    '      float F = 0.02 + 0.98*pow(1.0 - ct, 5.0);',
+    '      vec3 R = reflect(-V, Nw);',
+    '      vec3 skyR = mix(uFog, uSkyCol*vec3(0.74, 0.84, 1.0), smoothstep(0.0, 0.55, R.y));',
+    '      vec3 base = mix(wc*0.8, oc.rgb*vec3(0.96, 1.0, 1.04), oc.a*0.85);',
+    '      base *= 0.66 + 0.34*vis;',
+    '      vec3 wr = mix(base, skyR, clamp(F + 0.07, 0.0, 1.0)*(0.85 - 0.4*uDark));',
+    '      float sh = mix(320.0, 60.0, smoothstep(0.6, 6.0, fpx));',
+    '      float gl = pow(max(dot(R, uSunDir), 0.0), sh)*mix(1.8, 0.8, smoothstep(0.6, 6.0, fpx));',
+    '      wr += uSunCol*gl*vis*(1.0 - uDark)*smoothstep(0.0, 0.08, uSunDir.y);',
+    '      wc = mix(wc, wr, uOrthoMix);',
+    '      }',
+    '    }',
     '  }',
     '  col = mix(col, uContour, cont*uContourA*(0.2+0.8*inside)*(1.0-water));',
     '  col = mix(col, uOut, clamp(uHiAny-hv, 0.0, 1.0)*0.38*inside*(1.0-water));',
@@ -2306,8 +2348,28 @@ var OR = (function () {
   var la = {}, lb = {};
   (D.ortho.la || []).forEach(function (t) { la[t[0] + '_' + t[1]] = 1; });
   (D.ortho.lb || []).forEach(function (t) { lb[t[0] + '_' + t[1]] = 1; });
-  return { F: level(S), C: level(S), la: la, lb: lb, cache: {}, queue: [], inflight: 0, dirty: false, lastCompose: 0, listeners: [] };
+  function wlevel(sz) {
+    var cv = document.createElement('canvas'); cv.width = cv.height = sz;
+    var tex = new THREE.CanvasTexture(cv); tex.flipY = false; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;
+    return { cv: cv, ctx: cv.getContext('2d'), tex: tex, S: sz, x0: 0, z0: 0, size: 0 };
+  }
+  return { F: level(S), C: level(S), WF: wlevel(S / 2), WC: wlevel(S / 2), la: la, lb: lb, cache: {}, queue: [], inflight: 0, dirty: false, lastCompose: 0, listeners: [] };
 })();
+/* Seeflächen aus den Uferlinien (geschlossene Ringe, Meter relativ zu E0/N0), einmal als Path2D */
+var lakePath = null;
+function lakeMask(W, x0, z0, size) {
+  if (W.x0 === x0 && W.z0 === z0 && W.size === size) return;
+  if (!lakePath) {
+    lakePath = new Path2D();
+    (D.lines.shore || []).forEach(function (r) { for (var i = 0; i < r.length; i += 2) { if (i) lakePath.lineTo(r[i], r[i + 1]); else lakePath.moveTo(r[i], r[i + 1]); } lakePath.closePath(); });
+  }
+  var ctx = W.ctx, S = W.S, sc = S / size, Emin = x0 + EC, Nmax = NC - z0;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S, S);
+  ctx.setTransform(sc, 0, 0, -sc, (G.E0 - Emin) * sc, (Nmax - G.N0) * sc);
+  ctx.fillStyle = '#fff'; ctx.fill(lakePath, 'evenodd');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  W.x0 = x0; W.z0 = z0; W.size = size; W.tex.needsUpdate = true;
+}
 /* SWISSIMAGE live from the geo.admin.ch WMTS (LV95 tile matrix, 256 px tiles, CORS open) for the close-up;
    the pre-cut 2 m tiles in o/la stay as the fast base layer underneath. */
 var WMTS = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/2056/', WE0 = 2420000, WN1 = 1350000;
@@ -2388,12 +2450,15 @@ function updateOrtho(now) {
   var tx = X(cam.E), tz = Z(cam.N);
   function needs(L, s) { return !L.ok || Math.hypot(tx - (L.x0 + L.size / 2), tz - (L.z0 + L.size / 2)) > L.size * 0.16 || Math.abs(s / L.size - 1) > 0.25; }
   var dirtyOK = OR.dirty && now - OR.lastCompose > 220;
-  if (needs(OR.F, Fs) || dirtyOK) { var sn = Fs / 16; oCompose(OR.F, Math.round(tx / sn) * sn, Math.round(tz / sn) * sn, Fs, true); }
-  if (needs(OR.C, Cs) || dirtyOK) { var sc = Cs / 16; oCompose(OR.C, Math.round(tx / sc) * sc, Math.round(tz / sc) * sc, Cs, false); }
+  if (needs(OR.F, Fs) || dirtyOK) { var sn = Fs / 16; oCompose(OR.F, Math.round(tx / sn) * sn, Math.round(tz / sn) * sn, Fs, true); lakeMask(OR.WF, OR.F.x0, OR.F.z0, OR.F.size); }
+  if (needs(OR.C, Cs) || dirtyOK) { var sc = Cs / 16; oCompose(OR.C, Math.round(tx / sc) * sc, Math.round(tz / sc) * sc, Cs, false); lakeMask(OR.WC, OR.C.x0, OR.C.z0, OR.C.size); }
   if (dirtyOK) { OR.dirty = false; OR.lastCompose = now; }
   U.uOrthoF.value = OR.F.tex; U.uOrthoC.value = OR.C.tex;
   U.uOrthoFRect.value.set(OR.F.x0, OR.F.z0, OR.F.size, OR.F.ok ? 1 : 0);
   U.uOrthoCRect.value.set(OR.C.x0, OR.C.z0, OR.C.size, OR.C.ok ? 1 : 0);
+  U.uWaterF.value = OR.WF.tex; U.uWaterC.value = OR.WC.tex;
+  U.uWaterFRect.value.set(OR.WF.x0, OR.WF.z0, OR.WF.size || 1, OR.WF.size ? 1 : 0);
+  U.uWaterCRect.value.set(OR.WC.x0, OR.WC.z0, OR.WC.size || 1, OR.WC.size ? 1 : 0);
   U.uOrthoMix.value = sstep(3600, 1900, cam.d);
 }
 function drawCrop(cv, p) {
@@ -3005,7 +3070,7 @@ function frame(now) {
     R.lorze.material.uniforms.uDraw.value = lorzeDrawn * 1.001; R.lorze.material.uniforms.uOpacity.value = lerp(R.lorze.material.uniforms.uOpacity.value, lo, ko);
     R.cross.material.uniforms.uOpacity.value = 0.8 * sstep(0.55, 0.65, lorzeDrawn) * (touring ? 1 : 0) * (1 - U.uOrthoMix.value);
   }
-  if (R.shore) R.shore.material.uniforms.uOpacity.value = 0.65 * (1 - U.uOrthoMix.value * 0.6);
+  if (R.shore) R.shore.material.uniforms.uOpacity.value = 0.65 * (1 - U.uOrthoMix.value * 0.92);
 
   markerAlpha = lerp(markerAlpha, ready && !touring && MODE !== 'home' ? 1 : 0, TEST ? 1 : 1 - Math.exp(-dt * 6));
   updateMarkers(markerAlpha);
