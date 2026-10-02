@@ -44,9 +44,10 @@ var ICON = {
   denkmal: 'M10.4 2h3.2l1.6 14.6H8.8zM5.5 17.6h13V22h-13z',
   bahn: 'M2.6 3.8l18.6-2 .2 2-8.4.9V8H17a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h4.9V4.9l-9.1 1zM7.4 10.6v4h3.8v-4zM12.8 10.6v4h3.8v-4z',
   event: 'M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zM5 9v10h14V9zM7 11h4v4H7z',
-  gem: 'M12 3 2 11h3v9h5v-6h4v6h5v-9h3z'
+  gem: 'M12 3 2 11h3v9h5v-6h4v6h5v-9h3z',
+  park: 'M6 2.5h7.2a6 6 0 0 1 0 12H10.4V21.5H6zm4.4 3.9v4.2h2.7a2.1 2.1 0 0 0 0-4.2z'
 };
-var EVENODD = { sport: 1, bahn: 1, event: 1 };
+var EVENODD = { sport: 1, bahn: 1, event: 1, park: 1 };
 var CATS = [
   { k: 'spiel', t: 'Spielplätze' }, { k: 'baden', t: 'Baden' }, { k: 'feuer', t: 'Feuer & Picknick' },
   { k: 'natur', t: 'Ausflug & Natur' }, { k: 'kultur', t: 'Kultur & Lernen' }, { k: 'sport', t: 'Sport & Spass' }
@@ -54,8 +55,8 @@ var CATS = [
 var SCATS = (PD.sightCats || ['Altstadt & Stadtbild', 'Kirche & Kloster', 'Burg & Schloss', 'Museum & Kunst', 'Aussicht & Berg', 'See & Wasser', 'Natur & Landschaft', 'Denkmal & Geschichte', 'Bahn & Schiff'])
   .map(function (t, i) { return { t: t, k: ['stadt', 'kirche', 'burg', 'museum', 'berg', 'see', 'natur', 'denkmal', 'bahn'][i] || 'natur' }; });
 /* atlas order = marker category code: 0–5 family, 6 water, 7 WC, 8–16 sights, 17 events */
-var ICONKEYS = ['spiel', 'baden', 'feuer', 'natur', 'kultur', 'sport', 'wasser', 'wc', 'stadt', 'kirche', 'burg', 'museum', 'berg', 'see', 'natur', 'denkmal', 'bahn', 'event'];
-var MK_SIGHT = 8, MK_EVENT = 17;
+var ICONKEYS = ['spiel', 'baden', 'feuer', 'natur', 'kultur', 'sport', 'wasser', 'wc', 'stadt', 'kirche', 'burg', 'museum', 'berg', 'see', 'natur', 'denkmal', 'bahn', 'event', 'park'];
+var MK_SIGHT = 8, MK_EVENT = 17, MK_PARK = 18;
 function svgIcon(k, cls) { return '<svg class="' + (cls || 'ic') + '" viewBox="0 0 24 24" aria-hidden="true"><path' + (EVENODD[k] ? ' fill-rule="evenodd"' : '') + ' d="' + ICON[k] + '"/></svg>'; }
 
 /* ---------------- Gemeinden ---------------- */
@@ -379,10 +380,10 @@ function renderHead() {
   var h = '', m = MODE;
   if (m === 'gemeinden') {
     var pop = KANTON.pop ? swiss(KANTON.pop) + ' Einwohnerinnen und Einwohner' + (KANTON.popDate ? ' (' + esc(KANTON.popDate) + ')' : '') + ', ' : '';
-    h = '<p class="kicker">Gemeinden</p><h2>Elf Gemeinden zwischen Zugersee und Ägerisee</h2><p class="intro">' + pop + dec(KANTON.area || 238.7) + ' km². Wählen Sie eine Gemeinde in der Liste oder auf der Karte.</p>';
+    h = '<p class="kicker">' + svgIcon('gem') + 'Gemeinden</p><h2>Elf Gemeinden zwischen Zugersee und Ägerisee</h2><p class="intro">' + pop + dec(KANTON.area || 238.7) + ' km². Wählen Sie eine Gemeinde in der Liste oder auf der Karte.</p>';
   } else if (m === 'sights') {
     var cs = countBy(SIGHTS), f = filt.sights;
-    h = '<p class="kicker">Sehenswürdigkeiten</p><h2>' + SIGHTS.length + ' Orte in elf Gemeinden</h2>' +
+    h = '<p class="kicker">' + svgIcon('stadt') + 'Sehenswürdigkeiten</p><h2>' + SIGHTS.length + ' Orte in elf Gemeinden</h2>' +
       '<div class="flt">' + gemSelect('fGemS', f.gem, cs) + '</div>' +
       '<div class="flt" id="chipsS" role="group" aria-label="Kategorien">' + SCATS.map(function (c, k) {
         var n = SIGHTS.filter(function (s) { return s.cat === k; }).length; if (!n) return '';
@@ -390,7 +391,7 @@ function renderHead() {
       '<div class="count"><span id="count"></span><span id="countHint">Sortiert nach Gemeinde</span></div>';
   } else if (m === 'familie') {
     var ff = filt.familie, cf = countBy(PL);
-    h = '<p class="kicker">Für Familien</p><h2>Spielplätze, Badis, Feuerstellen, Ausflugsziele</h2>' +
+    h = '<p class="kicker">' + svgIcon('spiel') + 'Für Familien</p><h2>Spielplätze, Badis, Feuerstellen, Ausflugsziele</h2>' +
       '<div class="flt" id="chipsF" role="group" aria-label="Kategorien">' + CATS.map(function (c, k) {
         var n = PL.filter(function (p) { return p.cat === k; }).length;
         return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + ff.cats[k] + '">' + svgIcon(c.k) + c.t + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
@@ -407,7 +408,7 @@ function renderHead() {
     var fe = filt.events, live = liveEvents(), ce = countBy(live), cats = {};
     live.forEach(function (e) { e.cats.forEach(function (c) { cats[c] = (cats[c] || 0) + 1; }); });
     var WIN = [['alle', 'Alle'], ['heute', 'Heute'], ['we', 'Wochenende'], ['7', '7 Tage'], ['30', '30 Tage']];
-    h = '<p class="kicker">Veranstaltungen</p><h2>Was im Kanton Zug läuft</h2>' +
+    h = '<p class="kicker">' + svgIcon('event') + 'Veranstaltungen</p><h2>Was im Kanton Zug läuft</h2>' +
       '<div class="flt" id="winE" role="group" aria-label="Zeitraum">' + WIN.map(function (w) { return '<button type="button" class="chip" data-win="' + w[0] + '" aria-pressed="' + (fe.win === w[0]) + '">' + w[1] + '</button>'; }).join('') + '</div>' +
       '<div class="flt">' + gemSelect('fGemE', fe.gem, ce, 'Kantonsweit oder ausserhalb') +
       (Object.keys(cats).length > 1 ? '<label class="sr" for="fCatE">Kategorie</label><select id="fCatE"><option value="">Alle Kategorien</option>' + Object.keys(cats).sort(function (a, b) { return a.localeCompare(b, 'de'); }).map(function (k) {
@@ -594,7 +595,7 @@ function sparkSVG(p) {
     '<text class="ax" x="0" y="62">8</text><text class="ax" x="' + (W * 4 / 11).toFixed(1) + '" y="62" text-anchor="middle">12</text><text class="ax" x="' + (W * 8 / 11).toFixed(1) + '" y="62" text-anchor="middle">16</text><text class="ax" x="' + W + '" y="62" text-anchor="end">19 Uhr</text>' +
     '<text class="ax" x="2" y="12">100 %</text></svg></div>';
 }
-function backLabel(it) { return it.type === 'fam' ? '← Alle Familienorte' : it.type === 'sight' ? '← Alle Sehenswürdigkeiten' : it.type === 'event' ? '← Alle Veranstaltungen' : '← Alle Gemeinden'; }
+function backLabel(it) { return '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5 1.4-1.4L7.8 8l3.6-3.6z"/></svg>' + (it.type === 'fam' ? 'Alle Familienorte' : it.type === 'sight' ? 'Alle Sehenswürdigkeiten' : it.type === 'event' ? 'Alle Veranstaltungen' : 'Alle Gemeinden'); }
 function linkList(items) { var h = ''; items.forEach(function (l) { if (safeURL(l[1])) h += '<li><a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' + esc(l[0]) + '</a></li>'; }); return h ? '<ul class="links">' + h + '</ul>' : ''; }
 function osmLink(o) { if (!o) return null; var tp = { n: 'node', w: 'way', r: 'relation' }[o[0]]; return tp ? ['In OpenStreetMap ansehen', 'https://www.openstreetmap.org/' + tp + '/' + o.slice(1)] : null; }
 function detailHTML(it) {
@@ -666,10 +667,10 @@ function eventMoreHTML(e) {
   if (e.teaser) h += '<p class="txt">' + esc(e.teaser) + '</p>';
   if (up.length > 1) h += '<p class="note" style="margin:0">Termine</p><ul class="dates">' + up.slice(0, 12).map(function (o) { return '<li>' + esc(occText(o, true)) + '</li>'; }).join('') + (up.length > 12 ? '<li>und ' + (up.length - 12) + ' weitere</li>' : '') + '</ul>';
   var dl = '';
-  if (e.address || e.venue) dl += '<div><dt>Ort</dt><dd style="font-family:var(--f-body);font-size:14.5px">' + esc([e.venue, e.address].filter(Boolean).join(', ')) + '</dd></div>';
-  if (e.price) dl += '<div><dt>Preis</dt><dd style="font-family:var(--f-body);font-size:14.5px">' + esc(e.price) + '</dd></div>';
-  if (e.org) dl += '<div><dt>Veranstalter</dt><dd style="font-family:var(--f-body);font-size:14.5px">' + esc(e.org) + '</dd></div>';
-  if (dl) h += '<dl class="facts" style="grid-template-columns:1fr">' + dl + '</dl>';
+  if (e.address || e.venue) dl += '<div><dt>Ort</dt><dd class="t">' + esc([e.venue, e.address].filter(Boolean).join(', ')) + '</dd></div>';
+  if (e.price) dl += '<div><dt>Preis</dt><dd class="t">' + esc(e.price) + '</dd></div>';
+  if (e.org) dl += '<div><dt>Veranstalter</dt><dd class="t">' + esc(e.org) + '</dd></div>';
+  if (dl) h += '<dl class="facts one">' + dl + '</dl>';
   return h;
 }
 function openItem(it) {
@@ -855,7 +856,7 @@ sunVector(sun, U.uSunDir.value);
 var C = {};
 ['--paper', '--m-land', '--m-lit', '--m-shade', '--m-forest', '--m-out', '--m-water', '--m-water-deep', '--m-contour', '--m-hi',
  '--m-side', '--m-side-2', '--m-roof', '--m-wall', '--m-window', '--m-line', '--m-muni', '--m-river', '--m-shore', '--m-lorze', '--ink',
- '--m-tree', '--m-trunk', '--m-sun', '--m-sky', '--m-pin', '--m-pin-ink', '--m-ring-shade', '--m-ring-sun', '--m-sel', '--m-pin-sight', '--m-pin-event'
+ '--m-tree', '--m-trunk', '--m-sun', '--m-sky', '--m-pin', '--m-pin-ink', '--m-ring-shade', '--m-ring-sun', '--m-sel', '--m-pin-sight', '--m-pin-event', '--m-pin-park'
 ].forEach(function (k) { C[k] = new THREE.Color(); });
 
 var COMMON = [
@@ -1541,6 +1542,7 @@ function buildMarkers() {
   (F.svc.c || []).forEach(function (w) { items.push({ type: 'c', mk: 7, E: w[0] + E0F, N: w[1] + N0F, wick: !!w[2] }); });
   SIGHTS.forEach(function (s) { items.push(s); });
   EVENTS.forEach(function (e) { if (e.exact) items.push(e); });
+  PARK.forEach(function (g) { items.push(g); });
   items = items.filter(function (it) { return it.E && it.N && inGrid(it.E, it.N); });
   var n = items.length, pos = new Float32Array(n * 3), info = new Float32Array(n * 4), vis = new Float32Array(n), sel = new Float32Array(n);
   items.forEach(function (it, i) {
@@ -1558,7 +1560,7 @@ function buildMarkers() {
   var mat = MK.mat || new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, depthTest: true,
     uniforms: { uAtlas: { value: ATLAS }, uSize: { value: 20 }, uDpr: { value: 1 }, uAlpha: { value: 0 }, uRing: { value: 0 }, uVZ: U.uVZ, uPx: U.uPx,
-      uFill: { value: C['--m-pin'] }, uSight: { value: C['--m-pin-sight'] }, uEvent: { value: C['--m-pin-event'] }, uWhite: { value: new THREE.Color(1, 1, 1) },
+      uFill: { value: C['--m-pin'] }, uSight: { value: C['--m-pin-sight'] }, uEvent: { value: C['--m-pin-event'] }, uPark: { value: C['--m-pin-park'] }, uWhite: { value: new THREE.Color(1, 1, 1) },
       uRingShade: { value: C['--m-ring-shade'] }, uRingSun: { value: C['--m-ring-sun'] }, uSvc: { value: 0.7 } },
     vertexShader: [
       'attribute vec4 aInfo; attribute float aVis; attribute float aSel; uniform float uSize, uDpr, uVZ, uPx, uSvc;',
@@ -1576,7 +1578,7 @@ function buildMarkers() {
       '}'
     ].join('\n'),
     fragmentShader: [
-      'uniform sampler2D uAtlas; uniform vec3 uFill, uSight, uEvent, uWhite, uRingShade, uRingSun; uniform float uAlpha, uRing;',
+      'uniform sampler2D uAtlas; uniform vec3 uFill, uSight, uEvent, uPark, uWhite, uRingShade, uRingSun; uniform float uAlpha, uRing;',
       'varying vec4 vInfo; varying float vSel; varying float vSize;',
       'void main(){',
       '  vec2 pc = gl_PointCoord*2.0-1.0; float r = length(pc);',
@@ -1588,7 +1590,7 @@ function buildMarkers() {
       '  float inside = step(0.0, iu.x)*step(iu.x, 1.0)*step(0.0, iu.y)*step(iu.y, 1.0);',
       '  float lod = max(0.0, log2(128.0/(0.62*max(vSize, 1.0))));',
       '  float icon = textureLod(uAtlas, (cell + clamp(iu, 0.0, 1.0))/vec2(8.0,4.0), lod).a*inside;',
-      '  vec3 fill = cat > 16.5 ? uEvent : cat > 7.5 ? uSight : cat > 6.5 ? vec3(0.32,0.38,0.5) : cat > 5.5 ? vec3(0.18,0.62,0.86) : uFill;',
+      '  vec3 fill = cat > 17.5 ? uPark : cat > 16.5 ? uEvent : cat > 7.5 ? uSight : cat > 6.5 ? vec3(0.32,0.38,0.5) : cat > 5.5 ? vec3(0.18,0.62,0.86) : uFill;',
       '  vec3 col = mix(fill, uWhite, icon);',
       '  float a = disc;',
       '  if(uRing > 0.5 && vInfo.w > 0.5){',
@@ -1617,6 +1619,7 @@ function markerVisible(it) {
   if (it.type === 'fam') return MODE === 'familie' && matchFam(it);
   if (it.type === 'sight') return (MODE === 'sights' && matchSight(it)) || (MODE === 'gemeinden' && !!selGem && it.gem === selGem.name);
   if (it.type === 'event') return MODE === 'events' && matchEvent(it);
+  if (it.type === 'park') return parkOn && cam.d < 16000;
   return false;
 }
 function updateMarkers(alpha) {
@@ -1669,7 +1672,7 @@ function makeOutline(p) {
 }
 
 /* ---------------- labels ---------------- */
-var labelsEl = $('#labels'), LBL = [], LBL_ORDER = [], PRIO = { muni: 0, lake: 1, peak: 2, river: 3, poi: 4, place: 5 };
+var labelsEl = $('#labels'), LBL = [], LBL_ORDER = [], PRIO = { park: -1, muni: 0, lake: 1, peak: 2, river: 3, poi: 4, place: 5 };
 function addLabel(text, kind, E, N, sections, sub, elev) {
   var el = document.createElement('div');
   el.className = 'lbl ' + kind;
@@ -1682,6 +1685,7 @@ function addLabel(text, kind, E, N, sections, sub, elev) {
 }
 function labelWant(L) {
   var d = cam.d;
+  if (L.kind === 'park') return parkOn && !touring && d < 7000 ? 1 : 0;
   if (touring) { var key = TOUR[tourI].key; return (L.s.indexOf(key) >= 0 || (L.kind === 'muni' && key === 'kanton')) ? 1 : 0; }
   if (L.kind === 'muni') return d > 5200 ? 1 : 0;
   if (L.kind === 'lake') return L.k ? (d > 3200 ? 1 : 0) : (d > 6000 && d < 24000 ? 1 : 0);
@@ -1898,7 +1902,9 @@ canvas.addEventListener('keydown', function (e) {
 function mapClick(x, y, type) {
   var W = window.innerWidth, H = canvas.clientHeight || window.innerHeight;
   var mk = pickMarker(x, y, W, H);
-  if (mk && (mk.type === 'fam' || mk.type === 'sight' || mk.type === 'event')) { pick(mk); return; }
+  if (mk && mk.type === 'park') { showPark(mk); return; }
+  if (mk && (mk.type === 'fam' || mk.type === 'sight' || mk.type === 'event')) { hidePark(); pick(mk); return; }
+  if (POP.it) { hidePark(); return; }
   var g = groundAt(x, y), id = g ? idAt(g.E, g.N) : 0;
   if (!id) return;
   var m = D.munis[id - 1], gm = GEMBY[m.name];
@@ -1912,6 +1918,80 @@ $('#zoomOut').addEventListener('click', function () { flyTo({ E: ex.E, N: ex.N, 
 $('#homeBtn').addEventListener('click', function () { if (touring) stopTour(true); flyTo(fit(MODE === 'home' ? HOMEV : OVERVIEW)); });
 $('#northBtn').addEventListener('click', function () { flyTo({ E: ex.E, N: ex.N, d: ex.d, hd: 0, p: ex.p }); });
 $('#tPhoto').addEventListener('click', function () { photoOn = !photoOn; this.setAttribute('aria-pressed', String(photoOn)); });
+/* ---------------- parking garages with live free spaces (Parkleitsystem Zug, through the Worker) ---------------- */
+var PARK = [], PARKBY = {}, parkOn = false, parkTimer = null, parkState = '', POP = { el: $('#pop'), it: null };
+function freeClass(g) { return !g.open ? 'full' : g.free < 10 ? 'full' : g.free < 50 ? 'low' : 'ok'; }
+function freeText(g) { return g.open ? plural(g.free, 'frei', 'frei') : 'geschlossen'; }
+function loadParking() {
+  fetch('api/parking', { headers: { Accept: 'application/json' } })
+    .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    .then(setParking)
+    .catch(function () { parkState = 'error'; if (parkOn && !PARK.length) showParkError(); });
+}
+function setParking(d) {
+  var first = !PARK.length;
+  (d.garages || []).forEach(function (g) {
+    if (!g.E || !g.N) return;
+    var it = PARKBY[g.id];
+    if (!it) { it = PARKBY[g.id] = { type: 'park', id: String(g.id), mk: MK_PARK, gem: 'Zug', E: g.E, N: g.N }; PARK.push(it); }
+    it.title = it.name = g.name; it.free = Math.max(0, g.free | 0); it.open = !!g.open; it.address = g.address || '';
+    it.prices = g.prices || []; it.hours = g.hours || ''; it.info = g.info || ''; it.lat = g.lat; it.lng = g.lng;
+  });
+  parkState = 'ok'; parkUpdated = d.updated || '';
+  if (ready) { if (first) buildMarkers(); ensureParkLabels(); }
+  PARK.forEach(function (g) { if (g.lbl) { g.lbl.el.textContent = freeText(g); g.lbl.el.className = 'lbl park ' + freeClass(g); g.lbl.bw = 0; } });
+  markerVisDirty = true;
+  if (POP.it) showPark(POP.it, true);
+}
+var parkUpdated = '';
+function ensureParkLabels() {
+  var added = false;
+  PARK.forEach(function (g) {
+    if (g.lbl) return;
+    addLabel('', 'park', g.E, g.N, []); g.lbl = LBL[LBL.length - 1]; g.lbl.lift = 0; added = true;
+    g.lbl.el.setAttribute('role', 'button'); g.lbl.el.title = 'Parkhaus ' + g.title;
+    g.lbl.el.addEventListener('click', function (e) { e.stopPropagation(); showPark(g); });
+  });
+  if (added) LBL_ORDER = LBL.slice().sort(function (a, b) { return PRIO[a.kind] - PRIO[b.kind] || a.n - b.n; });
+}
+function parkHTML(g) {
+  var h = '<button class="x" type="button" aria-label="Schliessen">×</button><h4 id="popTitle">Parkhaus ' + esc(g.title) + '</h4><p class="sub">' + esc(g.address) + '</p>';
+  h += '<div class="big"><b class="free ' + freeClass(g) + '" style="font-size:1.6rem;padding:6px 12px">' + (g.open ? swiss(g.free) : '–') + '</b><span>' + (g.open ? (g.free === 1 ? 'freier Platz' : 'freie Plätze') : 'geschlossen') + '</span></div>';
+  var pr = g.prices.filter(function (p) { return p && (p[1] || p[2]); }).slice(0, 6);
+  if (pr.length) h += '<ul>' + pr.map(function (p) { return '<li><span>' + esc([p[0], p[1]].filter(Boolean).join(' · ')) + '</span><b>CHF ' + esc(p[2]) + '</b></li>'; }).join('') + '</ul>';
+  var notes = [g.hours, g.info].filter(Boolean).join(' · ');
+  if (notes) h += '<p class="note">' + esc(notes) + '</p>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;destination=' + encodeURIComponent(g.lat + ',' + g.lng) + '">Route</a>' +
+    '<a class="btn btn-soft" target="_blank" rel="noopener" href="https://www.pls-zug.ch/">Parkleitsystem Zug</a></div>';
+  if (parkUpdated) h += '<p class="note">Stand ' + esc(fmtHM.format(new Date(parkUpdated))) + ' Uhr, wird jede Minute aktualisiert.</p>';
+  return h;
+}
+function showPark(g, refresh) {
+  POP.it = g; POP.el.innerHTML = parkHTML(g); POP.el.classList.add('on');
+  POP.el.querySelector('.x').addEventListener('click', hidePark);
+  if (!refresh) { POP.placed = false; if (cam.d > 2500) flyTo({ E: g.E, N: g.N, d: 1600, hd: ex.hd, p: 44 }); }
+}
+function hidePark() { POP.it = null; POP.el.classList.remove('on'); }
+function showParkError() { POP.it = null; POP.el.innerHTML = '<button class="x" type="button" aria-label="Schliessen">×</button><h4 id="popTitle">Parkhäuser</h4><p class="sub">Die freien Plätze konnten nicht geladen werden. Sie finden sie beim <a href="https://www.pls-zug.ch/" target="_blank" rel="noopener">Parkleitsystem Zug</a>.</p>'; POP.el.classList.add('on'); POP.el.querySelector('.x').addEventListener('click', function () { POP.el.classList.remove('on'); }); }
+function placePop(W, H) {
+  if (!POP.it || narrowMQ.matches) return;
+  var g = POP.it; tmpV.set(X(g.E), Y(hAt(g.E, g.N)), Z(g.N)).project(camera);
+  var pw = POP.el.offsetWidth || 300, ph = POP.el.offsetHeight || 200, top = topBar.offsetHeight + 10;
+  var x = (tmpV.x + 1) / 2 * W + 24, y = (1 - tmpV.y) / 2 * H - ph / 2;
+  if (x + pw > W - 70) x = (tmpV.x + 1) / 2 * W - pw - 24;
+  var minX = MODE === 'home' || touring ? 12 : panel.offsetLeft + panel.offsetWidth + 12;
+  x = clamp(x, minX, W - pw - 64); y = clamp(y, top, H - ph - 12);
+  POP.el.style.left = x.toFixed(0) + 'px'; POP.el.style.top = y.toFixed(0) + 'px';
+}
+$('#tPark').addEventListener('click', function () {
+  parkOn = !parkOn; this.setAttribute('aria-pressed', String(parkOn)); markerVisDirty = true;
+  if (parkOn) {
+    loadParking(); clearInterval(parkTimer); parkTimer = setInterval(loadParking, 60000);
+    if (cam && cam.d > 9000) flyTo({ E: 2681850, N: 1225000, d: 4200, hd: ex.hd, p: 46 });
+  } else { clearInterval(parkTimer); hidePark(); POP.el.classList.remove('on'); }
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && POP.el.classList.contains('on')) { hidePark(); POP.el.classList.remove('on'); } });
+
 
 /* ---------------- tour over the canton ---------------- */
 var TOUR = [
@@ -2039,6 +2119,7 @@ function frame(now) {
         var hs = shadeAt(hp, sunT);
         tipB.textContent = hs != null ? 'Schatten am 21. Juli um ' + fmtTime(sunT) + ' Uhr: ' + Math.round(hs * 100) + ' %' : (hp.zt ? 'Tipp von Zug Tourismus' : CATS[hp.cat].t);
       } else if (hp.type === 'sight') { tipT.textContent = hp.title; tipA.textContent = hp.kind; tipB.textContent = hp.gem; }
+      else if (hp.type === 'park') { tipT.textContent = 'Parkhaus ' + hp.title; tipA.textContent = hp.open ? plural(hp.free, 'freier Platz', 'freie Plätze') : 'geschlossen'; tipB.textContent = hp.address; }
       else if (hp.type === 'event') { var o = nextOcc(hp, Date.now()); tipT.textContent = hp.title; tipA.textContent = o ? occText(o) : ''; tipB.textContent = [hp.venue, hp.gem].filter(Boolean).join(' · '); }
       else { tipT.textContent = hp.type === 'w' ? 'Trinkbrunnen' : 'WC'; tipA.textContent = hp.wick ? 'mit Wickeltisch' : ''; tipB.textContent = ''; }
       document.body.style.cursor = 'pointer';
@@ -2057,6 +2138,8 @@ function frame(now) {
     } else { tip.classList.remove('on'); if (!drag.mode) document.body.style.cursor = ''; }
   }
 
+  placePop(W, H);
+
   // callout for the selected item
   if (SEL && SEL.E && (SEL.type !== 'event' || SEL.exact)) {
     tmpV.set(X(SEL.E), Y(hAt(SEL.E, SEL.N)), Z(SEL.N)).project(camera);
@@ -2072,7 +2155,7 @@ function frame(now) {
   var placed = [], labelFade = 1 - sstep(2600, 1500, cam.d) * 0.85;
   for (i = 0; i < LBL.length; i++) {
     var L = LBL[i], want_o = ready ? labelWant(L) : 0;
-    if (L.kind !== 'muni') want_o *= labelFade;
+    if (L.kind !== 'muni' && L.kind !== 'park') want_o *= labelFade;
     L.p.set(X(L.E), Y(L.h) + L.lift, Z(L.N));
     tmpV.copy(L.p).project(camera);
     var vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.08 && Math.abs(tmpV.y) < 1.08;
@@ -2086,6 +2169,7 @@ function frame(now) {
     }
     if (!vis || L.occ) want_o = 0;
     L.sx = (tmpV.x + 1) / 2 * W; L.sy = (1 - tmpV.y) / 2 * H; L.want = want_o;
+    if (L.kind === 'park') { var msz = MK.mat ? MK.mat.uniforms.uSize.value : 20; L.sx += msz * 0.62; L.sy -= msz * 0.62; }
   }
   var fa = freeArea(W, H);
   for (i = 0; i < LBL_ORDER.length; i++) {
@@ -2093,7 +2177,7 @@ function frame(now) {
     if (L.want > 0.01 && (L.sx < fa.x0 + 10 || L.sy < fa.y0 + 6 || L.sy > fa.y1 - 6)) L.want = 0;
     if (L.want > 0.01) {
       if (!L.bw) { L.el.style.opacity = '0'; L.el.style.transform = 'translate3d(-9999px,0,0)'; L.bw = L.el.offsetWidth; L.bh = L.el.offsetHeight; }
-      var left = (L.kind === 'peak' || L.kind === 'poi') ? L.sx - 5 : L.sx - L.bw / 2, tries = L.kind === 'muni' ? [0, -15, 15] : [0], ok = false;
+      var left = L.kind === 'park' ? L.sx : (L.kind === 'peak' || L.kind === 'poi') ? L.sx - 5 : L.sx - L.bw / 2, tries = L.kind === 'muni' ? [0, -15, 15] : [0], ok = false;
       for (var tr = 0; tr < tries.length && !ok; tr++) {
         var top = L.sy - L.bh / 2 + tries[tr], hitL = false;
         for (var q = 0; q < placed.length; q++) { var P = placed[q]; if (left < P[2] + 6 && left + L.bw + 6 > P[0] && top < P[3] + 2 && top + L.bh + 2 > P[1]) { hitL = true; break; } }
@@ -2103,7 +2187,7 @@ function frame(now) {
     }
     L.o = TEST ? L.want : lerp(L.o, L.want, 1 - Math.exp(-dt * 6));
     if (L.o < 0.01) { if (L.w !== 0) { L.el.style.opacity = '0'; L.w = 0; } continue; }
-    var offs = (L.kind === 'peak' || L.kind === 'poi') ? 'translate(-5px,-50%)' : 'translate(-50%,-50%)';
+    var offs = L.kind === 'park' ? 'translate(0,-50%)' : (L.kind === 'peak' || L.kind === 'poi') ? 'translate(-5px,-50%)' : 'translate(-50%,-50%)';
     L.el.style.transform = 'translate3d(' + L.sx.toFixed(1) + 'px,' + (L.sy + (L.dy || 0)).toFixed(1) + 'px,0) ' + offs;
     L.el.style.opacity = L.o.toFixed(3); L.w = 1;
   }
@@ -2184,6 +2268,7 @@ loadEvents();
     LBL_ORDER = LBL.slice().sort(function (a, b) { return PRIO[a.kind] - PRIO[b.kind] || a.n - b.n; });
     ready = true; tReady = performance.now();
     buildMarkers();
+    ensureParkLabels();
     readTheme();
 
     canvas.style.opacity = '1';

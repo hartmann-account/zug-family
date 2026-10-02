@@ -4,7 +4,27 @@
 import '../src/guidle.js';
 
 const G = globalThis.ZGEvents;
-const LIST_TTL = 3600, DETAIL_TTL = 3600;
+const LIST_TTL = 3600, DETAIL_TTL = 3600, PARK_TTL = 60;
+const PLS = 'https://www.pls-zug.ch/?json=true';
+
+const strip = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+// Parkleitsystem Zug: free spaces per garage, coordinates in WGS84 -> LV95 for the map
+function parking(d) {
+  const list = (d && d.content) || [];
+  let last = 0;
+  const garages = list.map((g) => {
+    last = Math.max(last, +g.last_modified || 0);
+    const lat = parseFloat(g.latitude), lng = parseFloat(g.longitude), en = isFinite(lat) && isFinite(lng) ? G.toLV95(lat, lng) : null;
+    return {
+      id: g.id, name: String(g.name || '').trim(), address: [g.address, [g.plz, g.city].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+      free: Math.max(0, parseInt(g.free, 10) || 0), open: /offen/i.test(g.state || ''), state: g.state || '',
+      lat, lng, E: en ? en[0] : null, N: en ? en[1] : null,
+      prices: (g.prices || []).slice(0, 12).map((p) => [strip(p[0]), strip(p[1]), strip(p[2])]),
+      hours: strip(g.opening_hours), info: strip(g.additional)
+    };
+  });
+  return { updated: new Date(last ? last * 1000 : Date.now()).toISOString(), source: 'Parkleitsystem Zug', garages };
+}
 const mem = new Map();
 
 function json(data, ttl, status = 200) {
@@ -44,6 +64,13 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/events') {
       return cached(request, ctx, 'events', LIST_TTL, () => G.fetchAll(gfetch));
+    }
+    if (url.pathname === '/api/parking') {
+      return cached(request, ctx, 'parking', PARK_TTL, async () => {
+        const r = await fetch(PLS, { headers: { 'User-Agent': ua.headers['User-Agent'], Accept: 'application/json' } });
+        if (!r.ok) throw new Error('PLS ' + r.status);
+        return parking(await r.json());
+      });
     }
     if (url.pathname === '/api/event') {
       const id = (url.searchParams.get('id') || '').replace(/\D/g, '');
