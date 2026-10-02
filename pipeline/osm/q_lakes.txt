@@ -1,0 +1,6 @@
+[out:json][timeout:90];
+(
+  relation["natural"="water"]["name"~"^(Zugersee|Ägerisee)$"](47.0,8.3,47.3,8.75);
+  way["natural"="water"]["name"~"^(Zugersee|Ägerisee)$"](47.0,8.3,47.3,8.75);
+);
+out geom;

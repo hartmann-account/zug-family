@@ -1,0 +1,17 @@
+[out:json][timeout:300];
+area["ISO3166-2"="CH-ZG"]->.zg;
+(
+  nwr["leisure"~"^(playground|firepit|picnic_table|swimming_area|water_park|ice_rink|miniature_golf|bathing_place|adventure_park|trampoline_park|park|nature_reserve|garden|dog_park|swimming_pool|sports_centre|pitch|track|fitness_station|beach_resort|marina|slipway|bird_hide|bowling_alley|horse_riding|summer_camp|resort|indoor_play|amusement_arcade)$"](area.zg);
+  nwr["amenity"~"^(bbq|library|toy_library|public_bath|drinking_water|toilets|community_centre|social_facility|social_centre|cinema|theatre|arts_centre|ice_cream|shelter|fountain|watering_place|kindergarten|childcare|music_school|planetarium|events_venue|youth_centre|family_centre|boat_rental|bench)$"](area.zg);
+  nwr["tourism"~"^(zoo|museum|picnic_site|attraction|viewpoint|theme_park|camp_site|aquarium|gallery|wilderness_hut|alpine_hut)$"](area.zg);
+  nwr["playground"](area.zg);
+  nwr["natural"~"^(beach|cave_entrance|waterfall)$"](area.zg);
+  nwr["waterway"="waterfall"](area.zg);
+  nwr["historic"~"^(castle|ruins|monument|memorial|archaeological_site)$"](area.zg);
+  nwr["aerialway"~"^(cable_car|gondola|chair_lift|funicular|station|magic_carpet|drag_lift|t-bar|platter)$"](area.zg);
+  nwr["railway"="funicular"](area.zg);
+  nwr["sport"~"^(swimming|climbing|climbing_adventure|skateboard|bmx|ice_skating|minigolf|toboggan|skiing|free_flying)$"](area.zg);
+  nwr["piste:type"](area.zg);
+  nwr["shop"~"^(toys|baby_goods)$"](area.zg);
+);
+out tags geom;

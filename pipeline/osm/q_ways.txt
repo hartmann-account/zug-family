@@ -1,0 +1,4 @@
+[out:json][timeout:300];
+area["ISO3166-2"="CH-ZG"]->.zg;
+way["highway"]["name"](area.zg);
+out tags geom;

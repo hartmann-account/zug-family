@@ -1,0 +1,10 @@
+[out:json][timeout:300];
+area["ISO3166-2"="CH-ZG"]->.zg;
+(
+  way["highway"]["name"](area.zg);
+  nwr["amenity"~"^(school|kindergarten|college|place_of_worship|restaurant|townhall|community_centre)$"]["name"](area.zg);
+  node["place"~"^(suburb|neighbourhood|quarter|hamlet|village|town|locality|isolated_dwelling)$"](area.zg);
+  nwr["landuse"~"^(residential|recreation_ground)$"]["name"](area.zg);
+  nwr["leisure"~"^(park|sports_centre|pitch)$"]["name"](area.zg);
+);
+out tags center;
