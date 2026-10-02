@@ -1,22 +1,31 @@
 (function () {
 'use strict';
-var D = window.ZG, F = D.fam;
+var D = window.ZG, F = D.fam, PD = D.portal || {};
 var $ = function (s) { return document.querySelector(s); };
 var statusEl = $('#status'), hudA = $('#hudA'), hudB = $('#hudB');
 var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 var TEST = !!window.ZG_TEST;
 var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+var narrowMQ = matchMedia('(max-width: 760px)');
 function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
 function lerp(a, b, t) { return a + (b - a) * t; }
 function sstep(a, b, x) { var t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
 function swiss(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '’'); }
 function dec(x, d) { return x.toFixed(d == null ? 1 : d).replace('.', ','); }
-function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function pad2(n) { return (n < 10 ? '0' : '') + n; }
 function fmtTime(t) { var m = Math.round(t * 60 / 5) * 5, h = Math.floor(m / 60); return pad2(h) + ':' + pad2(m % 60); }
+function slug(s) {
+  return String(s || '').toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function safeURL(u) { return /^https?:\/\//i.test(String(u || '')) ? String(u) : ''; }
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 var DEG = Math.PI / 180;
+var GL = false;
 
 /* ---------------- icons and categories ---------------- */
+function waves(y) { return 'M2 ' + y + 'c2 0 2.6-1.5 4.6-1.5s2.6 1.5 4.6 1.5 2.6-1.5 4.6-1.5 2.6 1.5 4.6 1.5h1.6v2h-1.6c-2 0-2.6-1.5-4.6-1.5s-2.6 1.5-4.6 1.5-2.6-1.5-4.6-1.5S4 ' + (y + 2) + ' 2 ' + (y + 2) + 'z'; }
 var ICON = {
   spiel: 'M4 4h16v2H4zM5.3 5.6h2.1L5.2 21H3.1zM16.6 5.6h2.1L20.9 21h-2.1zM9.6 6h1.2v9.4H9.6zM13.2 6h1.2v9.4h-1.2zM8.6 15.2h6.8v2.2H8.6z',
   baden: 'M17 4.6a2.3 2.3 0 1 1 0 4.6a2.3 2.3 0 1 1 0-4.6zM4.5 12.4l4.6-3.6 3.4 2.4 3.3-1.6 1 1.8-4.3 2.2-3-2.1-3.6 2.8zM2 15.6c2 0 2.6-1.5 4.6-1.5s2.6 1.5 4.6 1.5 2.6-1.5 4.6-1.5 2.6 1.5 4.6 1.5h1.6v2h-1.6c-2 0-2.6-1.5-4.6-1.5s-2.6 1.5-4.6 1.5-2.6-1.5-4.6-1.5S4 17.6 2 17.6zM2 19.6c2 0 2.6-1.5 4.6-1.5s2.6 1.5 4.6 1.5 2.6-1.5 4.6-1.5 2.6 1.5 4.6 1.5h1.6v2h-1.6c-2 0-2.6-1.5-4.6-1.5s-2.6 1.5-4.6 1.5-2.6-1.5-4.6-1.5S4 21.6 2 21.6z',
@@ -25,25 +34,63 @@ var ICON = {
   kultur: 'M12 2l10 5v2.2H2V7zM4 10.4h3.2v7.6H4zM10.4 10.4h3.2v7.6h-3.2zM16.8 10.4H20v7.6h-3.2zM2 19.2h20V22H2z',
   sport: 'M12 2.6a9.4 9.4 0 1 1 0 18.8a9.4 9.4 0 1 1 0-18.8zM12 7.8l-3.9 2.8 1.5 4.6h4.8l1.5-4.6z',
   wasser: 'M12 2C9 7 6 10.5 6 14a6 6 0 0 0 12 0c0-3.5-3-7-6-12z',
-  wc: 'M7.5 2.6a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM5 8h5v7.4H9V22H6v-6.6H5zM16.5 2.6a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM16.5 8l3.6 8.2H18V22h-3v-5.8h-2.1z'
+  wc: 'M7.5 2.6a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM5 8h5v7.4H9V22H6v-6.6H5zM16.5 2.6a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM16.5 8l3.6 8.2H18V22h-3v-5.8h-2.1z',
+  stadt: 'M7.5 22V9.5L12 2l4.5 7.5V22h-3.2v-4.6a1.3 1.3 0 0 0-2.6 0V22zM3 22v-8h3v8zM18 22v-8h3v8z',
+  kirche: 'M11 1h2v2.6h2.2v2H13v2.6l5 3.8V22h-4.6v-4.4a1.4 1.4 0 0 0-2.8 0V22H6V12l5-3.8V5.6H8.8v-2H11z',
+  burg: 'M3 22V8.5h2.4V6h2.2v2.5h2.2V6H12v2.5h2.2V6h2.2v2.5h2.2V6H21v16h-6.4v-4.6a2.6 2.6 0 0 0-5.2 0V22z',
+  museum: 'M12 2l10 5v2.2H2V7zM4 10.4h3.2v7.6H4zM10.4 10.4h3.2v7.6h-3.2zM16.8 10.4H20v7.6h-3.2zM2 19.2h20V22H2z',
+  berg: 'M1.5 20.5L9 7.5l3.8 6.2 2.9-4.2 6.8 11z',
+  see: waves(6.2) + waves(11.2) + waves(16.2),
+  denkmal: 'M10.4 2h3.2l1.6 14.6H8.8zM5.5 17.6h13V22h-13z',
+  bahn: 'M2.6 3.8l18.6-2 .2 2-8.4.9V8H17a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h4.9V4.9l-9.1 1zM7.4 10.6v4h3.8v-4zM12.8 10.6v4h3.8v-4z',
+  event: 'M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zM5 9v10h14V9zM7 11h4v4H7z',
+  gem: 'M12 3 2 11h3v9h5v-6h4v6h5v-9h3z'
 };
+var EVENODD = { sport: 1, bahn: 1, event: 1 };
 var CATS = [
   { k: 'spiel', t: 'Spielplätze' }, { k: 'baden', t: 'Baden' }, { k: 'feuer', t: 'Feuer & Picknick' },
   { k: 'natur', t: 'Ausflug & Natur' }, { k: 'kultur', t: 'Kultur & Lernen' }, { k: 'sport', t: 'Sport & Spass' }
 ];
-var ICONKEYS = ['spiel', 'baden', 'feuer', 'natur', 'kultur', 'sport', 'wasser', 'wc'];
-function svgIcon(k, cls) { return '<svg class="' + (cls || 'ic') + '" viewBox="0 0 24 24" aria-hidden="true"><path' + (k === 'sport' ? ' fill-rule="evenodd"' : '') + ' d="' + ICON[k] + '"/></svg>'; }
+var SCATS = (PD.sightCats || ['Altstadt & Stadtbild', 'Kirche & Kloster', 'Burg & Schloss', 'Museum & Kunst', 'Aussicht & Berg', 'See & Wasser', 'Natur & Landschaft', 'Denkmal & Geschichte', 'Bahn & Schiff'])
+  .map(function (t, i) { return { t: t, k: ['stadt', 'kirche', 'burg', 'museum', 'berg', 'see', 'natur', 'denkmal', 'bahn'][i] || 'natur' }; });
+/* atlas order = marker category code: 0–5 family, 6 water, 7 WC, 8–16 sights, 17 events */
+var ICONKEYS = ['spiel', 'baden', 'feuer', 'natur', 'kultur', 'sport', 'wasser', 'wc', 'stadt', 'kirche', 'burg', 'museum', 'berg', 'see', 'natur', 'denkmal', 'bahn', 'event'];
+var MK_SIGHT = 8, MK_EVENT = 17;
+function svgIcon(k, cls) { return '<svg class="' + (cls || 'ic') + '" viewBox="0 0 24 24" aria-hidden="true"><path' + (EVENODD[k] ? ' fill-rule="evenodd"' : '') + ' d="' + ICON[k] + '"/></svg>'; }
 
-/* ---------------- places ---------------- */
+/* ---------------- Gemeinden ---------------- */
+var MUNI = {}, GEMS = [];
+D.munis.forEach(function (m) {
+  var x = (PD.gem || []).filter(function (g) { return g.name === m.name; })[0] || {};
+  var g = { type: 'gem', id: slug(m.name), m: m, name: m.name, title: m.name, E: m.c[0], N: m.c[1], ha: m.ha, hmin: m.hmin, hmax: m.hmax,
+    pop: x.pop || null, popDate: x.popDate || '', area: x.area || m.ha / 100, elev: x.elev || null, ortsteile: x.ortsteile || [], web: x.web || '',
+    zt: x.zt || '', text: x.text || '', sources: x.sources || [] };
+  MUNI[m.name] = m; GEMS.push(g);
+});
+GEMS.sort(function (a, b) { return a.name.localeCompare(b.name, 'de'); });
+var GEMBY = {}; GEMS.forEach(function (g) { GEMBY[g.id] = g; GEMBY[g.name] = g; });
+var KANTON = PD.kanton || {};
+
+/* ---------------- family places ---------------- */
 var E0F = 2666000, N0F = 1207000;
 var STEPS = F.steps;
 var PL = F.places.map(function (p, i) {
-  return { i: i, cat: p.c, kind: p.k, name: p.n || '', hint: p.h || '', gem: p.g, E: p.e + E0F, N: p.m + N0F, z: p.z, s: p.s || null, cover: p.v,
+  return { type: 'fam', i: i, id: String(i), cat: p.c, mk: p.c, kind: p.k, name: p.n || '', hint: p.h || '', gem: p.g, E: p.e + E0F, N: p.m + N0F, z: p.z, s: p.s || null, cover: p.v,
     dw: p.dw, dc: p.dc, zt: p.t || null, note: p.x || '', out: !!p.o, guests: !!p.q, flags: p.f || [], poly: p.p || null, osm: p.id || null,
     ph: p.ph || null, title: p.n || p.k };
 });
+(PD.famLinks || []).forEach(function (l) {
+  var p = PL[l.i]; if (!p) return;
+  p.zt = (p.zt || []).concat(l.t.filter(function (x) { return !(p.zt || []).some(function (y) { return y[1] === x[1]; }); }));
+  if (l.n && !p.name) { p.name = l.n; p.title = l.n; }
+});
+(PD.famExtra || []).forEach(function (p) {
+  var i = PL.length;
+  PL.push({ type: 'fam', i: i, id: String(i), cat: p.c, mk: p.c, kind: p.k, name: p.n, hint: p.h || '', gem: p.g, E: p.E, N: p.N, z: p.z || 430, s: null, cover: null,
+    dw: null, dc: null, zt: p.t || null, note: p.x || '', out: !!p.o, guests: false, flags: [], poly: null, osm: p.osm || null, ph: p.ph || null, title: p.n, extra: true });
+});
 function shadeAt(p, t) {
-  if (!p || !p.s) return null;
+  if (!p || !p.s || sunDay.k !== 'sommer') return null;
   var x = (t - STEPS[0]) / 0.5, n = p.s.length;
   if (x <= 0) return p.s[0] / 100;
   if (x >= n - 1) return p.s[n - 1] / 100;
@@ -51,12 +98,63 @@ function shadeAt(p, t) {
   return (p.s[i] * (1 - f) + p.s[i + 1] * f) / 100;
 }
 var SPIEL = PL.filter(function (p) { return p.cat === 0; });
-var FEAT = PL.filter(function (p) { return /Schattwäldli/.test(p.name); })[0] || SPIEL[0];
 
-/* ---------------- sun, UV ---------------- */
+/* ---------------- sights ---------------- */
+var SIGHTS = (PD.sights || []).map(function (s, i) {
+  return { type: 'sight', i: i, id: s.id, cat: s.c, mk: MK_SIGHT + s.c, title: s.n, name: s.n, kind: SCATS[s.c] ? SCATS[s.c].t : '', gem: s.g, town: s.town || '',
+    E: s.E, N: s.N, z: s.z || null, text: s.t || '', facts: s.f || [], zt: s.zt || '', web: s.web || '', wd: s.wd || '', osm: s.osm || '', ph: s.ph || null, big: !!s.big };
+});
+var SIGHTBY = {}; SIGHTS.forEach(function (s) { SIGHTBY[s.id] = s; });
+
+/* ---------------- events (loaded at runtime) ---------------- */
+var EVENTS = [], EVENTBY = {}, EVMETA = { state: 'loading', updated: '' };
+var TZ = 'Europe/Zurich';
+var fmtDay = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ });
+var fmtDayY = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: TZ });
+var fmtHM = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit', timeZone: TZ });
+var fmtYMD = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: TZ });
+function ymd(d) { return fmtYMD.format(d); }
+function hasTime(iso) { return /T\d\d:\d\d/.test(iso || '') && !/T00:00(:00)?([+-]|Z|$)/.test(iso || ''); }
+function occText(o, withYear) {
+  var s = new Date(o.s), e = o.e ? new Date(o.e) : null;
+  var t = (withYear ? fmtDayY : fmtDay).format(s);
+  if (hasTime(o.s)) t += ', ' + fmtHM.format(s);
+  if (e && ymd(e) !== ymd(s)) t += ' bis ' + (withYear ? fmtDayY : fmtDay).format(e);
+  else if (e && hasTime(o.e) && hasTime(o.s) && o.e !== o.s) t += '–' + fmtHM.format(e);
+  return t;
+}
+function normEvent(e) {
+  var occ = (e.dates && e.dates.length ? e.dates : [{ s: e.start, e: e.end }]).filter(function (o) { return o && o.s && !isNaN(new Date(o.s)); })
+    .map(function (o) { return { s: o.s, e: o.e || null, t0: +new Date(o.s), t1: o.e ? +new Date(o.e) : +new Date(o.s) + (hasTime(o.s) ? 3 * 3600e3 : 86400e3 - 1) }; })
+    .sort(function (a, b) { return a.t0 - b.t0; });
+  var gem = e.gem && GEMBY[e.gem] ? GEMBY[e.gem].name : (e.gem || '');
+  return { type: 'event', id: String(e.id), mk: MK_EVENT, title: e.title || '', name: e.title || '', kind: e.cat || 'Veranstaltung', gem: gem, town: e.town || '',
+    E: e.E || null, N: e.N || null, exact: !!(e.E && e.N && e.exact !== false), venue: e.venue || '', address: e.address || '', teaser: e.teaser || '',
+    url: safeURL(e.url), guidle: safeURL(e.guidle), img: safeURL(e.img), thumb: safeURL(e.thumb || e.img), credit: e.credit || '', org: e.org || '', price: e.price || '', tickets: safeURL(e.tickets),
+    cats: e.cats && e.cats.length ? e.cats : (e.cat ? [e.cat] : []), occ: occ };
+}
+function nextOcc(ev, now) { for (var i = 0; i < ev.occ.length; i++) if (ev.occ[i].t1 >= now) return ev.occ[i]; return null; }
+
+/* ---------------- sun, date, UV ---------------- */
 var GAMMA = -0.786;
-function sunpos(hours) {
-  var ms = Date.UTC(2026, 6, 21) + (hours - 2) * 3600000;
+function lastSunday(y, m) { var d = new Date(Date.UTC(y, m + 1, 0)); return d.getUTCDate() - d.getUTCDay(); }
+function tzOff(day) {
+  var m = day.m, d = day.d;
+  if (m > 2 && m < 9) return 2;
+  if (m < 2 || m > 9) return 1;
+  if (m === 2) return d >= lastSunday(day.y, 2) ? 2 : 1;
+  return d < lastSunday(day.y, 9) ? 2 : 1;
+}
+function resolveDay(k) {
+  if (k === 'heute') { var p = fmtYMD.format(new Date()).split('-'); return { k: 'heute', y: +p[0], m: +p[1] - 1, d: +p[2] }; }
+  if (k === 'winter') return { k: 'winter', y: 2026, m: 11, d: 21 };
+  return { k: 'sommer', y: 2026, m: 6, d: 21 };
+}
+var sunDay = resolveDay('sommer');
+function sunpos(hours, day) {
+  day = day || sunDay;
+  var off = tzOff(day);
+  var ms = Date.UTC(day.y, day.m, day.d) + (hours - off) * 3600000;
   var jd = ms / 86400000 + 2440587.5, T = (jd - 2451545.0) / 36525;
   var L0 = ((280.46646 + T * (36000.76983 + T * 0.0003032)) % 360 + 360) % 360;
   var M = 357.52911 + T * (35999.05029 - 0.0001537 * T), e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T), Mr = M * DEG;
@@ -66,7 +164,7 @@ function sunpos(hours) {
   var dc = Math.asin(Math.sin(eps * DEG) * Math.sin(lam * DEG));
   var y = Math.pow(Math.tan(eps * DEG / 2), 2), L0r = L0 * DEG;
   var eqt = 4 / DEG * (y * Math.sin(2 * L0r) - 2 * e * Math.sin(Mr) + 4 * e * y * Math.sin(Mr) * Math.cos(2 * L0r) - 0.5 * y * y * Math.sin(4 * L0r) - 1.25 * e * e * Math.sin(2 * Mr));
-  var mins = (((hours - 2) * 60) % 1440 + 1440) % 1440;
+  var mins = (((hours - off) * 60) % 1440 + 1440) % 1440;
   var ha = ((((mins + eqt + 4 * 8.52) % 1440) + 1440) % 1440) / 4 - 180;
   var lr = 47.17 * DEG, har = ha * DEG;
   var cz = Math.sin(lr) * Math.sin(dc) + Math.cos(lr) * Math.cos(dc) * Math.cos(har);
@@ -84,25 +182,11 @@ var DIRS = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten',
 function dirWord(az) { return DIRS[Math.round(((az % 360) + 360) % 360 / 45) % 8]; }
 function uvi(alt, z) { if (alt <= 0) return 0; var mu = Math.sin(alt * DEG); return 12.5 * Math.pow(mu, 2.42) * 0.889 * 0.95 * (1 + 0.1 * Math.max(0, (z || 425) - 400) / 1000); }
 function uvCat(u) { var r = Math.round(u); return r < 3 ? [1, 'niedrig'] : r < 6 ? [2, 'mässig'] : r < 8 ? [3, 'hoch'] : r < 11 ? [4, 'sehr hoch'] : [5, 'extrem']; }
-
-/* ---------------- text that comes from the data ---------------- */
-var MUNI = {}; D.munis.forEach(function (m) { MUNI[m.name] = m; });
-function fillRows(id, names) {
-  var ul = document.getElementById(id); if (!ul) return;
-  ul.innerHTML = names.map(function (n) { var m = MUNI[n];
-    return '<li><span>' + n + '</span><span>' + dec(m.ha / 100) + ' km² · ' + m.hmin + '–' + m.hmax + ' m</span></li>'; }).join('');
+function dayLabel(day) {
+  if (day.k === 'sommer') return '21. Juli';
+  if (day.k === 'winter') return '21. Dezember';
+  return 'heute, ' + new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'long', timeZone: TZ }).format(new Date(Date.UTC(day.y, day.m, day.d, 12)));
 }
-fillRows('rowsLorze', ['Baar', 'Steinhausen', 'Cham', 'Hünenberg', 'Risch']);
-fillRows('rowsAegeri', ['Unterägeri', 'Oberägeri']);
-fillRows('rowsBerg', ['Menzingen', 'Neuheim']);
-(function () {
-  var cnt = {}; SPIEL.forEach(function (p) { cnt[p.gem] = (cnt[p.gem] || 0) + 1; });
-  var arr = Object.keys(cnt).map(function (k) { return [k, cnt[k]]; }).sort(function (a, b) { return b[1] - a[1] || a[0].localeCompare(b[0]); });
-  var top = arr.slice(0, 6), rest = arr.slice(6).reduce(function (s, a) { return s + a[1]; }, 0);
-  $('#nSpiel').textContent = SPIEL.length;
-  $('#rowsSpiel').innerHTML = top.map(function (a) { return '<li><span>' + esc(a[0]) + '</span><span>' + a[1] + '</span></li>'; }).join('') +
-    (rest ? '<li><span>Übrige ' + (arr.length - 6) + ' Gemeinden</span><span>' + rest + '</span></li>' : '');
-})();
 
 function fail(msg) {
   document.documentElement.classList.add('noscene');
@@ -110,155 +194,621 @@ function fail(msg) {
 }
 
 /* ---------------- sun UI (built before WebGL so it works without 3D) ---------------- */
-var sunT = 15, sun = sunpos(15), sunUIs = [], userSunLock = false, playing = false, playLast = 0;
-var ARC = (function () { var pts = [], t; for (t = 5; t <= 22.001; t += 0.25) pts.push([t, sunpos(t).alt]); return pts; })();
+var sunT = 15, sun = sunpos(15), sunUIs = [], playing = false, playLast = 0;
+function arcPts() { var pts = [], t; for (t = 5; t <= 22.001; t += 0.25) pts.push([t, sunpos(t).alt]); return pts; }
+var ARC = arcPts();
 function arcX(t) { return (t - 5) / 17 * 300; } function arcY(a) { return 42 - clamp(a, -12, 66) / 66 * 38; }
-function buildSunUI(el, id) {
-  if (!el) return;
-  var day = '', all = '';
-  ARC.forEach(function (p, i) { var s = (i ? 'L' : 'M') + arcX(p[0]).toFixed(1) + ' ' + arcY(p[1]).toFixed(1); all += s; });
-  var started = false; ARC.forEach(function (p) { if (p[1] > 0) { day += (started ? 'L' : 'M') + arcX(p[0]).toFixed(1) + ' ' + arcY(p[1]).toFixed(1); started = true; } });
-  el.innerHTML = '<div class="sun-top"><button class="sun-play" type="button" aria-label="Tagesverlauf abspielen"><svg viewBox="0 0 14 14"><path d="M3 1.5v11l9-5.5z"/></svg></button>' +
-    '<div class="sun-read"><b class="sun-time">15:00</b><span class="sun-pos"></span></div><span class="uv" data-c="3"><i></i><span class="uv-t"></span></span></div>' +
-    '<svg class="sun-arc" viewBox="0 0 300 46" aria-hidden="true"><line class="horizon" x1="0" x2="300" y1="' + arcY(0).toFixed(1) + '" y2="' + arcY(0).toFixed(1) + '"/><path class="path" d="' + all + '"/><path class="day" d="' + day + '"/><circle class="dot" r="6" cx="0" cy="0"/></svg>' +
-    '<input type="range" id="' + id + '" min="8" max="19" step="0.25" value="15" aria-label="Uhrzeit am 21. Juli">' +
-    '<div class="sun-scale" aria-hidden="true"><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>19 Uhr</span></div>';
-  var ui = { el: el, time: el.querySelector('.sun-time'), pos: el.querySelector('.sun-pos'), uv: el.querySelector('.uv'), uvt: el.querySelector('.uv-t'),
-    dot: el.querySelector('.dot'), range: el.querySelector('input'), play: el.querySelector('.sun-play') };
-  ui.range.addEventListener('input', function () { stopPlay(); userSunLock = true; setSunT(parseFloat(ui.range.value), 'ui'); });
-  ui.play.addEventListener('click', function () { if (playing) stopPlay(); else { playing = true; userSunLock = true; playLast = performance.now(); sunUIs.forEach(function (u) { u.play.setAttribute('aria-label', 'Tagesverlauf anhalten'); u.play.innerHTML = '<svg viewBox="0 0 14 14"><path d="M3 2h3v10H3zM8 2h3v10H8z"/></svg>'; }); } });
-  sunUIs.push(ui);
+function arcPaths() {
+  var all = '', day = '', started = false;
+  ARC.forEach(function (p, i) { all += (i ? 'L' : 'M') + arcX(p[0]).toFixed(1) + ' ' + arcY(p[1]).toFixed(1); });
+  ARC.forEach(function (p) { if (p[1] > 0) { day += (started ? 'L' : 'M') + arcX(p[0]).toFixed(1) + ' ' + arcY(p[1]).toFixed(1); started = true; } });
+  return [all, day];
 }
-function stopPlay() { if (!playing) return; playing = false; sunUIs.forEach(function (u) { u.play.setAttribute('aria-label', 'Tagesverlauf abspielen'); u.play.innerHTML = '<svg viewBox="0 0 14 14"><path d="M3 1.5v11l9-5.5z"/></svg>'; }); }
-buildSunUI($('#sunA'), 'sunRangeA'); buildSunUI($('#sunB'), 'sunRangeB');
-var lastUIupd = 0, listDirty = true;
+function playIcon(on) { return on ? '<svg viewBox="0 0 14 14"><path d="M3 2h3v10H3zM8 2h3v10H8z"/></svg>' : '<svg viewBox="0 0 14 14"><path d="M3 1.5v11l9-5.5z"/></svg>'; }
+function buildSunUI(el, opts) {
+  if (!el) return null;
+  opts = opts || {};
+  var ap = arcPaths();
+  el.innerHTML = '<div class="sun-top"><button class="sun-play" type="button" aria-label="Tagesverlauf abspielen">' + playIcon(false) + '</button>' +
+    '<div class="sun-read"><b class="sun-time">15:00</b><span class="sun-pos"></span></div><span class="uv" data-c="3"><i></i><span class="uv-t"></span></span></div>' +
+    (opts.noDate ? '' : '<div class="sun-date" role="group" aria-label="Datum">' + ['sommer', 'heute', 'winter'].map(function (k) {
+      return '<button type="button" data-day="' + k + '" aria-pressed="' + (sunDay.k === k) + '">' + (k === 'sommer' ? '21. Juli' : k === 'heute' ? 'Heute' : '21. Dez.') + '</button>'; }).join('') + '</div>') +
+    '<svg class="sun-arc" viewBox="0 0 300 46" aria-hidden="true"><line class="horizon" x1="0" x2="300" y1="' + arcY(0).toFixed(1) + '" y2="' + arcY(0).toFixed(1) + '"/><path class="path" d="' + ap[0] + '"/><path class="day" d="' + ap[1] + '"/><circle class="dot" r="6" cx="0" cy="0"/></svg>' +
+    '<input type="range" min="7" max="21" step="0.25" value="15" aria-label="Uhrzeit">' +
+    '<div class="sun-scale" aria-hidden="true"><span>7</span><span>9</span><span>11</span><span>13</span><span>15</span><span>17</span><span>19</span><span>21 Uhr</span></div>' +
+    (opts.hint ? '<p class="shint">' + opts.hint + '</p>' : '');
+  var ui = { el: el, time: el.querySelector('.sun-time'), pos: el.querySelector('.sun-pos'), uv: el.querySelector('.uv'), uvt: el.querySelector('.uv-t'),
+    dot: el.querySelector('.dot'), range: el.querySelector('input'), play: el.querySelector('.sun-play'), pAll: el.querySelector('.sun-arc .path'), pDay: el.querySelector('.sun-arc .day'),
+    days: el.querySelectorAll('.sun-date button'), z: opts.z || 425 };
+  ui.range.addEventListener('input', function () { stopPlay(); setSunT(parseFloat(ui.range.value), 'ui'); });
+  ui.play.addEventListener('click', function () { if (playing) stopPlay(); else { playing = true; playLast = performance.now(); sunUIs.forEach(function (u) { u.play.setAttribute('aria-label', 'Tagesverlauf anhalten'); u.play.innerHTML = playIcon(true); }); } });
+  Array.prototype.forEach.call(ui.days, function (b) { b.addEventListener('click', function () { setSunDay(b.dataset.day); }); });
+  sunUIs = sunUIs.filter(function (u) { return u.el.isConnected && u.el !== el; });
+  sunUIs.push(ui);
+  updateSunUI();
+  return ui;
+}
+function stopPlay() { if (!playing) return; playing = false; sunUIs.forEach(function (u) { u.play.setAttribute('aria-label', 'Tagesverlauf abspielen'); u.play.innerHTML = playIcon(false); }); }
+var lastUIupd = 0, listDirty = true, markerShadeDirty = true, markerVisDirty = true;
 function updateSunUI() {
-  var u = uvi(sun.alt, 425), c = uvCat(u);
+  sunUIs = sunUIs.filter(function (u) { return u.el.isConnected; });
   sunUIs.forEach(function (ui) {
+    var u = uvi(sun.alt, ui.z), c = uvCat(u);
     ui.time.textContent = fmtTime(sunT) + ' Uhr';
     ui.pos.textContent = sun.alt > 0 ? 'Sonne ' + Math.round(sun.alt) + '° hoch, aus ' + dirWord(sun.az) : 'Sonne unter dem Horizont';
     ui.uv.dataset.c = c[0]; ui.uvt.textContent = 'UV ' + Math.round(u) + ' · ' + c[1];
     ui.uv.title = 'UV-Index bei wolkenlosem Himmel, geschätzt aus dem Sonnenstand';
     ui.dot.setAttribute('cx', arcX(sunT).toFixed(1)); ui.dot.setAttribute('cy', arcY(sun.alt).toFixed(1));
     if (document.activeElement !== ui.range) ui.range.value = String(Math.round(sunT * 4) / 4);
+    ui.range.setAttribute('aria-valuetext', fmtTime(sunT) + ' Uhr, ' + dayLabel(sunDay));
   });
-  var fs = shadeAt(FEAT, sunT);
-  $('#featShade').textContent = fs == null ? '–' : Math.round(fs * 100) + ' %';
   updateChart();
 }
 function setSunT(t, src) {
-  t = clamp(t, 8, 19);
+  t = clamp(t, 7, 21);
   if (Math.abs(t - sunT) < 1e-4 && src !== 'force') return;
   sunT = t; sun = sunpos(t);
-  if (window.THREE && U) sunVector(sun, U.uSunDir.value);
+  if (GL) sunVector(sun, U.uSunDir.value);
   var now = performance.now();
-  if (src !== 'scroll' || now - lastUIupd > 60) { lastUIupd = now; updateSunUI(); }
+  if (src !== 'play' || now - lastUIupd > 60) { lastUIupd = now; updateSunUI(); }
   listDirty = true; markerShadeDirty = true;
 }
+function setSunDay(k) {
+  sunDay = resolveDay(k);
+  ARC = arcPts();
+  var ap = arcPaths();
+  sunUIs.forEach(function (u) {
+    if (u.pAll) { u.pAll.setAttribute('d', ap[0]); u.pDay.setAttribute('d', ap[1]); }
+    Array.prototype.forEach.call(u.days, function (b) { b.setAttribute('aria-pressed', String(b.dataset.day === k)); });
+  });
+  if (GL) smState.need = true;
+  setSunT(sunT, 'force');
+  markerVisDirty = true;
+  if (MODE === 'familie') renderHead();
+  if (SEL) updateDetailLive(true);
+}
 /* small bar chart: playgrounds with at least half of the area in shade */
-var chartEl = $('#miniChart'), CH = null;
-(function buildChart() {
-  if (!chartEl) return;
+var CH = null;
+function buildChart(el) {
+  if (!el) { CH = null; return; }
   var n = STEPS.length, W = 300, H = 92, top = 18, base = 74, total = SPIEL.filter(function (p) { return p.s; }).length;
   var counts = STEPS.map(function (t, k) { return SPIEL.filter(function (p) { return p.s && p.s[k] >= 50; }).length; });
-  var bw = W / n, svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Spielplätze mit mindestens halbem Schatten je Uhrzeit">';
+  var bw = W / n, svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Spielplätze mit mindestens halbem Schatten je Uhrzeit am 21. Juli">';
   counts.forEach(function (c, k) {
     var h = (base - top) * c / total, x = k * bw + 1;
     svg += '<rect class="b" data-k="' + k + '" x="' + x.toFixed(1) + '" y="' + (base - h).toFixed(1) + '" width="' + (bw - 2).toFixed(1) + '" height="' + Math.max(h, 1).toFixed(1) + '" rx="2"><title>' + fmtTime(STEPS[k]) + ' Uhr: ' + c + ' von ' + total + '</title></rect>';
   });
   svg += '<line class="base" x1="0" x2="' + W + '" y1="' + base + '" y2="' + base + '"/>';
   [8, 12, 16, 19].forEach(function (t) { var k = STEPS.indexOf(t); svg += '<text class="ax" x="' + (k * bw + bw / 2).toFixed(1) + '" y="' + (base + 13) + '" text-anchor="middle">' + t + (t === 19 ? ' Uhr' : '') + '</text>'; });
-  svg += '<text class="val" id="chartVal" x="0" y="12" text-anchor="middle"></text></svg>';
-  chartEl.innerHTML = '<figcaption><b>Spielplätze mit mindestens halbem Schatten</b>, von ' + total + '</figcaption>' + svg;
-  CH = { counts: counts, bw: bw, base: base, top: top, total: total, bars: chartEl.querySelectorAll('.b'), val: chartEl.querySelector('#chartVal') };
-  chartEl.addEventListener('click', function (e) { var b = e.target.closest('.b'); if (!b) return; stopPlay(); userSunLock = true; setSunT(STEPS[+b.dataset.k], 'ui'); });
-})();
+  svg += '<text class="val" x="0" y="12" text-anchor="middle"></text></svg>';
+  el.innerHTML = '<figcaption><b>Spielplätze mit mindestens halbem Schatten</b> am 21. Juli, von ' + total + '. Ein Klick auf einen Balken stellt die Uhrzeit.</figcaption>' + svg;
+  CH = { counts: counts, bw: bw, base: base, top: top, total: total, bars: el.querySelectorAll('.b'), val: el.querySelector('.val') };
+  el.addEventListener('click', function (e) { var b = e.target.closest('.b'); if (!b) return; stopPlay(); if (sunDay.k !== 'sommer') setSunDay('sommer'); setSunT(STEPS[+b.dataset.k], 'ui'); });
+  updateChart();
+}
 function updateChart() {
-  if (!CH) return;
+  if (!CH || !CH.val.isConnected) return;
   var k = clamp(Math.round((sunT - 8) / 0.5), 0, STEPS.length - 1);
-  for (var i = 0; i < CH.bars.length; i++) CH.bars[i].classList.toggle('on', i === k);
+  for (var i = 0; i < CH.bars.length; i++) CH.bars[i].classList.toggle('on', i === k && sunT >= 8 && sunT <= 19);
   var h = (CH.base - CH.top) * CH.counts[k] / CH.total;
   CH.val.setAttribute('x', (k * CH.bw + CH.bw / 2).toFixed(1)); CH.val.setAttribute('y', (CH.base - h - 4).toFixed(1));
-  CH.val.textContent = CH.counts[k];
+  CH.val.textContent = (sunT >= 8 && sunT <= 19) ? CH.counts[k] : '';
 }
 
-/* ---------------- explorer UI ---------------- */
-var filt = { cats: [true, true, true, true, true, true], gem: '', shade: false, zt: false };
-var explorerEl = document.querySelector('.explorer');
-var chipsEl = $('#chips'), listEl = $('#list'), detailEl = $('#detail'), scrollEl = $('#scroll'), countEl = $('#count'), countHint = $('#countHint');
-chipsEl.innerHTML = CATS.map(function (c, k) {
-  var n = PL.filter(function (p) { return p.cat === k; }).length;
-  return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="true">' + svgIcon(c.k) + c.t + ' <small>' + n + '</small></button>';
-}).join('');
-(function () {
-  var sel = $('#fGem'), gems = {};
-  PL.forEach(function (p) { gems[p.gem] = (gems[p.gem] || 0) + 1; });
-  Object.keys(gems).sort(function (a, b) { var ao = MUNI[a] ? 0 : 1, bo = MUNI[b] ? 0 : 1; return ao - bo || a.localeCompare(b); }).forEach(function (g) {
-    var o = document.createElement('option'); o.value = g; o.textContent = (MUNI[g] ? g : g + ', ausserhalb') + ' (' + gems[g] + ')'; sel.appendChild(o);
-  });
-  sel.addEventListener('change', function () { filt.gem = sel.value; listDirty = true; if (sel.value && MUNI[sel.value]) flyToMuni(MUNI[sel.value]); });
-})();
-chipsEl.addEventListener('click', function (e) {
-  var b = e.target.closest('.chip'); if (!b) return;
-  var k = +b.dataset.cat;
-  var allOn = filt.cats.every(Boolean);
-  if (allOn) { filt.cats = filt.cats.map(function (_, j) { return j === k; }); }
-  else { filt.cats[k] = !filt.cats[k]; if (!filt.cats.some(Boolean)) filt.cats = filt.cats.map(function () { return true; }); }
-  Array.prototype.forEach.call(chipsEl.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', filt.cats[+c.dataset.cat] ? 'true' : 'false'); });
-  listDirty = true; markerVisDirty = true;
-});
-$('#fShade').addEventListener('click', function () { filt.shade = !filt.shade; this.setAttribute('aria-pressed', String(filt.shade)); listDirty = true; markerVisDirty = true; });
-$('#fZT').addEventListener('click', function () { filt.zt = !filt.zt; this.setAttribute('aria-pressed', String(filt.zt)); listDirty = true; markerVisDirty = true; });
-function matches(p) {
-  if (!filt.cats[p.cat]) return false;
-  if (filt.gem && p.gem !== filt.gem) return false;
-  if (filt.zt && !p.zt) return false;
-  if (filt.shade) { var s = shadeAt(p, sunT); if (s == null || s < 0.5) return false; }
+/* ---------------- app state, routing ---------------- */
+var MODE = 'home', SEL = null, selGem = null, touring = false, pushedDetail = false;
+var panel = $('#panel'), phEl = $('#ph'), listEl = $('#list'), detailEl = $('#detail'), pscroll = $('#pscroll'), homeEl = $('#home');
+var filt = {
+  familie: { cats: [true, true, true, true, true, true], gem: '', shade: false, zt: false },
+  sights: { cats: SCATS.map(function () { return true; }), gem: '' },
+  events: { win: 'alle', gem: '', cat: '' }
+};
+var showWater = false, showWC = false;
+var MODEPATH = { home: '', gemeinden: 'gemeinden', sights: 'sehenswuerdigkeiten', familie: 'familien', events: 'events', info: 'info' };
+var PATHMODE = {}; Object.keys(MODEPATH).forEach(function (k) { PATHMODE[MODEPATH[k]] = k; });
+function parseHash() {
+  var h = decodeURI(location.hash || '').replace(/^#\/?/, ''), q = {}, qi = h.indexOf('?');
+  if (qi >= 0) { h.slice(qi + 1).split('&').forEach(function (kv) { var a = kv.split('='); if (a[0]) q[a[0]] = a[1] || ''; }); h = h.slice(0, qi); }
+  var parts = h.split('/').filter(Boolean);
+  return { mode: PATHMODE[parts[0] || ''] || 'home', id: parts[1] || null, q: q };
+}
+function curQuery(mode) {
+  var q = [];
+  if (mode === 'sights' && filt.sights.gem) q.push('g=' + slug(filt.sights.gem));
+  if (mode === 'familie' && filt.familie.gem) q.push('g=' + slug(filt.familie.gem));
+  if (mode === 'events') { if (filt.events.gem) q.push('g=' + slug(filt.events.gem)); if (filt.events.win !== 'alle') q.push('w=' + filt.events.win); }
+  return q.length ? '?' + q.join('&') : '';
+}
+function hashFor(mode, id) { var p = MODEPATH[mode]; return '#/' + p + (p && id ? '/' + encodeURIComponent(id) : '') + (id ? '' : curQuery(mode)); }
+function go(mode, id, replace) {
+  var h = hashFor(mode, id);
+  if (location.hash === h) { applyRoute(); return; }
+  if (replace) { history.replaceState(null, '', h); applyRoute(); }
+  else location.hash = h;
+}
+function syncHash() { var h = hashFor(MODE, SEL ? SEL.id : selGem ? selGem.id : null); if (location.hash !== h) history.replaceState(null, '', h); }
+function gemFromSlug(s) { return s && GEMBY[s] ? GEMBY[s].name : ''; }
+var lastRoute = '';
+function applyRoute() {
+  var r = parseHash();
+  if (r.mode === 'info') { if (!/\bm-\w/.test(document.body.className)) setMode('home', true); openInfo(); return; }
+  closeInfo();
+  if (touring) stopTour(true);
+  if (r.mode === 'sights' && 'g' in r.q) filt.sights.gem = gemFromSlug(r.q.g);
+  if (r.mode === 'familie' && 'g' in r.q) filt.familie.gem = gemFromSlug(r.q.g);
+  if (r.mode === 'events') { if ('g' in r.q) filt.events.gem = gemFromSlug(r.q.g); if (r.q.w) filt.events.win = r.q.w; }
+  var changed = r.mode !== MODE;
+  setMode(r.mode, changed);
+  var it = r.id ? findItem(r.mode, r.id) : null;
+  if (it) {
+    if (it !== SEL && it !== selGem) openItem(it);
+  } else if (SEL || selGem) {
+    closeDetail(true);
+  } else if (changed) flyContext();
+  lastRoute = location.hash;
+}
+function findItem(mode, id) {
+  if (mode === 'gemeinden') return GEMBY[id] || null;
+  if (mode === 'sights') return SIGHTBY[id] || null;
+  if (mode === 'familie') return PL[+id] || null;
+  if (mode === 'events') return EVENTBY[id] || null;
+  return null;
+}
+function setMode(m, changed) {
+  MODE = m;
+  ['home', 'gemeinden', 'sights', 'familie', 'events'].forEach(function (k) { document.body.classList.toggle('m-' + k, k === m); });
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs a'), function (a) { if (a.dataset.mode === m) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  if (changed) {
+    if (SEL || selGem) closeDetail(true);
+    renderHead(); renderList();
+    pscroll.scrollTop = 0;
+    if (m !== 'home') showHint();
+  }
+  markerVisDirty = true; listDirty = true;
+  document.title = m === 'home' ? 'Zug entdecken' : ({ gemeinden: 'Gemeinden', sights: 'Sehenswürdigkeiten', familie: 'Für Familien', events: 'Events' }[m] + ' · Zug entdecken');
+}
+
+/* ---------------- panel head per mode ---------------- */
+function gemSelect(id, val, counts, outLabel) {
+  return '<label class="sr" for="' + id + '">Gemeinde</label><select id="' + id + '"><option value="">Alle Gemeinden</option>' +
+    GEMS.map(function (g) { var n = counts ? (counts[g.name] || 0) : null; return '<option value="' + esc(g.name) + '"' + (g.name === val ? ' selected' : '') + '>' + esc(g.name) + (n != null ? ' (' + n + ')' : '') + '</option>'; }).join('') +
+    (counts && counts._out ? '<option value="_out"' + (val === '_out' ? ' selected' : '') + '>' + (outLabel || 'Ausserhalb') + ' (' + counts._out + ')</option>' : '') + '</select>';
+}
+function countBy(arr) { var c = {}; arr.forEach(function (x) { if (MUNI[x.gem]) c[x.gem] = (c[x.gem] || 0) + 1; else c._out = (c._out || 0) + 1; }); return c; }
+function renderHead() {
+  var h = '', m = MODE;
+  if (m === 'gemeinden') {
+    var pop = KANTON.pop ? swiss(KANTON.pop) + ' Einwohnerinnen und Einwohner' + (KANTON.popDate ? ' (' + esc(KANTON.popDate) + ')' : '') + ', ' : '';
+    h = '<p class="kicker">Gemeinden</p><h2>Elf Gemeinden zwischen Zugersee und Ägerisee</h2><p class="intro">' + pop + dec(KANTON.area || 238.7) + ' km². Wählen Sie eine Gemeinde in der Liste oder auf der Karte.</p>';
+  } else if (m === 'sights') {
+    var cs = countBy(SIGHTS), f = filt.sights;
+    h = '<p class="kicker">Sehenswürdigkeiten</p><h2>' + SIGHTS.length + ' Orte in elf Gemeinden</h2>' +
+      '<div class="flt">' + gemSelect('fGemS', f.gem, cs) + '</div>' +
+      '<div class="flt" id="chipsS" role="group" aria-label="Kategorien">' + SCATS.map(function (c, k) {
+        var n = SIGHTS.filter(function (s) { return s.cat === k; }).length; if (!n) return '';
+        return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + f.cats[k] + '">' + svgIcon(c.k) + esc(c.t) + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
+      '<div class="count"><span id="count"></span><span id="countHint">Sortiert nach Gemeinde</span></div>';
+  } else if (m === 'familie') {
+    var ff = filt.familie, cf = countBy(PL);
+    h = '<p class="kicker">Für Familien</p><h2>Spielplätze, Badis, Feuerstellen, Ausflugsziele</h2>' +
+      '<div class="flt" id="chipsF" role="group" aria-label="Kategorien">' + CATS.map(function (c, k) {
+        var n = PL.filter(function (p) { return p.cat === k; }).length;
+        return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + ff.cats[k] + '">' + svgIcon(c.k) + c.t + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
+      '<div class="flt">' + gemSelect('fGemF', ff.gem, cf) +
+      '<button type="button" class="chip" id="fShade" aria-pressed="' + ff.shade + '"' + (sunDay.k !== 'sommer' ? ' disabled title="Schattenwerte gibt es für den 21. Juli"' : '') + '>Schattig ab 50&nbsp;%</button>' +
+      '<button type="button" class="chip" id="fZT" aria-pressed="' + ff.zt + '">Tipps Zug Tourismus</button>' +
+      '<button type="button" class="chip" id="tWater" aria-pressed="' + showWater + '">' + svgIcon('wasser') + 'Trinkbrunnen</button>' +
+      '<button type="button" class="chip" id="tWC" aria-pressed="' + showWC + '">' + svgIcon('wc') + 'WC</button></div>' +
+      '<div class="sun" id="sunFam"></div>' +
+      '<details class="more-info"><summary>Schatten im Tagesverlauf</summary><figure class="mini" id="miniChart"></figure>' +
+      '<p class="note" style="font-size:13px;color:var(--ink-2);margin:6px 0 0">Für jeden Spielplatz ist berechnet, welcher Teil der Fläche am 21. Juli im Schatten von Bäumen, Gebäuden und Gelände liegt. Grundlage ist das Oberflächenmodell swissSURFACE3D.</p></details>' +
+      '<div class="count"><span id="count"></span><span id="countHint"></span></div>';
+  } else if (m === 'events') {
+    var fe = filt.events, live = liveEvents(), ce = countBy(live), cats = {};
+    live.forEach(function (e) { e.cats.forEach(function (c) { cats[c] = (cats[c] || 0) + 1; }); });
+    var WIN = [['alle', 'Alle'], ['heute', 'Heute'], ['we', 'Wochenende'], ['7', '7 Tage'], ['30', '30 Tage']];
+    h = '<p class="kicker">Veranstaltungen</p><h2>Was im Kanton Zug läuft</h2>' +
+      '<div class="flt" id="winE" role="group" aria-label="Zeitraum">' + WIN.map(function (w) { return '<button type="button" class="chip" data-win="' + w[0] + '" aria-pressed="' + (fe.win === w[0]) + '">' + w[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="flt">' + gemSelect('fGemE', fe.gem, ce, 'Kantonsweit oder ausserhalb') +
+      (Object.keys(cats).length > 1 ? '<label class="sr" for="fCatE">Kategorie</label><select id="fCatE"><option value="">Alle Kategorien</option>' + Object.keys(cats).sort(function (a, b) { return a.localeCompare(b, 'de'); }).map(function (k) {
+        return '<option value="' + esc(k) + '"' + (fe.cat === k ? ' selected' : '') + '>' + esc(k) + ' (' + cats[k] + ')</option>'; }).join('') + '</select>' : '') + '</div>' +
+      '<div class="count"><span id="count"></span><span id="countHint"></span></div>';
+  }
+  phEl.innerHTML = h;
+  wireHead();
+  $('#pfootL').textContent = m === 'events' && EVMETA.updated ? 'Stand ' + new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ }).format(new Date(EVMETA.updated)) : '';
+}
+function wireHead() {
+  var m = MODE;
+  function onGem(sel, f) {
+    if (!sel) return;
+    sel.addEventListener('change', function () {
+      f.gem = sel.value; listDirty = true; markerVisDirty = true; renderList(); syncHash();
+      if (f.gem && MUNI[f.gem]) flyToMuni(MUNI[f.gem]); else flyOverview();
+    });
+  }
+  if (m === 'sights') {
+    onGem($('#fGemS'), filt.sights);
+    $('#chipsS').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; toggleCat(filt.sights.cats, +b.dataset.cat, this); });
+  } else if (m === 'familie') {
+    onGem($('#fGemF'), filt.familie);
+    $('#chipsF').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; toggleCat(filt.familie.cats, +b.dataset.cat, this); });
+    $('#fShade').addEventListener('click', function () { filt.familie.shade = !filt.familie.shade; this.setAttribute('aria-pressed', String(filt.familie.shade)); listDirty = true; markerVisDirty = true; renderList(); });
+    $('#fZT').addEventListener('click', function () { filt.familie.zt = !filt.familie.zt; this.setAttribute('aria-pressed', String(filt.familie.zt)); listDirty = true; markerVisDirty = true; renderList(); });
+    $('#tWater').addEventListener('click', function () { showWater = !showWater; this.setAttribute('aria-pressed', String(showWater)); markerVisDirty = true; });
+    $('#tWC').addEventListener('click', function () { showWC = !showWC; this.setAttribute('aria-pressed', String(showWC)); markerVisDirty = true; });
+    buildSunUI($('#sunFam'), { hint: sunDay.k === 'sommer' ? '' : 'Die Prozentwerte für Schatten gelten für den 21. Juli. Für andere Tage zeigt die Karte die Schatten in der Nahansicht.' });
+    buildChart($('#miniChart'));
+  } else if (m === 'events') {
+    onGem($('#fGemE'), filt.events);
+    $('#winE').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; filt.events.win = b.dataset.win;
+      Array.prototype.forEach.call(this.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', String(c === b)); }); listDirty = true; markerVisDirty = true; renderList(); syncHash(); });
+    var fc = $('#fCatE'); if (fc) fc.addEventListener('change', function () { filt.events.cat = fc.value; listDirty = true; markerVisDirty = true; renderList(); });
+  }
+}
+function toggleCat(arr, k, wrap) {
+  var allOn = arr.every(Boolean);
+  if (allOn) { for (var j = 0; j < arr.length; j++) arr[j] = j === k; }
+  else { arr[k] = !arr[k]; if (!arr.some(Boolean)) for (j = 0; j < arr.length; j++) arr[j] = true; }
+  Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', arr[+c.dataset.cat] ? 'true' : 'false'); });
+  listDirty = true; markerVisDirty = true; renderList();
+}
+
+/* ---------------- filters ---------------- */
+function gemMatch(want, gem) { return !want || (want === '_out' ? !MUNI[gem] : gem === want); }
+function matchFam(p) {
+  var f = filt.familie;
+  if (!f.cats[p.cat]) return false;
+  if (!gemMatch(f.gem, p.gem)) return false;
+  if (f.zt && !p.zt) return false;
+  if (f.shade && sunDay.k === 'sommer') { var s = shadeAt(p, sunT); if (s == null || s < 0.5) return false; }
   return true;
 }
-function subLine(p) {
-  var parts = [];
-  if (p.name) parts.push(p.kind);
-  if (p.hint) parts.push(p.hint);
-  parts.push(p.gem);
-  return parts.join(' · ');
+function matchSight(s) { var f = filt.sights; return f.cats[s.cat] && gemMatch(f.gem, s.gem); }
+function winRange(w) {
+  var now = Date.now(), p = fmtYMD.format(new Date()).split('-'), y = +p[0], mo = +p[1] - 1, d = +p[2];
+  var start = Date.UTC(y, mo, d) - tzOff({ y: y, m: mo, d: d }) * 3600e3, day = 86400e3;
+  if (w === 'heute') return [now, start + day];
+  if (w === '7') return [now, start + 7 * day];
+  if (w === '30') return [now, start + 30 * day];
+  if (w === 'we') {
+    var dow = new Date(Date.UTC(y, mo, d)).getUTCDay(), sat = start + (dow === 0 ? -1 : 6 - dow) * day, s0 = dow === 5 ? start + 17 * 3600e3 : sat;
+    return [Math.max(now, s0), sat + 2 * day];
+  }
+  return [now, Infinity];
 }
-var ROWS = PL.map(function (p) {
-  var b = document.createElement('button');
-  b.type = 'button'; b.className = 'it'; b.dataset.i = p.i; b.setAttribute('role', 'listitem');
-  b.innerHTML = '<span class="pin">' + svgIcon(CATS[p.cat].k) + '</span><span class="tx"><b>' + esc(p.title) + (p.zt ? '<span class="tag">Tipp</span>' : '') + '</b><span>' + esc(subLine(p)) + '</span></span><span class="sh"></span>';
-  b._sh = b.querySelector('.sh');
-  return b;
-});
-listEl.addEventListener('click', function (e) { var b = e.target.closest('.it'); if (b) selectPlace(PL[+b.dataset.i], true); });
-function renderList() {
-  listDirty = false;
-  var vis = PL.filter(matches);
-  if (filt.shade) vis.sort(function (a, b) { return shadeAt(b, sunT) - shadeAt(a, sunT); });
-  else vis.sort(function (a, b) { return (b.zt ? 1 : 0) - (a.zt ? 1 : 0) || a.cat - b.cat || a.title.localeCompare(b.title, 'de') || a.gem.localeCompare(b.gem, 'de'); });
-  var frag = document.createDocumentFragment();
-  vis.forEach(function (p) {
-    var r = ROWS[p.i], s = shadeAt(p, sunT);
-    if (s != null) { var pc = Math.round(s * 100); r._sh.innerHTML = pc + ' %<i style="--p:' + pc + '%"></i>'; r._sh.title = 'Schatten um ' + fmtTime(sunT) + ' Uhr'; }
-    else r._sh.textContent = '';
-    frag.appendChild(r);
-  });
-  listEl.textContent = ''; listEl.appendChild(frag);
-  countEl.textContent = vis.length + (vis.length === 1 ? ' Ort' : ' Orte');
-  countHint.textContent = 'Schatten um ' + fmtTime(sunT) + ' Uhr';
+function liveEvents() { var now = Date.now(); return EVENTS.filter(function (e) { return nextOcc(e, now); }); }
+function matchEvent(e) {
+  var f = filt.events, r = winRange(f.win);
+  if (!gemMatch(f.gem, e.gem)) return false;
+  if (f.cat && e.cats.indexOf(f.cat) < 0) return false;
+  for (var i = 0; i < e.occ.length; i++) { var o = e.occ[i]; if (o.t1 >= r[0] && o.t0 < r[1]) return true; }
+  return false;
 }
 
+/* ---------------- lists ---------------- */
+function famSub(p) { var parts = []; if (p.name) parts.push(p.kind); if (p.hint) parts.push(p.hint); parts.push(p.gem); return parts.join(' · '); }
+function itemSub(it) {
+  if (it.type === 'fam') return famSub(it);
+  if (it.type === 'sight') return it.kind + ' · ' + (MUNI[it.gem] ? it.gem : (it.town || it.gem));
+  if (it.type === 'event') return [it.venue, it.gem || it.town].filter(Boolean).join(' · ');
+  if (it.type === 'gem') return (it.pop ? swiss(it.pop) + ' Einw. · ' : '') + dec(it.area) + ' km²';
+  return '';
+}
+var FAMROWS = null;
+function famRows() {
+  if (FAMROWS) return FAMROWS;
+  FAMROWS = PL.map(function (p) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'it'; b.dataset.k = 'f' + p.i;
+    b.innerHTML = '<span class="pin">' + svgIcon(CATS[p.cat].k) + '</span><span class="tx"><b>' + esc(p.title) + (p.zt ? '<span class="tag">Tipp</span>' : '') + '</b><span>' + esc(famSub(p)) + '</span></span><span class="sh"></span>';
+    b._sh = b.querySelector('.sh');
+    return b;
+  });
+  return FAMROWS;
+}
+var evShown = 60;
+function renderList() {
+  listDirty = false;
+  var m = MODE, cnt = $('#count'), hint = $('#countHint');
+  if (m === 'home') { listEl.textContent = ''; return; }
+  if (m === 'familie') {
+    var vis = PL.filter(matchFam), summer = sunDay.k === 'sommer';
+    if (filt.familie.shade && summer) vis.sort(function (a, b) { return shadeAt(b, sunT) - shadeAt(a, sunT); });
+    else vis.sort(function (a, b) { return (b.zt ? 1 : 0) - (a.zt ? 1 : 0) || a.cat - b.cat || a.title.localeCompare(b.title, 'de') || a.gem.localeCompare(b.gem, 'de'); });
+    var rows = famRows(), frag = document.createDocumentFragment();
+    vis.forEach(function (p) {
+      var r = rows[p.i], s = shadeAt(p, sunT);
+      if (s != null) { var pc = Math.round(s * 100); r._sh.innerHTML = pc + ' %<i style="--p:' + pc + '%"></i>'; r._sh.title = 'Schatten am 21. Juli um ' + fmtTime(sunT) + ' Uhr'; }
+      else { r._sh.textContent = ''; r._sh.removeAttribute('title'); }
+      frag.appendChild(r);
+    });
+    listEl.textContent = ''; listEl.appendChild(frag);
+    if (cnt) cnt.textContent = plural(vis.length, 'Ort', 'Orte');
+    if (hint) hint.textContent = summer ? 'Schatten um ' + fmtTime(sunT) + ' Uhr' : '';
+    return;
+  }
+  var html = '';
+  if (m === 'gemeinden') {
+    GEMS.forEach(function (g) {
+      var ns = SIGHTS.filter(function (s) { return s.gem === g.name; }).length;
+      html += '<button type="button" class="it" data-k="g' + g.id + '"><span class="pin">' + svgIcon('gem') + '</span><span class="tx"><b>' + esc(g.name) + '</b><span>' + esc(itemSub(g)) + '</span></span><span class="sh" title="Sehenswürdigkeiten">' + (ns ? ns + ' ★' : '') + '</span></button>';
+    });
+  } else if (m === 'sights') {
+    var vs = SIGHTS.filter(matchSight), groups = {};
+    vs.forEach(function (s) { var k = MUNI[s.gem] ? s.gem : 'Ausserhalb des Kantons'; (groups[k] = groups[k] || []).push(s); });
+    Object.keys(groups).sort(function (a, b) { return (MUNI[a] ? 0 : 1) - (MUNI[b] ? 0 : 1) || a.localeCompare(b, 'de'); }).forEach(function (k) {
+      var arr = groups[k].sort(function (a, b) { return (b.big ? 1 : 0) - (a.big ? 1 : 0) || a.title.localeCompare(b.title, 'de'); });
+      html += '<div class="grp"><span>' + esc(k) + '</span><span>' + arr.length + '</span></div>';
+      arr.forEach(function (s) {
+        html += '<button type="button" class="it" data-k="s' + esc(s.id) + '"><span class="pin sight">' + svgIcon(SCATS[s.cat].k) + '</span><span class="tx"><b>' + esc(s.title) + '</b><span>' + esc(s.kind + (s.town && !MUNI[s.gem] ? ' · ' + s.town : '')) + '</span></span><span class="sh"></span></button>';
+      });
+    });
+    if (!vs.length) html = '<p class="empty">Keine Orte für diese Auswahl.</p>';
+    if (cnt) cnt.textContent = plural(vs.length, 'Ort', 'Orte');
+  } else if (m === 'events') {
+    if (EVMETA.state === 'loading') html = '<p class="empty">Veranstaltungen werden geladen …</p>';
+    else if (EVMETA.state === 'error') html = '<p class="empty">Die Veranstaltungen konnten nicht geladen werden. Den vollständigen Kalender finden Sie bei <a href="https://www.zug-tourismus.ch/de/event-calendar/" target="_blank" rel="noopener">Zug Tourismus</a>.</p>';
+    else {
+      var now = Date.now(), ve = EVENTS.filter(matchEvent).sort(function (a, b) { return nextOcc(a, now).t0 - nextOcc(b, now).t0 || a.title.localeCompare(b.title, 'de'); });
+      ve.slice(0, evShown).forEach(function (e) {
+        var o = nextOcc(e, now), more = e.occ.filter(function (x) { return x.t1 >= now; }).length - 1;
+        html += '<button type="button" class="it ev" data-k="e' + esc(e.id) + '">' + (e.thumb ? '<img class="thumb" src="' + esc(e.thumb) + '" alt="" loading="lazy" decoding="async">' : '<span class="thumb"></span>') +
+          '<span class="tx"><span class="when">' + esc(occText(o)) + (more > 0 ? ' · +' + more + ' Termine' : '') + '</span><b>' + esc(e.title) + '</b><span>' + esc(itemSub(e)) + '</span></span></button>';
+      });
+      if (ve.length > evShown) html += '<button type="button" class="more" id="moreEv">Weitere ' + (ve.length - evShown) + ' Veranstaltungen</button>';
+      if (!ve.length) html = '<p class="empty">Keine Veranstaltungen für diese Auswahl.</p>';
+      if (cnt) cnt.textContent = plural(ve.length, 'Veranstaltung', 'Veranstaltungen');
+      if (hint) hint.textContent = 'Quelle: Zug Tourismus';
+    }
+  }
+  listEl.innerHTML = html;
+  var mb = $('#moreEv'); if (mb) mb.addEventListener('click', function () { evShown += 60; renderList(); });
+}
+listEl.addEventListener('click', function (e) {
+  var b = e.target.closest('.it'); if (!b) return;
+  var k = b.dataset.k, t = k[0], id = k.slice(1);
+  var it = t === 'f' ? PL[+id] : t === 's' ? SIGHTBY[id] : t === 'e' ? EVENTBY[id] : t === 'g' ? GEMBY[id] : null;
+  if (it) pick(it);
+});
+function pick(it) {
+  var mode = it.type === 'fam' ? 'familie' : it.type === 'sight' ? 'sights' : it.type === 'event' ? 'events' : 'gemeinden';
+  pushedDetail = true;
+  go(mode, it.id);
+}
+
+/* ---------------- detail panels ---------------- */
+function photoFig(ph, title, inset) {
+  return '<figure><div class="media"><img src="' + esc(ph.f) + '" alt="' + esc(ph.w || title) + '" loading="lazy" decoding="async">' + (inset ? '<canvas class="inset" width="320" height="240" aria-label="Luftbild"></canvas>' : '') +
+    '</div><figcaption>Foto: ' + esc(ph.a) + ', ' + (safeURL(ph.lu) ? '<a href="' + esc(ph.lu) + '" target="_blank" rel="noopener">' + esc(ph.l) + '</a>' : esc(ph.l)) +
+    (safeURL(ph.u) ? ', via <a href="' + esc(ph.u) + '" target="_blank" rel="noopener">Wikimedia Commons</a>' : '') + (ph.crop === false ? '' : ' (zugeschnitten)') + (inset ? '. Luftbild: swisstopo SWISSIMAGE' : '') + '</figcaption></figure>';
+}
+function aerialFig(title, outline) { return '<figure><canvas width="640" height="480" aria-label="Luftbild von ' + esc(title) + '"></canvas><figcaption>Luftbild: swisstopo SWISSIMAGE' + (outline ? ', Umriss gestrichelt' : '') + '</figcaption></figure>'; }
+function sparkSVG(p) {
+  if (!p.s || sunDay.k !== 'sommer') return '';
+  var W = 300, H = 64, n = p.s.length, pts = p.s.map(function (v, k) { return [k / (n - 1) * W, 6 + (1 - v / 100) * 44]; });
+  var line = pts.map(function (q, k) { return (k ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('');
+  var area = line + 'L' + W + ' 50L0 50Z', xNow = clamp((sunT - 8) / 11, 0, 1) * W;
+  return '<div class="spark"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Schattenanteil im Tagesverlauf am 21. Juli"><path class="area" d="' + area + '"/><path class="line" d="' + line + '"/>' +
+    '<line class="now" id="sparkNow" x1="' + xNow.toFixed(1) + '" x2="' + xNow.toFixed(1) + '" y1="2" y2="52"/>' +
+    '<text class="ax" x="0" y="62">8</text><text class="ax" x="' + (W * 4 / 11).toFixed(1) + '" y="62" text-anchor="middle">12</text><text class="ax" x="' + (W * 8 / 11).toFixed(1) + '" y="62" text-anchor="middle">16</text><text class="ax" x="' + W + '" y="62" text-anchor="end">19 Uhr</text>' +
+    '<text class="ax" x="2" y="12">100 %</text></svg></div>';
+}
+function backLabel(it) { return it.type === 'fam' ? '← Alle Familienorte' : it.type === 'sight' ? '← Alle Sehenswürdigkeiten' : it.type === 'event' ? '← Alle Veranstaltungen' : '← Alle Gemeinden'; }
+function linkList(items) { var h = ''; items.forEach(function (l) { if (safeURL(l[1])) h += '<li><a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' + esc(l[0]) + '</a></li>'; }); return h ? '<ul class="links">' + h + '</ul>' : ''; }
+function osmLink(o) { if (!o) return null; var tp = { n: 'node', w: 'way', r: 'relation' }[o[0]]; return tp ? ['In OpenStreetMap ansehen', 'https://www.openstreetmap.org/' + tp + '/' + o.slice(1)] : null; }
+function detailHTML(it) {
+  var h = '<button class="back" type="button" id="back">' + backLabel(it) + '</button>';
+  if (it.type === 'fam') {
+    var p = it, s = shadeAt(p, sunT), u = uvi(sun.alt, p.z), uc = uvCat(u);
+    h += p.ph ? photoFig(p.ph, p.title, true) : aerialFig(p.title, !!p.poly);
+    h += '<h3>' + esc(p.title) + '</h3><p class="sub">' + esc(famSub(p)) + (p.guests ? ' · für Gäste' : '') + '</p>';
+    h += '<dl class="facts">';
+    if (s != null) h += '<div><dt>Schatten ' + fmtTime(sunT) + '</dt><dd id="dShade">' + Math.round(s * 100) + ' %</dd></div><div><dt>Unter Bäumen/Dach</dt><dd>' + (p.cover || 0) + ' %</dd></div>';
+    h += '<div><dt>UV ' + fmtTime(sunT) + ', wolkenlos</dt><dd id="dUV">' + Math.round(u) + ' · ' + uc[1] + '</dd></div>';
+    if (p.z) h += '<div><dt>Höhe</dt><dd>' + swiss(p.z) + ' m ü. M.</dd></div>';
+    if (p.dw != null && p.dw < 2000) h += '<div><dt>Trinkbrunnen</dt><dd>' + swiss(p.dw) + ' m</dd></div>';
+    if (p.dc != null && p.dc < 2000) h += '<div><dt>WC</dt><dd>' + swiss(p.dc) + ' m</dd></div>';
+    h += '</dl>' + sparkSVG(p);
+    h += '<div class="sun" id="sunDet"></div>';
+    if (p.flags && p.flags.length) h += '<p class="note">Vor Ort: ' + p.flags.map(esc).join(', ') + '</p>';
+    if (p.note) h += '<p class="note">' + esc(p.note) + '</p>';
+    var L = (p.zt || []).map(function (l) { return [l[0] + ' bei Zug Tourismus', l[1]]; }); var ol = osmLink(p.osm); if (ol) L.push(ol);
+    h += linkList(L);
+  } else if (it.type === 'sight') {
+    var g = it;
+    h += g.ph ? photoFig(g.ph, g.title, true) : aerialFig(g.title, false);
+    h += '<h3>' + esc(g.title) + '</h3><p class="sub">' + esc(g.kind) + ' · ' + esc(MUNI[g.gem] ? g.gem : (g.town || g.gem)) + '</p>';
+    if (g.text) h += '<p class="txt">' + esc(g.text) + '</p>';
+    if (g.facts && g.facts.length) h += '<ul class="flist">' + g.facts.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>';
+    h += '<div class="sun" id="sunDet"></div>';
+    var LS = []; if (g.zt) LS.push(['Bei Zug Tourismus', g.zt]); if (g.web) LS.push(['Website', g.web]);
+    if (g.wd) LS.push(['Wikidata', 'https://www.wikidata.org/wiki/' + g.wd]); var o2 = osmLink(g.osm); if (o2) LS.push(o2);
+    h += linkList(LS);
+  } else if (it.type === 'event') {
+    var e = it, now = Date.now(), up = e.occ.filter(function (o) { return o.t1 >= now; });
+    if (e.img) h += '<figure class="ev"><img src="' + esc(e.img) + '" alt="' + esc(e.title) + '" decoding="async"><figcaption>Bild: Veranstalter, über den Veranstaltungskalender von Zug Tourismus (Guidle)</figcaption></figure>';
+    h += '<p class="when">' + esc(up.length ? occText(up[0], true) : '') + '</p><h3>' + esc(e.title) + '</h3><p class="sub">' + esc([e.kind, e.venue, e.gem || e.town].filter(Boolean).join(' · ')) + '</p>';
+    h += '<div id="evMore">' + eventMoreHTML(e) + '</div>';
+    if (e.exact) h += '<div class="sun" id="sunDet"></div>';
+    var LE = []; if (e.url) LE.push(['Im Veranstaltungskalender von Zug Tourismus', e.url]); if (e.tickets) LE.push(['Tickets', e.tickets]);
+    h += linkList(LE);
+  } else if (it.type === 'gem') {
+    var m = it, nS = SIGHTS.filter(function (s) { return s.gem === m.name; }), nF = PL.filter(function (p) { return p.gem === m.name; }).length,
+      nE = liveEvents().filter(function (e) { return e.gem === m.name; }).length;
+    h += '<h3>' + esc(m.name) + '</h3><p class="sub">Gemeinde im Kanton Zug' + (m.m.bfs ? ' · BFS-Nr. ' + m.m.bfs : '') + '</p>';
+    if (m.text) h += '<p class="txt">' + esc(m.text) + '</p>';
+    h += '<dl class="facts">';
+    if (m.pop) h += '<div><dt>Einwohner' + (m.popDate ? ' ' + esc(m.popDate) : '') + '</dt><dd>' + swiss(m.pop) + '</dd></div>';
+    h += '<div><dt>Fläche</dt><dd>' + dec(m.area) + ' km²</dd></div><div><dt>Höhenlage</dt><dd>' + m.hmin + '–' + m.hmax + ' m</dd></div>';
+    if (m.elev) h += '<div><dt>Dorfkern</dt><dd>' + swiss(m.elev) + ' m ü. M.</dd></div>';
+    h += '</dl>';
+    if (m.ortsteile && m.ortsteile.length) h += '<p class="note">Ortsteile: ' + m.ortsteile.map(esc).join(', ') + '</p>';
+    h += '<div class="btns">' +
+      '<a href="#/sehenswuerdigkeiten?g=' + m.id + '">' + svgIcon('stadt') + 'Sehenswürdigkeiten <small>' + nS.length + '</small></a>' +
+      '<a href="#/familien?g=' + m.id + '">' + svgIcon('spiel') + 'Familienorte <small>' + nF + '</small></a>' +
+      '<a href="#/events?g=' + m.id + '">' + svgIcon('event') + 'Events <small>' + nE + '</small></a></div>';
+    if (nS.length) {
+      h += '<div class="grp" style="position:static;margin-top:14px"><span>Sehenswürdigkeiten</span><span>' + nS.length + '</span></div><div class="list">';
+      nS.sort(function (a, b) { return (b.big ? 1 : 0) - (a.big ? 1 : 0) || a.title.localeCompare(b.title, 'de'); }).forEach(function (s) {
+        h += '<button type="button" class="it" data-k="s' + esc(s.id) + '"><span class="pin sight">' + svgIcon(SCATS[s.cat].k) + '</span><span class="tx"><b>' + esc(s.title) + '</b><span>' + esc(s.kind) + '</span></span><span class="sh"></span></button>';
+      });
+      h += '</div>';
+    }
+    var LG = []; if (m.web) LG.push(['Website der Gemeinde', m.web]); if (m.zt) LG.push([m.name + ' bei Zug Tourismus', m.zt]);
+    h += linkList(LG);
+    if (m.sources && m.sources.length) h += '<p class="note" style="font-size:12px">Quellen: ' + m.sources.map(function (s) { return safeURL(s.u) ? '<a href="' + esc(s.u) + '" target="_blank" rel="noopener">' + esc(s.t) + '</a>' : esc(s.t); }).join(', ') + '</p>';
+  }
+  return h;
+}
+function eventMoreHTML(e) {
+  var h = '', now = Date.now(), up = e.occ.filter(function (o) { return o.t1 >= now; });
+  if (e.teaser) h += '<p class="txt">' + esc(e.teaser) + '</p>';
+  if (up.length > 1) h += '<p class="note" style="margin:0">Termine</p><ul class="dates">' + up.slice(0, 12).map(function (o) { return '<li>' + esc(occText(o, true)) + '</li>'; }).join('') + (up.length > 12 ? '<li>und ' + (up.length - 12) + ' weitere</li>' : '') + '</ul>';
+  var dl = '';
+  if (e.address || e.venue) dl += '<div><dt>Ort</dt><dd style="font-family:var(--f-body);font-size:14.5px">' + esc([e.venue, e.address].filter(Boolean).join(', ')) + '</dd></div>';
+  if (e.price) dl += '<div><dt>Preis</dt><dd style="font-family:var(--f-body);font-size:14.5px">' + esc(e.price) + '</dd></div>';
+  if (e.org) dl += '<div><dt>Veranstalter</dt><dd style="font-family:var(--f-body);font-size:14.5px">' + esc(e.org) + '</dd></div>';
+  if (dl) h += '<dl class="facts" style="grid-template-columns:1fr">' + dl + '</dl>';
+  return h;
+}
+function openItem(it) {
+  if (it.type === 'gem') { selGem = it; SEL = null; } else { SEL = it; selGem = null; }
+  detailEl.innerHTML = detailHTML(it);
+  detailEl.hidden = false; listEl.hidden = true; pscroll.scrollTop = 0; panel.classList.add('has-detail');
+  $('#back').addEventListener('click', backFromDetail);
+  var sd = $('#sunDet');
+  if (sd) buildSunUI(sd, { z: it.z || 425, hint: it.type === 'fam' && it.s ? '' : 'Beim Heranzoomen zeigt die Karte Licht und Schatten für die gewählte Zeit.' });
+  markerVisDirty = true;
+  if (it.type === 'event') loadEventDetail(it);
+  if (pushedDetail) { var bk = $('#back'); if (bk) bk.focus({ preventScroll: true }); }
+  if (narrowMQ.matches) setSheet('half');
+  if (GL) {
+    makeOutline(it.poly ? it : null);
+    var cv = detailEl.querySelector('figure canvas');
+    if (cv) { var redraw = function () { if (!cv.isConnected) { OR.listeners.splice(OR.listeners.indexOf(redraw), 1); return; } drawCrop(cv, it); }; OR.listeners.push(redraw); redraw(); }
+    if (it.type === 'gem') flyToMuni(it.m);
+    else if (it.E && it.N) flyTo({ E: it.E, N: it.N, d: itemDistance(it), hd: ex.hd, p: it.type === 'sight' && it.cat === 4 ? 30 : 42 });
+    else if (it.type === 'event' && MUNI[it.gem]) flyToMuni(MUNI[it.gem]);
+  }
+}
+detailEl.addEventListener('click', function (e) {
+  var b = e.target.closest('.it'); if (!b) return;
+  var k = b.dataset.k; if (k[0] === 's' && SIGHTBY[k.slice(1)]) pick(SIGHTBY[k.slice(1)]);
+});
+function backFromDetail() {
+  if (pushedDetail && history.length > 1) { pushedDetail = false; history.back(); }
+  else go(MODE, null, true);
+}
+function closeDetail(silent) {
+  SEL = null; selGem = null; pushedDetail = false;
+  if (GL) { clearOutline(); calloutEl.classList.remove('on'); }
+  detailEl.hidden = true; detailEl.innerHTML = ''; listEl.hidden = false; panel.classList.remove('has-detail');
+  markerVisDirty = true; listDirty = true;
+  if (!silent) syncHash();
+}
+function updateDetailLive(full) {
+  if (!SEL || detailEl.hidden) return;
+  if (full && SEL.type === 'fam') { var keep = pscroll.scrollTop; detailEl.innerHTML = detailHTML(SEL); $('#back').addEventListener('click', backFromDetail); var sd = $('#sunDet'); if (sd) buildSunUI(sd, { z: SEL.z || 425 }); pscroll.scrollTop = keep; return; }
+  var p = SEL, s = shadeAt(p, sunT), u = uvi(sun.alt, p.z), uc = uvCat(u);
+  var d1 = $('#dShade'), d2 = $('#dUV'), sn = $('#sparkNow');
+  if (d1 && s != null) { d1.textContent = Math.round(s * 100) + ' %'; d1.previousElementSibling.textContent = 'Schatten ' + fmtTime(sunT); }
+  if (d2) { d2.textContent = Math.round(u) + ' · ' + uc[1]; d2.previousElementSibling.textContent = 'UV ' + fmtTime(sunT) + ', wolkenlos'; }
+  if (sn) { var x = (clamp((sunT - 8) / 11, 0, 1) * 300).toFixed(1); sn.setAttribute('x1', x); sn.setAttribute('x2', x); }
+}
+function itemDistance(it) {
+  if (it.type === 'fam') {
+    if (it.kind === 'Naturschutzgebiet') return 2600;
+    if (it.kind === 'Velotour' || it.kind === 'Schlittelweg' || it.kind === 'Skilift' || it.kind === 'Bergbahn' || it.out) return 2200;
+    if (it.cat === 1 || it.kind === 'Park') return 820;
+    return 560;
+  }
+  if (it.type === 'sight') return it.big ? 2400 : [700, 560, 620, 520, 1500, 2600, 1300, 600, 900][it.cat] || 700;
+  if (it.type === 'event') return it.exact ? 650 : 6000;
+  return 8000;
+}
+
+/* ---------------- events: live from the Zug Tourismus calendar (Guidle) ---------------- */
+var EVSRC = PD.events || {};
+function loadEvents() {
+  EVMETA.state = 'loading';
+  if (!window.ZGEvents) { EVMETA.state = 'error'; return; }
+  window.ZGEvents.load()
+    .then(function (data) { setEvents(data); })
+    .catch(function (err) { console.warn('events', err); EVMETA.state = 'error'; if (MODE === 'events') { renderHead(); renderList(); } });
+}
+function setEvents(data) {
+  var list = (data && data.events) || [];
+  EVENTS = list.map(normEvent).filter(function (e) { return e.occ.length && e.title; });
+  EVENTBY = {}; EVENTS.forEach(function (e) { EVENTBY[e.id] = e; });
+  refineEventGem();
+  EVMETA = { state: 'ok', updated: data.updated || '' };
+  var n = liveEvents().length; $('#nEv').textContent = n || '';
+  if (GL && ready) rebuildMarkers();
+  if (MODE === 'events') {
+    renderHead(); renderList();
+    var r = parseHash(); if (r.id && !SEL && EVENTBY[r.id]) openItem(EVENTBY[r.id]);
+  }
+}
+/* Gemeinde from the coordinates where the map mask is loaded; the town name stays as fallback */
+function refineEventGem() {
+  if (!GL || !ids) return;
+  EVENTS.forEach(function (e) { if (e.exact) { var id = idAt(e.E, e.N); if (id) e.gem = D.munis[id - 1].name; else if (!inGrid(e.E, e.N) || !MUNI[e.gem]) e.gem = e.gem || ''; } });
+}
+function loadEventDetail(e) {
+  if (e.detailLoaded || !window.ZGEvents || !window.ZGEvents.detail) return;
+  window.ZGEvents.detail(e).then(function (d) {
+    if (!d) return;
+    e.detailLoaded = true;
+    if (d.dates && d.dates.length) { var n = normEvent({ id: e.id, title: e.title, dates: d.dates }); if (n.occ.length) e.occ = n.occ; }
+    ['teaser', 'address', 'venue', 'price', 'org', 'credit'].forEach(function (k) { if (d[k]) e[k] = d[k]; });
+    if (d.tickets) e.tickets = safeURL(d.tickets);
+    if (SEL === e) {
+      var box = $('#evMore'); if (box) box.innerHTML = eventMoreHTML(e);
+      var w = detailEl.querySelector('.when'), up = e.occ.filter(function (o) { return o.t1 >= Date.now(); }); if (w && up.length) w.textContent = occText(up[0], true);
+      if (e.tickets && !detailEl.querySelector('a[data-t]')) { var ul = detailEl.querySelector('.links'); if (ul) ul.insertAdjacentHTML('beforeend', '<li><a data-t="1" href="' + esc(e.tickets) + '" target="_blank" rel="noopener">Tickets</a></li>'); }
+    }
+  }).catch(function () {});
+}
+
+/* ---------------- mobile sheet ---------------- */
+var sheet = 'half';
+function setSheet(s) {
+  sheet = s;
+  var top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top')) || 50;
+  panel.style.setProperty('--sheet', s === 'peek' ? '26svh' : s === 'full' ? 'calc(100svh - ' + (top + 14) + 'px)' : '46svh');
+}
+$('#handle').addEventListener('click', function () { setSheet(sheet === 'half' ? 'full' : sheet === 'full' ? 'peek' : 'half'); });
+
+/* ---------------- info dialog ---------------- */
+var infoDlg = $('#infoDlg'), infoFrom = null;
+function openInfo() { if (!infoDlg.hidden) return; infoFrom = document.activeElement; infoDlg.hidden = false; $('#infoClose').focus(); }
+function closeInfo() { if (infoDlg.hidden) return; infoDlg.hidden = true; if (infoFrom && infoFrom.focus) infoFrom.focus(); }
+$('#infoClose').addEventListener('click', function () { if (lastRoute && lastRoute !== location.hash) history.back(); else go(MODE, null, true); });
+infoDlg.addEventListener('click', function (e) { if (e.target === infoDlg) $('#infoClose').click(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  if (!infoDlg.hidden) { $('#infoClose').click(); return; }
+  if (touring) { stopTour(); return; }
+  if (SEL || selGem) backFromDetail();
+});
+var hintEl = $('#hint'), hintShown = false;
+function showHint() { if (hintShown || !fine || TEST) return; hintShown = true; hintEl.classList.add('on'); setTimeout(function () { hintEl.classList.remove('on'); }, 6000); }
+
+/* home counts */
+$('#nSight').textContent = SIGHTS.length || '';
+$('#nFam').textContent = PL.length;
 /* ---------------- WebGL setup ---------------- */
-if (!window.THREE) { fail('Die 3D-Bibliothek konnte nicht geladen werden. Liste und Texte bleiben nutzbar.'); updateSunUI(); renderList(); return; }
-if (typeof DecompressionStream === 'undefined') { fail('Dieser Browser kann die Geodaten nicht entpacken. Liste und Texte bleiben nutzbar.'); updateSunUI(); renderList(); return; }
+if (!window.THREE) { fail('Die 3D-Bibliothek konnte nicht geladen werden. Liste und Texte bleiben nutzbar.'); uiOnly(); return; }
+if (typeof DecompressionStream === 'undefined') { fail('Dieser Browser kann die Geodaten nicht entpacken. Liste und Texte bleiben nutzbar.'); uiOnly(); return; }
 THREE.ColorManagement.enabled = false;
 var canvas = $('#scene');
 canvas.style.opacity = '0';
 canvas.style.transition = reduce ? 'none' : 'opacity 1.4s ease';
 var renderer;
 try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' }); }
-catch (e) { fail('WebGL ist in diesem Browser nicht verfügbar. Liste und Texte bleiben nutzbar.'); updateSunUI(); renderList(); return; }
-if (!renderer.capabilities.isWebGL2) { fail('Für das Relief braucht es WebGL 2. Liste und Texte bleiben nutzbar.'); updateSunUI(); renderList(); return; }
+catch (e) { fail('WebGL ist in diesem Browser nicht verfügbar. Liste und Texte bleiben nutzbar.'); uiOnly(); return; }
+if (!renderer.capabilities.isWebGL2) { fail('Für das Relief braucht es WebGL 2. Liste und Texte bleiben nutzbar.'); uiOnly(); return; }
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 renderer.setClearColor(0x000000, 0);
 renderer.autoClear = true;
@@ -305,7 +855,7 @@ sunVector(sun, U.uSunDir.value);
 var C = {};
 ['--paper', '--m-land', '--m-lit', '--m-shade', '--m-forest', '--m-out', '--m-water', '--m-water-deep', '--m-contour', '--m-hi',
  '--m-side', '--m-side-2', '--m-roof', '--m-wall', '--m-window', '--m-line', '--m-muni', '--m-river', '--m-shore', '--m-lorze', '--ink',
- '--m-tree', '--m-trunk', '--m-sun', '--m-sky', '--m-pin', '--m-pin-ink', '--m-ring-shade', '--m-ring-sun', '--m-sel'
+ '--m-tree', '--m-trunk', '--m-sun', '--m-sky', '--m-pin', '--m-pin-ink', '--m-ring-shade', '--m-ring-sun', '--m-sel', '--m-pin-sight', '--m-pin-event'
 ].forEach(function (k) { C[k] = new THREE.Color(); });
 
 var COMMON = [
@@ -966,30 +1516,37 @@ function drawCrop(cv, p) {
   return any;
 }
 
+/* ================= from here on WebGL 2 is available ================= */
+GL = true;
+
 /* ---------------- markers ---------------- */
-var MK = { pts: null, mat: null, geo: null, items: [], screen: null };
-var markerVisDirty = true, markerShadeDirty = true, photoOn = true, showWater = false, showWC = false;
+var MK = { pts: null, mat: null, geo: null, items: [] };
+var photoOn = true, markerKey = '';
 function buildAtlas() {
-  var cv = document.createElement('canvas'); cv.width = 512; cv.height = 256;
+  var cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512;
   var ctx = cv.getContext('2d'); ctx.fillStyle = '#fff';
   ICONKEYS.forEach(function (k, i) {
-    var cx = (i % 4) * 128, cy = Math.floor(i / 4) * 128;
+    var cx = (i % 8) * 128, cy = Math.floor(i / 8) * 128;
     ctx.save(); ctx.translate(cx + 14, cy + 14); ctx.scale(100 / 24, 100 / 24);
-    ctx.fill(new Path2D(ICON[k]), k === 'sport' ? 'evenodd' : 'nonzero'); ctx.restore();
+    ctx.fill(new Path2D(ICON[k]), EVENODD[k] ? 'evenodd' : 'nonzero'); ctx.restore();
   });
   var t = new THREE.CanvasTexture(cv); t.flipY = false; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
   return t;
 }
+var ATLAS = null;
 function buildMarkers() {
   var items = [];
-  PL.forEach(function (p) { items.push({ type: 'p', p: p, cat: p.cat, E: p.E, N: p.N }); });
-  (F.svc.w || []).forEach(function (w) { items.push({ type: 'w', cat: 6, E: w[0] + E0F, N: w[1] + N0F }); });
-  (F.svc.c || []).forEach(function (w) { items.push({ type: 'c', cat: 7, E: w[0] + E0F, N: w[1] + N0F, wick: !!w[2] }); });
+  PL.forEach(function (p) { items.push(p); });
+  (F.svc.w || []).forEach(function (w) { items.push({ type: 'w', mk: 6, E: w[0] + E0F, N: w[1] + N0F }); });
+  (F.svc.c || []).forEach(function (w) { items.push({ type: 'c', mk: 7, E: w[0] + E0F, N: w[1] + N0F, wick: !!w[2] }); });
+  SIGHTS.forEach(function (s) { items.push(s); });
+  EVENTS.forEach(function (e) { if (e.exact) items.push(e); });
+  items = items.filter(function (it) { return it.E && it.N && inGrid(it.E, it.N); });
   var n = items.length, pos = new Float32Array(n * 3), info = new Float32Array(n * 4), vis = new Float32Array(n), sel = new Float32Array(n);
   items.forEach(function (it, i) {
-    it.g = hAt(it.E, it.N) - H0;
-    pos[i * 3] = X(it.E); pos[i * 3 + 1] = it.g; pos[i * 3 + 2] = Z(it.N);
-    info[i * 4] = it.cat; info[i * 4 + 1] = it.p && it.p.zt ? 1 : 0; info[i * 4 + 2] = 0; info[i * 4 + 3] = it.p && it.p.s ? 1 : 0;
+    var g = hAt(it.E, it.N) - H0;
+    pos[i * 3] = X(it.E); pos[i * 3 + 1] = g; pos[i * 3 + 2] = Z(it.N);
+    info[i * 4] = it.mk; info[i * 4 + 1] = it.zt ? 1 : 0; info[i * 4 + 2] = 0; info[i * 4 + 3] = 0;
   });
   var geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -997,18 +1554,20 @@ function buildMarkers() {
   geo.setAttribute('aVis', new THREE.BufferAttribute(vis, 1));
   geo.setAttribute('aSel', new THREE.BufferAttribute(sel, 1));
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 40000);
-  var mat = new THREE.ShaderMaterial({
+  if (!ATLAS) ATLAS = buildAtlas();
+  var mat = MK.mat || new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, depthTest: true,
-    uniforms: { uAtlas: { value: buildAtlas() }, uSize: { value: 20 }, uDpr: { value: 1 }, uAlpha: { value: 0 }, uRing: { value: 0 }, uVZ: U.uVZ, uPx: U.uPx,
-      uFill: { value: C['--m-pin'].clone() }, uWhite: { value: new THREE.Color(1, 1, 1) }, uRingShade: { value: C['--m-ring-shade'] }, uRingSun: { value: C['--m-ring-sun'] },
-      uSvc: { value: 0.7 } },
+    uniforms: { uAtlas: { value: ATLAS }, uSize: { value: 20 }, uDpr: { value: 1 }, uAlpha: { value: 0 }, uRing: { value: 0 }, uVZ: U.uVZ, uPx: U.uPx,
+      uFill: { value: C['--m-pin'] }, uSight: { value: C['--m-pin-sight'] }, uEvent: { value: C['--m-pin-event'] }, uWhite: { value: new THREE.Color(1, 1, 1) },
+      uRingShade: { value: C['--m-ring-shade'] }, uRingSun: { value: C['--m-ring-sun'] }, uSvc: { value: 0.7 } },
     vertexShader: [
       'attribute vec4 aInfo; attribute float aVis; attribute float aSel; uniform float uSize, uDpr, uVZ, uPx, uSvc;',
       'varying vec4 vInfo; varying float vSel; varying float vSize;',
       'void main(){',
       '  vec3 p = position; p.y *= uVZ;',
       '  vec4 mv = modelViewMatrix*vec4(p,1.0);',
-      '  float sz = uSize * (aInfo.x > 5.5 ? uSvc : 1.0) * (1.0 + 0.45*aSel);',
+      '  float svc = (aInfo.x > 5.5 && aInfo.x < 7.5) ? uSvc : 1.0;',
+      '  float sz = uSize * svc * (1.0 + 0.45*aSel);',
       '  mv.y += uPx*(-mv.z)*sz*0.62;',
       '  gl_Position = projectionMatrix*mv;',
       '  gl_Position.z -= 0.004*gl_Position.w*(1.0+aSel);',
@@ -1017,19 +1576,19 @@ function buildMarkers() {
       '}'
     ].join('\n'),
     fragmentShader: [
-      'uniform sampler2D uAtlas; uniform vec3 uFill, uWhite, uRingShade, uRingSun; uniform float uAlpha, uRing;',
+      'uniform sampler2D uAtlas; uniform vec3 uFill, uSight, uEvent, uWhite, uRingShade, uRingSun; uniform float uAlpha, uRing;',
       'varying vec4 vInfo; varying float vSel; varying float vSize;',
       'void main(){',
       '  vec2 pc = gl_PointCoord*2.0-1.0; float r = length(pc);',
       '  float w = max(fwidth(r), 0.02);',
       '  float disc = 1.0 - smoothstep(0.70-w, 0.70+w, r);',
       '  float ring = smoothstep(0.73-w, 0.73+w, r) * (1.0 - smoothstep(0.97-w, 0.97+w, r));',
-      '  float cat = floor(vInfo.x + 0.5); vec2 cell = vec2(cat - 4.0*floor(cat/4.0 + 0.01), floor(cat/4.0 + 0.01));',
+      '  float cat = floor(vInfo.x + 0.5); float row = floor(cat/8.0 + 0.01); vec2 cell = vec2(cat - 8.0*row, row);',
       '  vec2 iu = (gl_PointCoord - 0.5)/0.62 + 0.5;',
       '  float inside = step(0.0, iu.x)*step(iu.x, 1.0)*step(0.0, iu.y)*step(iu.y, 1.0);',
       '  float lod = max(0.0, log2(128.0/(0.62*max(vSize, 1.0))));',
-      '  float icon = textureLod(uAtlas, (cell + clamp(iu, 0.0, 1.0))/vec2(4.0,2.0), lod).a*inside;',
-      '  vec3 fill = cat > 5.5 ? (cat > 6.5 ? vec3(0.32,0.38,0.5) : vec3(0.18,0.62,0.86)) : uFill;',
+      '  float icon = textureLod(uAtlas, (cell + clamp(iu, 0.0, 1.0))/vec2(8.0,4.0), lod).a*inside;',
+      '  vec3 fill = cat > 16.5 ? uEvent : cat > 7.5 ? uSight : cat > 6.5 ? vec3(0.32,0.38,0.5) : cat > 5.5 ? vec3(0.18,0.62,0.86) : uFill;',
       '  vec3 col = mix(fill, uWhite, icon);',
       '  float a = disc;',
       '  if(uRing > 0.5 && vInfo.w > 0.5){',
@@ -1043,40 +1602,44 @@ function buildMarkers() {
       '}'
     ].join('\n')
   });
+  if (MK.pts) { scene.remove(MK.pts); MK.geo.dispose(); }
   var pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 20;
   scene.add(pts);
-  MK.items = items; MK.geo = geo; MK.mat = mat; MK.pts = pts; MK.screen = new Float32Array(n * 3);
+  MK.items = items; MK.geo = geo; MK.mat = mat; MK.pts = pts;
+  markerVisDirty = true; markerShadeDirty = true; markerKey = '';
 }
-var markerMode = 'none';
-function markerVisible(it, mode) {
-  if (it.type === 'w') return mode === 'familie' && showWater && cam.d < 4000;
-  if (it.type === 'c') return mode === 'familie' && showWC && cam.d < 4000;
-  var p = it.p;
-  if (mode === 'spiel') return p.cat === 0;
-  if (mode === 'schatten') return p.cat === 0;
-  if (mode === 'familie') return matches(p);
+function rebuildMarkers() { if (ready) buildMarkers(); }
+function markerVisible(it) {
+  if (touring) return false;
+  if (it === SEL) return true;
+  if (it.type === 'w') return MODE === 'familie' && showWater && cam.d < 4000;
+  if (it.type === 'c') return MODE === 'familie' && showWC && cam.d < 4000;
+  if (it.type === 'fam') return MODE === 'familie' && matchFam(it);
+  if (it.type === 'sight') return (MODE === 'sights' && matchSight(it)) || (MODE === 'gemeinden' && !!selGem && it.gem === selGem.name);
+  if (it.type === 'event') return MODE === 'events' && matchEvent(it);
   return false;
 }
-function updateMarkers(mode, alpha) {
+function updateMarkers(alpha) {
   if (!MK.geo) return;
   var vis = MK.geo.attributes.aVis, info = MK.geo.attributes.aInfo, sel = MK.geo.attributes.aSel;
-  var modeKey = mode + (cam.d < 4000 ? 'n' : 'f');
-  if (markerVisDirty || modeKey !== markerMode) {
-    markerVisDirty = false; markerMode = modeKey;
-    MK.items.forEach(function (it, i) { vis.array[i] = markerVisible(it, mode) ? 1 : 0; });
-    vis.needsUpdate = true;
-  }
+  var key = MODE + (cam.d < 4000 ? 'n' : 'f') + (touring ? 't' : '') + (selGem ? selGem.id : '');
   if (markerShadeDirty) {
     markerShadeDirty = false;
-    MK.items.forEach(function (it, i) { if (it.p && it.p.s) info.array[i * 4 + 2] = shadeAt(it.p, sunT); });
+    var summer = sunDay.k === 'sommer';
+    MK.items.forEach(function (it, i) { if (it.type === 'fam' && it.s) { info.array[i * 4 + 2] = summer ? shadeAt(it, sunT) : 0; info.array[i * 4 + 3] = summer ? 1 : 0; } });
     info.needsUpdate = true;
-    if (filt.shade) { markerVisDirty = true; }
+    if (filt.familie.shade) markerVisDirty = true;
+  }
+  if (markerVisDirty || key !== markerKey) {
+    markerVisDirty = false; markerKey = key;
+    MK.items.forEach(function (it, i) { vis.array[i] = markerVisible(it) ? 1 : 0; });
+    vis.needsUpdate = true;
   }
   MK.mat.uniforms.uAlpha.value = alpha;
-  MK.mat.uniforms.uRing.value = (mode === 'schatten' || mode === 'familie') ? 1 : 0;
+  MK.mat.uniforms.uRing.value = MODE === 'familie' ? 1 : 0;
   MK.mat.uniforms.uSize.value = clamp(lerp(26, 12, sstep(1500, 26000, cam.d)), 11, 28);
   MK.mat.uniforms.uDpr.value = renderer.getPixelRatio();
-  for (var i = 0; i < sel.array.length; i++) { var s = (MK.items[i].p && selected && MK.items[i].p === selected) ? 1 : 0; if (sel.array[i] !== s) { sel.array[i] = s; sel.needsUpdate = true; } }
+  for (var i = 0; i < sel.array.length; i++) { var s = MK.items[i] === SEL ? 1 : 0; if (sel.array[i] !== s) { sel.array[i] = s; sel.needsUpdate = true; } }
 }
 var projV = new THREE.Vector3();
 function pickMarker(cx, cy, W, H) {
@@ -1085,94 +1648,24 @@ function pickMarker(cx, cy, W, H) {
   for (var i = 0; i < MK.items.length; i++) {
     if (!vis[i]) continue;
     var it = MK.items[i];
-    projV.set(X(it.E), Y(it.E ? hAt(it.E, it.N) : 0), Z(it.N)).project(camera);
+    projV.set(X(it.E), Y(hAt(it.E, it.N)), Z(it.N)).project(camera);
     if (projV.z > 1) continue;
-    var sx = (projV.x + 1) / 2 * W, sy = (1 - projV.y) / 2 * H - size * (it.cat > 5 ? 0.7 : 1) * 0.62;
+    var sx = (projV.x + 1) / 2 * W, sy = (1 - projV.y) / 2 * H - size * (it.mk === 6 || it.mk === 7 ? 0.7 : 1) * 0.62;
     var d2 = (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy);
     if (d2 < bd) { bd = d2; best = it; }
   }
   return best;
 }
 
-/* ---------------- selection, outline, callout ---------------- */
-var selected = null, outlineMesh = null, featOutline = null, calloutEl = $('#callout');
+/* ---------------- selection outline, callout ---------------- */
+var outlineMesh = null, calloutEl = $('#callout');
 function clearOutline() { if (outlineMesh) { scene.remove(outlineMesh); outlineMesh.geometry.dispose(); outlineMesh = null; } }
 function makeOutline(p) {
   clearOutline();
-  if (!p.poly) return;
+  if (!p || !p.poly) return;
   var lines = p.poly.map(function (ring) { var o = []; for (var k = 0; k < ring.length; k += 2) o.push([p.E + ring[k] / 2, p.N + ring[k + 1] / 2]); o.push(o[0]); return o; });
   outlineMesh = buildRibbon(lines, ribbonMat('--m-sel', 2.6, 0.95, { lift: 1.2 }), false, 4);
   outlineMesh.renderOrder = 15;
-}
-function placeDistance(p) {
-  if (p.kind === 'Naturschutzgebiet') return 2600;
-  if (p.kind === 'Velotour' || p.kind === 'Schlittelweg' || p.kind === 'Skilift' || p.kind === 'Bergbahn' || p.out) return 2200;
-  if (p.cat === 1 || p.kind === 'Park') return 820;
-  return 560;
-}
-function selectPlace(p, fromList) {
-  if (!renderer || !scene) { selected = p; showDetail(p); return; }
-  selected = p;
-  markerVisDirty = true;
-  makeOutline(p);
-  showDetail(p);
-  if (!inFinale()) { pendingFly = p; document.getElementById('familienorte').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }); }
-  else flyTo({ E: p.E, N: p.N, d: placeDistance(p), hd: ex.hd, p: 42 });
-}
-function closeDetail() {
-  selected = null; clearOutline(); markerVisDirty = true;
-  detailEl.hidden = true; listEl.hidden = false; calloutEl.classList.remove('on'); explorerEl.classList.remove('has-detail');
-}
-var pendingFly = null;
-
-/* ---------------- detail panel ---------------- */
-var detailCanvas = null;
-function sparkSVG(p) {
-  if (!p.s) return '';
-  var W = 300, H = 64, n = p.s.length, pts = p.s.map(function (v, k) { return [k / (n - 1) * W, 6 + (1 - v / 100) * 44]; });
-  var line = pts.map(function (q, k) { return (k ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('');
-  var area = line + 'L' + W + ' 50L0 50Z', xNow = clamp((sunT - 8) / 11, 0, 1) * W;
-  return '<div class="spark"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Schattenanteil im Tagesverlauf"><path class="area" d="' + area + '"/><path class="line" d="' + line + '"/>' +
-    '<line class="now" id="sparkNow" x1="' + xNow.toFixed(1) + '" x2="' + xNow.toFixed(1) + '" y1="2" y2="52"/>' +
-    '<text class="ax" x="0" y="62">8</text><text class="ax" x="' + (W * 4 / 11).toFixed(1) + '" y="62" text-anchor="middle">12</text><text class="ax" x="' + (W * 8 / 11).toFixed(1) + '" y="62" text-anchor="middle">16</text><text class="ax" x="' + W + '" y="62" text-anchor="end">19 Uhr</text>' +
-    '<text class="ax" x="2" y="12">100 %</text></svg></div>';
-}
-function showDetail(p) {
-  var s = shadeAt(p, sunT), u = uvi(sun.alt, p.z), uc = uvCat(u);
-  var html = '<button class="back" type="button" id="back">← Alle Orte</button>';
-  if (p.ph) html += '<figure><div class="media"><img src="' + esc(p.ph.f) + '" alt="' + esc(p.ph.w || p.title) + '" loading="lazy"><canvas class="inset" width="320" height="240" aria-label="Luftbild von ' + esc(p.title) + '"></canvas></div><figcaption>Foto: ' + esc(p.ph.a) + ', ' + (p.ph.lu ? '<a href="' + esc(p.ph.lu) + '" target="_blank" rel="noopener">' + esc(p.ph.l) + '</a>' : esc(p.ph.l)) + ', via <a href="' + esc(p.ph.u) + '" target="_blank" rel="noopener">Wikimedia Commons</a> (zugeschnitten). Luftbild: swisstopo SWISSIMAGE</figcaption></figure>';
-  else html += '<figure><canvas width="640" height="480" aria-label="Luftbild von ' + esc(p.title) + '"></canvas><figcaption>Luftbild: swisstopo SWISSIMAGE' + (p.poly ? ', Umriss gestrichelt' : '') + '</figcaption></figure>';
-  html += '<h3>' + esc(p.title) + '</h3><p class="sub">' + esc(subLine(p)) + (p.guests ? ' · für Gäste' : '') + '</p>';
-  html += '<dl class="facts">';
-  if (s != null) html += '<div><dt>Schatten ' + fmtTime(sunT) + '</dt><dd id="dShade">' + Math.round(s * 100) + ' %</dd></div><div><dt>Unter Bäumen/Dach</dt><dd>' + (p.cover || 0) + ' %</dd></div>';
-  html += '<div><dt>UV ' + fmtTime(sunT) + ', wolkenlos</dt><dd id="dUV">' + Math.round(u) + ' · ' + uc[1] + '</dd></div>';
-  html += '<div><dt>Höhe</dt><dd>' + swiss(p.z) + ' m ü. M.</dd></div>';
-  if (p.dw != null && p.dw < 2000) html += '<div><dt>Trinkbrunnen</dt><dd>' + swiss(p.dw) + ' m</dd></div>';
-  if (p.dc != null && p.dc < 2000) html += '<div><dt>WC</dt><dd>' + swiss(p.dc) + ' m</dd></div>';
-  html += '</dl>';
-  html += sparkSVG(p);
-  if (p.flags && p.flags.length) html += '<p class="note">Vor Ort: ' + p.flags.map(esc).join(', ') + '</p>';
-  if (p.note) html += '<p class="note">' + esc(p.note) + '</p>';
-  html += '<ul class="links">';
-  (p.zt || []).forEach(function (l) { html += '<li><a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' + esc(l[0]) + ' bei Zug Tourismus</a></li>'; });
-  if (p.osm) { var tp = { n: 'node', w: 'way', r: 'relation' }[p.osm[0]]; html += '<li><a href="https://www.openstreetmap.org/' + tp + '/' + p.osm.slice(1) + '" target="_blank" rel="noopener">In OpenStreetMap ansehen</a></li>'; }
-  html += '</ul>';
-  detailEl.innerHTML = html;
-  detailEl.hidden = false; listEl.hidden = true; scrollEl.scrollTop = 0; explorerEl.classList.add('has-detail');
-  $('#back').addEventListener('click', closeDetail);
-  detailCanvas = detailEl.querySelector('canvas');
-  if (detailCanvas && renderer && OR) {
-    var redraw = function () { if (!detailCanvas || !detailCanvas.isConnected) { OR.listeners.splice(OR.listeners.indexOf(redraw), 1); return; } drawCrop(detailCanvas, p); };
-    OR.listeners.push(redraw); redraw();
-  }
-}
-function updateDetailLive() {
-  if (!selected || detailEl.hidden) return;
-  var p = selected, s = shadeAt(p, sunT), u = uvi(sun.alt, p.z), uc = uvCat(u);
-  var d1 = $('#dShade'), d2 = $('#dUV'), sn = $('#sparkNow');
-  if (d1 && s != null) { d1.textContent = Math.round(s * 100) + ' %'; d1.previousElementSibling.textContent = 'Schatten ' + fmtTime(sunT); }
-  if (d2) { d2.textContent = Math.round(u) + ' · ' + uc[1]; d2.previousElementSibling.textContent = 'UV ' + fmtTime(sunT) + ', wolkenlos'; }
-  if (sn) { var x = (clamp((sunT - 8) / 11, 0, 1) * 300).toFixed(1); sn.setAttribute('x1', x); sn.setAttribute('x2', x); }
 }
 
 /* ---------------- labels ---------------- */
@@ -1180,83 +1673,72 @@ var labelsEl = $('#labels'), LBL = [], LBL_ORDER = [], PRIO = { muni: 0, lake: 1
 function addLabel(text, kind, E, N, sections, sub, elev) {
   var el = document.createElement('div');
   el.className = 'lbl ' + kind;
-  if (kind === 'muni') el.innerHTML = text + (sub ? '<small>' + sub + '</small>' : '');
-  else if (kind === 'peak') el.innerHTML = '<span>' + text + '</span><em>' + elev + '</em>';
+  if (kind === 'muni') el.innerHTML = esc(text) + (sub ? '<small>' + esc(sub) + '</small>' : '');
+  else if (kind === 'peak') el.innerHTML = '<span>' + esc(text) + '</span><em>' + elev + '</em>';
   else el.textContent = text;
   labelsEl.appendChild(el);
   var lift = kind === 'peak' ? 40 : kind === 'poi' ? 30 : 60;
-  LBL.push({ el: el, kind: kind, name: text, E: E, N: N, h: hAt(E, N), lift: lift, p: new THREE.Vector3(), s: sections, o: 0, occ: false, n: LBL.length, w: 0 });
+  LBL.push({ el: el, kind: kind, name: text, E: E, N: N, h: hAt(E, N), lift: lift, p: new THREE.Vector3(), s: sections || [], k: (sections || []).indexOf('kanton') >= 0, o: 0, occ: false, n: LBL.length, w: 0 });
+}
+function labelWant(L) {
+  var d = cam.d;
+  if (touring) { var key = TOUR[tourI].key; return (L.s.indexOf(key) >= 0 || (L.kind === 'muni' && key === 'kanton')) ? 1 : 0; }
+  if (L.kind === 'muni') return d > 5200 ? 1 : 0;
+  if (L.kind === 'lake') return L.k ? (d > 3200 ? 1 : 0) : (d > 6000 && d < 24000 ? 1 : 0);
+  if (L.kind === 'peak') return L.k ? (d > 2400 ? 1 : 0) : (d > 7000 && d < 26000 && MODE !== 'home' ? 1 : 0);
+  if (L.kind === 'river') return d > 2500 && d < 26000 ? 1 : 0;
+  return d > 500 && d < 9000 ? 1 : 0;
 }
 
-/* ---------------- camera choreography ---------------- */
+/* ---------------- camera ---------------- */
+var OVERVIEW = { E: 2684000, N: 1224300, d: 31000, hd: 10, p: 54 };
+var HOMEV = { E: 2683700, N: 1223000, d: 44000, hd: -22, p: 38 };
 var KEYS = {
-  hero:      { E: 2683400, N: 1222800, d: 72000, hd: -22, p: 36, ox: 0.04, oy: -0.21 },
-  kanton:    { E: 2684000, N: 1224200, d: 33500, hd: 0, p: 64, ox: 0.17, oy: 0.02 },
-  zug:       { E: 2681950, N: 1224350, d: 3900, hd: 100, p: 24, ox: 0.17, oy: 0.06 },
-  lorze:     { E: 2681200, N: 1226600, d: 25500, hd: -38, p: 52, ox: 0.17, oy: 0.02 },
-  aegeri:    { E: 2689500, N: 1219800, d: 9200, hd: 136, p: 33, ox: 0.17, oy: 0.03 },
-  berg:      { E: 2687300, N: 1225500, d: 10000, hd: 142, p: 34, ox: 0.17, oy: 0.04 },
-  walchwil:  { E: 2682900, N: 1216800, d: 9000, hd: 118, p: 27, ox: 0.17, oy: 0.04 },
-  spiel:     { E: 2680400, N: 1225600, d: 15500, hd: -16, p: 50, ox: 0.17, oy: 0.03 },
-  schatten:  { E: FEAT.E + 10, N: FEAT.N + 10, d: 520, hd: 28, p: 40, ox: 0.18, oy: 0.08 },
-  familie:   null
+  kanton:    { E: 2684000, N: 1224200, d: 33500, hd: 0, p: 64 },
+  zug:       { E: 2681950, N: 1224350, d: 3900, hd: 100, p: 26 },
+  lorze:     { E: 2681200, N: 1226600, d: 25500, hd: -38, p: 52 },
+  aegeri:    { E: 2689500, N: 1219800, d: 9200, hd: 136, p: 33 },
+  berg:      { E: 2687300, N: 1225500, d: 10000, hd: 142, p: 34 },
+  walchwil:  { E: 2682900, N: 1216800, d: 9000, hd: 118, p: 27 }
 };
-var ex = { E: 2684000, N: 1224300, d: 31000, hd: 10, p: 54, ox: 0.2, oy: 0.02 };
-KEYS.familie = ex;
-var HI = { hero: [], kanton: [], zug: ['Zug'], lorze: ['Baar', 'Steinhausen', 'Cham', 'Hünenberg', 'Risch'],
-  aegeri: ['Unterägeri', 'Oberägeri'], berg: ['Menzingen', 'Neuheim'], walchwil: ['Walchwil'], spiel: [], schatten: [], familie: [] };
-var PAR = {
-  hero: { focus: 0.35, cont: 0.25, muni: 0 }, kanton: { focus: 1, cont: 0.85, muni: 1 }, zug: { focus: 1, cont: 0.8, muni: 0.8 },
-  lorze: { focus: 1, cont: 0.7, muni: 0.8 }, aegeri: { focus: 1, cont: 0.85, muni: 0.8 }, berg: { focus: 1, cont: 0.85, muni: 0.8 },
-  walchwil: { focus: 1, cont: 0.85, muni: 0.8 }, spiel: { focus: 1, cont: 0.55, muni: 0.7 }, schatten: { focus: 0.4, cont: 0.2, muni: 0.2 },
-  familie: { focus: 1, cont: 0.55, muni: 0.7 }
-};
-var anchors = [];
-function measure() {
-  anchors = [];
-  var vh = window.innerHeight;
-  Array.prototype.forEach.call(document.querySelectorAll('[data-cam]'), function (s) {
-    var r = s.getBoundingClientRect(), top = r.top + window.scrollY, hgt = r.height, key = s.dataset.cam;
-    if (s.classList.contains('long')) {
-      anchors.push({ key: key, y: top + vh * 0.6, top: top, h: hgt, el: s, a0: top + vh * 0.6, a1: top + hgt - vh * 0.5 });
-      anchors.push({ key: key, y: top + hgt - vh * 0.5, top: top, h: hgt, el: s, a0: top + vh * 0.6, a1: top + hgt - vh * 0.5 });
-    } else anchors.push({ key: key, y: top + hgt * 0.5, top: top, h: hgt, el: s });
-  });
+var ex = { E: HOMEV.E, N: HOMEV.N, d: HOMEV.d, hd: HOMEV.hd, p: HOMEV.p }, cam = null, flight = null;
+var topBar = document.querySelector('.top'), capEl = $('#caption');
+/* layout boxes via offset* so running CSS transitions do not distort the measurement */
+function freeArea(W, H) {
+  var top = topBar.offsetHeight, x0 = 0, y0 = top, x1 = W, y1 = H;
+  if (touring) { if (narrowMQ.matches) y1 = capEl.offsetTop; else x0 = Math.min(W * 0.3, (capEl.offsetLeft + capEl.offsetWidth) * 0.6); }
+  else if (MODE === 'home') y1 = Math.max(top + 120, homeEl.offsetTop);
+  else if (narrowMQ.matches) y1 = Math.max(top + 100, panel.offsetTop);
+  else x0 = panel.offsetLeft + panel.offsetWidth;
+  return { x0: x0, y0: y0, x1: x1, y1: y1 };
 }
-function anchorY(key) { for (var i = 0; i < anchors.length; i++) if (anchors[i].key === key) return anchors[i].y; return 0; }
-function anchorOf(key) { for (var i = 0; i < anchors.length; i++) if (anchors[i].key === key) return anchors[i]; return null; }
-function story() {
-  var y = window.scrollY + window.innerHeight * 0.5, i = 0;
-  while (i < anchors.length - 1 && y >= anchors[i + 1].y) i++;
-  if (i >= anchors.length - 1) return { a: anchors.length - 1, b: anchors.length - 1, t: 0, y: y };
-  var A = anchors[i], B = anchors[i + 1];
-  return { a: i, b: i + 1, t: clamp((y - A.y) / (B.y - A.y), 0, 1), y: y };
+function viewOffsets(W, H) { var a = freeArea(W, H); return { ox: ((a.x0 + a.x1) / 2 - W / 2) / W, oy: ((a.y0 + a.y1) / 2 - H / 2) / H }; }
+function fitFactor() {
+  var W = window.innerWidth, H = window.innerHeight, a = freeArea(W, H), w = Math.max(1, a.x1 - a.x0), h = Math.max(1, a.y1 - a.y0), asp = w / h;
+  var f = asp < 1.25 ? clamp(1.25 / asp, 1, 2.4) : 1;
+  return f * clamp(Math.sqrt(H / h), 1, 1.35);
 }
+function fit(c) { var f = fitFactor(); return { E: c.E, N: c.N, d: c.d * (c.d < 3000 ? Math.min(f, 1.4) : f), hd: c.hd, p: c.p }; }
+function clampEx() { ex.E = clamp(ex.E, G.E0 + 500, G.E1 - 500); ex.N = clamp(ex.N, G.N0 + 500, G.N1 - 500); ex.d = clamp(ex.d, 200, 80000); ex.p = clamp(ex.p, 10, 86); }
 function angLerp(a, b, t) { var d = ((b - a + 540) % 360) - 180; return a + d * t; }
-function portraitAdjust(c) {
-  var asp = window.innerWidth / window.innerHeight, narrow = window.innerWidth < 760;
-  var f = asp < 1.25 ? clamp(1.25 / asp, 1, 2.3) : 1;
-  var isHero = c === KEYS.hero, near = c.d < 2000;
-  return { E: c.E, N: c.N, d: c.d * (near ? Math.min(f, 1.4) : f), hd: c.hd, p: narrow && c === KEYS.zug ? 36 : c.p,
-    ox: narrow ? (isHero ? 0.12 : 0) : c.ox, oy: narrow ? (isHero ? -0.13 : (c === ex ? -0.31 : (c === KEYS.schatten ? -0.27 : -0.2))) : c.oy };
-}
-function desiredCam(st) {
-  var A = portraitAdjust(KEYS[anchors[st.a].key]), B = portraitAdjust(KEYS[anchors[st.b].key]);
-  var t = sstep(0.16, 0.84, st.t);
-  var sep = Math.hypot(A.E - B.E, A.N - B.N), hop = clamp(sep / Math.min(A.d, B.d) * 0.22, 0, 0.9) * Math.sin(Math.PI * t);
-  var d = Math.exp(lerp(Math.log(A.d), Math.log(B.d), t)) * (1 + hop);
-  return { E: lerp(A.E, B.E, t), N: lerp(A.N, B.N, t), d: d, hd: angLerp(A.hd, B.hd, t), p: lerp(A.p, B.p, t) - hop * 6, ox: lerp(A.ox, B.ox, t), oy: lerp(A.oy, B.oy, t), t: t };
-}
-var flight = null;
 function flyTo(to) {
+  if (!cam) { ex.E = to.E; ex.N = to.N; ex.d = to.d; ex.hd = to.hd == null ? ex.hd : to.hd; ex.p = to.p == null ? ex.p : to.p; flight = null; return; }
   var from = { E: ex.E, N: ex.N, d: ex.d, hd: ex.hd, p: ex.p };
+  if (to.hd == null) to.hd = ex.hd; if (to.p == null) to.p = ex.p;
   var dist = Math.hypot(to.E - from.E, to.N - from.N);
   flight = { from: from, to: to, t0: performance.now(), dur: reduce ? 1 : clamp(900 + dist * 0.12 + Math.abs(Math.log(to.d / from.d)) * 260, 900, 2600),
     hop: clamp(dist / Math.min(from.d, to.d) * 0.35, 0, 1.6) };
 }
 function flyToMuni(m) {
   var size = Math.sqrt(m.ha * 10000);
-  flyTo({ E: (m.at[0] * 2 + m.c[0]) / 3, N: (m.at[1] * 2 + m.c[1]) / 3, d: clamp(size * 2.3, 6500, 15000), hd: ex.hd, p: 46 });
+  flyTo(fit({ E: (m.at[0] * 2 + m.c[0]) / 3, N: (m.at[1] * 2 + m.c[1]) / 3, d: clamp(size * 2.3, 6500, 15000), hd: ex.hd, p: 46 }));
+}
+function flyOverview() { flyTo(fit({ E: OVERVIEW.E, N: OVERVIEW.N, d: OVERVIEW.d, hd: ((ex.hd % 360) + 540) % 360 - 180 > 90 || ((ex.hd % 360) + 540) % 360 - 180 < -90 ? OVERVIEW.hd : ex.hd, p: OVERVIEW.p })); }
+function flyContext() {
+  if (!GL) return;
+  if (MODE === 'home') { flyTo(fit(HOMEV)); return; }
+  var g = MODE === 'sights' ? filt.sights.gem : MODE === 'familie' ? filt.familie.gem : MODE === 'events' ? filt.events.gem : '';
+  if (g && MUNI[g]) flyToMuni(MUNI[g]); else flyOverview();
 }
 function stepFlight(now) {
   if (!flight) return;
@@ -1267,7 +1749,6 @@ function stepFlight(now) {
   ex.hd = angLerp(f.hd, t.hd, e); ex.p = lerp(f.p, t.p, e);
   if (u >= 1) flight = null;
 }
-var cam = null, ptr = { x: 0, y: 0, sx: 0, sy: 0, cx: -1, cy: -1, moved: false, over: false }, drag = { on: false, hd: 0, p: 0, lx: 0, ly: 0, id: null, sx: 0, sy: 0, t0: 0, type: '' };
 function placeCamera(c, W, H) {
   var th = c.hd * DEG, ph = c.p * DEG, cp = Math.cos(ph), sp = Math.sin(ph);
   var h = hAt(c.E, c.N), tx = X(c.E), ty = Y(Math.max(h, 414)), tz = Z(c.N);
@@ -1280,6 +1761,7 @@ function placeCamera(c, W, H) {
   camera.aspect = W / H;
   camera.setViewOffset(W, H, -c.ox * W, -c.oy * H, W, H);
   camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
   U.uPx.value = 2 * Math.tan(camera.fov * Math.PI / 360) / H;
   U.uFogNear.value = c.d * 1.05; U.uFogFar.value = c.d * 3.6;
 }
@@ -1291,9 +1773,9 @@ function idAt(E, N) {
   var c = Math.min(IDW - 1, Math.floor((E - G.E0) / 20)), r = Math.min(IDH - 1, Math.floor((G.N1 - N) / 20));
   return Math.round(ids[(r * IDW + c) * 4] / 20);
 }
-function pick(cx, cy) {
-  ndc.set(cx / window.innerWidth * 2 - 1, -(cy / window.innerHeight) * 2 + 1);
-  ray.setFromCamera(ndc, camera);
+function setRay(cx, cy) { ndc.set(cx / window.innerWidth * 2 - 1, -(cy / (canvas.clientHeight || window.innerHeight)) * 2 + 1); ray.setFromCamera(ndc, camera); }
+function groundAt(cx, cy) {
+  setRay(cx, cy);
   var o = ray.ray.origin, d = ray.ray.direction, t = camera.near, prev = t, step = Math.max(4, cam.d / 320);
   for (var s = 0; s < 1600; s++) {
     var x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t, E = x + EC, N = NC - z;
@@ -1309,64 +1791,179 @@ function pick(cx, cy) {
   }
   return null;
 }
+function planeAt(cx, cy, h) {
+  setRay(cx, cy);
+  var o = ray.ray.origin, d = ray.ray.direction, yp = Y(h);
+  if (Math.abs(d.y) < 1e-6) return null;
+  var t = (yp - o.y) / d.y; if (t <= 0) return null;
+  return { E: o.x + d.x * t + EC, N: NC - (o.z + d.z * t), h: h };
+}
 
-/* ---------------- interaction ---------------- */
+/* ---------------- interaction: drag pans, right button or two fingers rotate, wheel or pinch zooms ---------------- */
 var tip = $('#tip'), tipT = $('#tipT'), tipA = $('#tipA'), tipB = $('#tipB'), hoverId = 0, hoverMk = null;
-function overUI(el) { return el && el.closest && el.closest('.card, .nav, button, a, .tip, .mapctl, select, input'); }
-function inFinale() { var y = window.scrollY + window.innerHeight * 0.5; return anchors.length && y > anchorY('familie') - window.innerHeight * 0.45; }
-window.addEventListener('pointermove', function (e) {
-  ptr.x = e.clientX / window.innerWidth * 2 - 1; ptr.y = e.clientY / window.innerHeight * 2 - 1;
-  ptr.cx = e.clientX; ptr.cy = e.clientY; ptr.moved = true; ptr.over = e.pointerType === 'mouse' && !overUI(e.target);
-  if (drag.on && e.pointerId === drag.id) {
-    var dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
-    if (inFinale()) { ex.hd -= dx * 0.22; ex.p = clamp(ex.p + dy * 0.15, 14, 82); flight = null; }
-    else { drag.hd -= dx * 0.18; drag.p = clamp(drag.p + dy * 0.12, -22, 26); }
-    drag.lx = e.clientX; drag.ly = e.clientY;
+var ptr = { cx: -1, cy: -1, moved: false, over: false }, PTS = {}, drag = { mode: null, g: null, lx: 0, ly: 0, sx: 0, sy: 0, t0: 0, moved: 0, type: '' }, lastInteract = 0;
+function nPts() { return Object.keys(PTS).length; }
+function syncCamNow() {
+  if (!cam) return;
+  cam.E = ex.E; cam.N = ex.N; cam.d = ex.d; cam.hd = ex.hd; cam.p = ex.p;
+  vz = lerp(1.0, VZ, sstep(1800, 7500, cam.d)); U.uVZ.value = vz; U.uBZ.value = vz;
+  placeCamera(cam, window.innerWidth, canvas.clientHeight || window.innerHeight);
+}
+function panTo(cx, cy) {
+  if (!drag.g) return;
+  var p = planeAt(cx, cy, drag.g.h); if (!p) return;
+  ex.E += drag.g.E - p.E; ex.N += drag.g.N - p.N; clampEx(); syncCamNow();
+}
+function pinchState() {
+  var k = Object.keys(PTS), a = PTS[k[0]], b = PTS[k[1]];
+  return { dist: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+}
+function beginPan(x, y) { drag.mode = 'pan'; drag.g = groundAt(x, y) || planeAt(x, y, hAt(ex.E, ex.N)); }
+canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+canvas.addEventListener('pointerdown', function (e) {
+  lastInteract = performance.now();
+  if (touring) stopTour();
+  flight = null;
+  try { canvas.setPointerCapture(e.pointerId); } catch (er) {}
+  PTS[e.pointerId] = { x: e.clientX, y: e.clientY };
+  var n = nPts();
+  drag.lx = e.clientX; drag.ly = e.clientY;
+  if (n === 1) {
+    drag.sx = e.clientX; drag.sy = e.clientY; drag.t0 = performance.now(); drag.moved = 0; drag.type = e.pointerType;
+    if (e.pointerType === 'mouse' && (e.button === 2 || e.button === 1 || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey)) drag.mode = 'rot';
+    else if (e.pointerType !== 'mouse' || e.button === 0) beginPan(e.clientX, e.clientY);
+    if (e.pointerType === 'mouse') document.body.style.cursor = drag.mode === 'rot' ? 'move' : 'grabbing';
+  } else if (n === 2) {
+    var s = pinchState(); drag.mode = 'pinch'; drag.moved = 99; drag.p0 = s; drag.d0 = ex.d; drag.hd0 = ex.hd; drag.pp0 = ex.p;
   }
-}, { passive: true });
-document.addEventListener('pointerleave', function () { ptr.over = false; });
-window.addEventListener('pointerdown', function (e) {
-  if (overUI(e.target)) return;
-  drag.sx = e.clientX; drag.sy = e.clientY; drag.t0 = performance.now(); drag.type = e.pointerType;
-  if (e.pointerType !== 'mouse' || e.button !== 0) return;
   e.preventDefault();
-  drag.on = true; drag.id = e.pointerId; drag.lx = e.clientX; drag.ly = e.clientY;
-  document.body.style.cursor = 'grabbing';
 });
-window.addEventListener('pointerup', function (e) {
-  var moved = Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy), quick = performance.now() - drag.t0 < 450;
-  if (drag.on) { drag.on = false; document.body.style.cursor = ''; }
-  if (overUI(e.target) || moved > 6 || !quick) return;
-  var mk = pickMarker(e.clientX, e.clientY, window.innerWidth, canvas.clientHeight || window.innerHeight);
-  if (mk && mk.p) { selectPlace(mk.p, false); return; }
-  if (inFinale() && hoverId > 0 && e.pointerType === 'mouse') flyToMuni(D.munis[hoverId - 1]);
+canvas.addEventListener('pointermove', function (e) {
+  ptr.cx = e.clientX; ptr.cy = e.clientY; ptr.moved = true; ptr.over = e.pointerType === 'mouse';
+  if (!PTS[e.pointerId]) return;
+  PTS[e.pointerId] = { x: e.clientX, y: e.clientY };
+  lastInteract = performance.now();
+  var dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
+  drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy));
+  if (drag.mode === 'pan' && nPts() === 1) panTo(e.clientX, e.clientY);
+  else if (drag.mode === 'rot') { ex.hd -= dx * 0.25; ex.p = clamp(ex.p + dy * 0.2, 10, 86); }
+  else if (drag.mode === 'pinch' && nPts() >= 2) {
+    var s = pinchState();
+    ex.d = clamp(drag.d0 * drag.p0.dist / Math.max(20, s.dist), 200, 80000);
+    ex.hd = drag.hd0 - (s.ang - drag.p0.ang) / DEG;
+    ex.p = clamp(drag.pp0 + (s.my - drag.p0.my) * 0.2, 10, 86);
+    syncCamNow();
+  }
+  drag.lx = e.clientX; drag.ly = e.clientY;
 });
-window.addEventListener('wheel', function (e) {
-  if (!inFinale() || !e.ctrlKey || overUI(e.target)) return;
-  e.preventDefault(); flight = null;
-  ex.d = clamp(ex.d * Math.exp(e.deltaY * 0.01), 260, 60000);
+function endPointer(e) {
+  if (!PTS[e.pointerId]) return;
+  delete PTS[e.pointerId];
+  var n = nPts();
+  if (n === 1 && drag.mode === 'pinch') { var k = Object.keys(PTS)[0]; drag.lx = PTS[k].x; drag.ly = PTS[k].y; beginPan(PTS[k].x, PTS[k].y); drag.moved = 99; return; }
+  if (n > 0) return;
+  var wasClick = drag.moved < 6 && performance.now() - drag.t0 < 500 && e.type === 'pointerup';
+  drag.mode = null; drag.g = null; document.body.style.cursor = '';
+  if (wasClick) mapClick(e.clientX, e.clientY, e.pointerType);
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('pointerleave', function () { ptr.over = false; ptr.moved = true; });
+canvas.addEventListener('wheel', function (e) {
+  e.preventDefault(); flight = null; lastInteract = performance.now(); if (touring) stopTour();
+  var dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+  if (e.ctrlKey) dy *= 3;
+  zoomAt(e.clientX, e.clientY, Math.exp(clamp(dy, -240, 240) * 0.0016));
 }, { passive: false });
-$('#zoomIn').addEventListener('click', function () { flyTo({ E: ex.E, N: ex.N, d: clamp(ex.d / 2, 260, 60000), hd: ex.hd, p: ex.p }); });
-$('#zoomOut').addEventListener('click', function () { flyTo({ E: ex.E, N: ex.N, d: clamp(ex.d * 2, 260, 60000), hd: ex.hd, p: ex.p }); });
-$('#home').addEventListener('click', function () { closeDetail(); flyTo({ E: 2684000, N: 1224300, d: 31000, hd: 10, p: 54 }); });
-function toggleBtn(id, get, set) { var b = $(id); b.addEventListener('click', function () { set(!get()); b.setAttribute('aria-pressed', String(get())); markerVisDirty = true; }); }
-toggleBtn('#tWater', function () { return showWater; }, function (v) { showWater = v; });
-toggleBtn('#tWC', function () { return showWC; }, function (v) { showWC = v; });
-toggleBtn('#tPhoto', function () { return photoOn; }, function (v) { photoOn = v; });
+function zoomAt(x, y, f) {
+  var nd = clamp(ex.d * f, 200, 80000), g = x != null ? groundAt(x, y) : null;
+  if (g) { var k = 1 - nd / ex.d; ex.E += (g.E - ex.E) * k; ex.N += (g.N - ex.N) * k; }
+  ex.d = nd; clampEx();
+}
+canvas.addEventListener('keydown', function (e) {
+  var k = e.key, step = ex.d * 0.12, th = ex.hd * DEG, fE = Math.sin(th), fN = Math.cos(th), rE = Math.cos(th), rN = -Math.sin(th), used = true;
+  if (k === 'ArrowUp') { ex.E += fE * step; ex.N += fN * step; }
+  else if (k === 'ArrowDown') { ex.E -= fE * step; ex.N -= fN * step; }
+  else if (k === 'ArrowLeft') { ex.E -= rE * step; ex.N -= rN * step; }
+  else if (k === 'ArrowRight') { ex.E += rE * step; ex.N += rN * step; }
+  else if (k === '+' || k === '=') zoomAt(null, null, 0.7);
+  else if (k === '-' || k === '_') zoomAt(null, null, 1.4);
+  else if (k === 'q' || k === 'Q') ex.hd -= 10;
+  else if (k === 'e' || k === 'E') ex.hd += 10;
+  else if (k === 'PageUp') ex.p = clamp(ex.p + 6, 10, 86);
+  else if (k === 'PageDown') ex.p = clamp(ex.p - 6, 10, 86);
+  else used = false;
+  if (used) { e.preventDefault(); flight = null; clampEx(); lastInteract = performance.now(); }
+});
+function mapClick(x, y, type) {
+  var W = window.innerWidth, H = canvas.clientHeight || window.innerHeight;
+  var mk = pickMarker(x, y, W, H);
+  if (mk && (mk.type === 'fam' || mk.type === 'sight' || mk.type === 'event')) { pick(mk); return; }
+  var g = groundAt(x, y), id = g ? idAt(g.E, g.N) : 0;
+  if (!id) return;
+  var m = D.munis[id - 1], gm = GEMBY[m.name];
+  if (MODE === 'home' || MODE === 'gemeinden') { pick(gm); return; }
+  var f = filt[MODE]; if (!f) return;
+  if (SEL) { closeDetail(true); }
+  f.gem = m.name; renderHead(); renderList(); markerVisDirty = true; syncHash(); flyToMuni(m);
+}
+$('#zoomIn').addEventListener('click', function () { flyTo({ E: ex.E, N: ex.N, d: clamp(ex.d / 2, 200, 80000), hd: ex.hd, p: ex.p }); });
+$('#zoomOut').addEventListener('click', function () { flyTo({ E: ex.E, N: ex.N, d: clamp(ex.d * 2, 200, 80000), hd: ex.hd, p: ex.p }); });
+$('#homeBtn').addEventListener('click', function () { if (touring) stopTour(true); flyTo(fit(MODE === 'home' ? HOMEV : OVERVIEW)); });
+$('#northBtn').addEventListener('click', function () { flyTo({ E: ex.E, N: ex.N, d: ex.d, hd: 0, p: ex.p }); });
+$('#tPhoto').addEventListener('click', function () { photoOn = !photoOn; this.setAttribute('aria-pressed', String(photoOn)); });
+
+/* ---------------- tour over the canton ---------------- */
+var TOUR = [
+  { key: 'kanton', kick: 'Der Kanton', title: 'Elf Gemeinden auf 239 km²', text: 'Vom Zugersee auf 414 m ü. M. bis zum Wildspitz auf 1580 m. Die blauen Linien zeigen die Grenzen von Kanton und Gemeinden, Stand 2026.', hi: [] },
+  { key: 'zug', kick: 'Stadt Zug', title: 'Die Stadt am See', text: 'Altstadt, Zytturm und Seeufer liegen auf wenigen hundert Metern. Hinter der Stadt steigt der Zugerberg auf 1039 m an, und das Gemeindegebiet reicht bis an den Wildspitz.', hi: ['Zug'] },
+  { key: 'lorze', kick: 'Baar · Steinhausen · Cham · Hünenberg · Risch', title: 'Der Weg der Lorze', text: 'Die Lorze verlässt den Ägerisee bei Unterägeri, fliesst durch das Lorzentobel und erreicht bei Baar die Ebene. Sie mündet in den Zugersee, tritt bei Cham wieder aus und fliesst an der nördlichen Kantonsgrenze in die Reuss.', hi: ['Baar', 'Steinhausen', 'Cham', 'Hünenberg', 'Risch'] },
+  { key: 'aegeri', kick: 'Unterägeri · Oberägeri', title: 'Das Ägerital', text: 'Der Ägerisee liegt auf 724 m ü. M., rund 310 m über dem Zugersee. Seine tiefste Stelle liegt mehr als 80 m unter dem Wasserspiegel. Am Südende erinnert das Denkmal bei Morgarten an die Schlacht von 1315.', hi: ['Unterägeri', 'Oberägeri'] },
+  { key: 'berg', kick: 'Menzingen · Neuheim', title: 'Hügelland über dem Tobel', text: 'Nördlich und östlich des Lorzentobels steigt das Land zu einem welligen Plateau an. Neuheim liegt zwischen 482 und 766 m, Menzingen reicht bis an den Gottschalkenberg.', hi: ['Menzingen', 'Neuheim'] },
+  { key: 'walchwil', kick: 'Walchwil · Wildspitz', title: 'Am Hang des Rossbergs', text: 'Walchwil liegt am Ostufer des Zugersees und reicht bis auf 1248 m. Darüber erreicht der Kanton am Wildspitz seinen höchsten Punkt, direkt an der Grenze zum Kanton Schwyz.', hi: ['Walchwil'] }
+];
+var tourI = 0, tourT0 = 0, TOUR_DUR = 10000, lorzeStart = 0, lorzeDrawn = 0, tourPaused = false;
+function startTour() {
+  touring = true; document.body.classList.add('touring'); capEl.hidden = false; markerVisDirty = true;
+  tourGo(0);
+}
+function tourGo(i) {
+  tourI = clamp(i, 0, TOUR.length - 1); var s = TOUR[tourI];
+  flyTo(fit(KEYS[s.key]));
+  $('#capKick').textContent = s.kick; $('#capTitle').textContent = s.title; $('#capText').textContent = s.text;
+  $('#capStep').textContent = (tourI + 1) + ' / ' + TOUR.length;
+  $('#capPrev').disabled = tourI === 0; $('#capNext').textContent = tourI === TOUR.length - 1 ? 'Ende' : 'Weiter';
+  tourT0 = performance.now();
+  if (s.key === 'lorze') { lorzeStart = performance.now(); lorzeDrawn = 0; }
+}
+function stepTour(now) {
+  if (!touring) return;
+  var u = clamp((now - tourT0) / TOUR_DUR, 0, 1);
+  $('#capBar').style.width = (u * 100).toFixed(1) + '%';
+  if (u >= 1 && !tourPaused) { if (tourI < TOUR.length - 1) tourGo(tourI + 1); else stopTour(); }
+}
+function stopTour(silent) {
+  if (!touring) return;
+  touring = false; document.body.classList.remove('touring'); capEl.hidden = true; markerVisDirty = true;
+  if (!silent) flyContext();
+}
+$('#tourBtn').addEventListener('click', startTour);
+$('#capPrev').addEventListener('click', function () { tourGo(tourI - 1); });
+$('#capNext').addEventListener('click', function () { if (tourI < TOUR.length - 1) tourGo(tourI + 1); else stopTour(); });
+$('#capStop').addEventListener('click', function () { stopTour(); });
+capEl.addEventListener('pointerenter', function () { tourPaused = true; });
+capEl.addEventListener('pointerleave', function () { tourPaused = false; tourT0 = Math.max(tourT0, performance.now() - TOUR_DUR * 0.6); });
 
 /* ---------------- frame loop ---------------- */
-var HUDtick = 0, tReady = 0, grown = 0, lorzeDrawn = 0, last = performance.now(), navLinks = Array.prototype.slice.call(document.querySelectorAll('#nav a')),
-    prog = $('#prog'), mark = $('#mark'), north = $('#north'), docH = 1, ready = false, hiCur = new Array(12).fill(0), cur = { focus: 0.35, cont: 0.25, muni: 0 };
-var tmpV = new THREE.Vector3(), markerAlpha = 0, wasFinale = false, lastListUpd = 0, lastDetailUpd = 0;
+var HUDtick = 0, tReady = 0, last = performance.now(), north = $('#north'), ready = false, hiCur = new Array(12).fill(0), cur = { focus: 0.6, cont: 0.45, muni: 0.35 };
+var tmpV = new THREE.Vector3(), markerAlpha = 0, lastListUpd = 0, lastDetailUpd = 0;
 var prCap = dpr0, frameTimes = [], prLowered = false;
 function applyPR(W, H) { renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, prCap, Math.sqrt(3.4e6 / (W * H)))); }
 function resize() {
   var W = window.innerWidth, H = canvas.clientHeight || window.innerHeight;
   applyPR(W, H);
   renderer.setSize(W, H, false);
-  measure();
   LBL.forEach(function (L) { L.bw = 0; });
-  docH = document.documentElement.scrollHeight;
 }
 window.addEventListener('resize', resize);
 window.addEventListener('load', resize);
@@ -1377,134 +1974,105 @@ function frame(now) {
   if (!TEST && !prLowered && ready && rawDt > 0 && rawDt < 0.5) { frameTimes.push(rawDt); if (frameTimes.length > 90) { frameTimes.shift(); var avg = frameTimes.reduce(function (a, b) { return a + b; }, 0) / frameTimes.length; if (avg > 0.034) { prLowered = true; prCap = Math.max(1, prCap * 0.7); resize(); } } }
   var W = window.innerWidth, H = canvas.clientHeight || window.innerHeight;
   if (!reduce) U.uTime.value = now / 1000;
-  var fin = inFinale();
-  if (fin !== wasFinale) { wasFinale = fin; document.body.classList.toggle('explore', fin); if (fin && pendingFly) { var pf = pendingFly; pendingFly = null; flyTo({ E: pf.E, N: pf.N, d: placeDistance(pf), hd: ex.hd, p: 42 }); } }
-  stepFlight(now);
-  if (playing) { var nt = sunT + (now - playLast) / 1000 * 1.1; playLast = now; if (nt > 19) nt = 8; setSunT(nt, 'play'); }
-  var st = story(), want = desiredCam(st);
-  var keyA = anchors[st.a].key, keyB = anchors[st.b].key, tb = want.t;
-  // scroll-linked sun inside the shade chapter
-  var sa = anchorOf('schatten');
-  if (sa) {
-    var inSh = (keyA === 'schatten' || keyB === 'schatten');
-    if (inSh && !userSunLock && !playing) { var u = clamp((st.y - sa.a0) / Math.max(1, sa.a1 - sa.a0), 0, 1); setSunT(8.5 + u * 10, 'scroll'); }
-    if (!inSh && !fin && userSunLock && !playing) userSunLock = false;
+  stepFlight(now); stepTour(now);
+  if (playing) { var nt = sunT + (now - playLast) / 1000 * 1.1; playLast = now; if (nt > 21) nt = 7; setSunT(nt, 'play'); }
+  if (MODE === 'home' && !touring && !drag.mode && !flight && now - lastInteract > 2500 && !reduce && !TEST) ex.hd += dt * 2.4;
+  var off = viewOffsets(W, H);
+  if (!cam) {
+    cam = { E: ex.E, N: ex.N, d: ex.d, hd: ex.hd, p: ex.p, ox: off.ox, oy: off.oy };
+    if (!reduce && !TEST) { cam.d *= 1.45; cam.hd -= 28; cam.p += 14; }
   }
-  var heroW = keyA === 'hero' ? 1 - tb : 0;
-  ptr.sx = lerp(ptr.sx, fine ? ptr.x : 0, 1 - Math.exp(-dt * 2.5)); ptr.sy = lerp(ptr.sy, fine ? ptr.y : 0, 1 - Math.exp(-dt * 2.5));
-  if (!drag.on) { drag.hd *= Math.exp(-dt * 1.2); drag.p *= Math.exp(-dt * 1.2); }
-  var par = fin ? 0.25 : 1;
-  want.hd += (ptr.sx * 4.5 + drag.hd) * par + (reduce ? 0 : Math.sin(now / 1000 * 0.09) * 7 * heroW);
-  want.p = clamp(want.p - ptr.sy * 2.5 * par + drag.p * par, 12, 82);
-  if (!cam) { cam = { E: want.E, N: want.N, d: want.d, hd: want.hd, p: want.p, ox: want.ox, oy: want.oy };
-    if (!reduce && !TEST && st.a === 0 && st.t < 0.05) { cam.d *= 1.45; cam.hd -= 28; cam.p += 14; } }
-  var kf = TEST ? 1 : 1 - Math.exp(-dt * (fin ? 5 : 3.2));
-  cam.E = lerp(cam.E, want.E, kf); cam.N = lerp(cam.N, want.N, kf);
-  cam.d = Math.exp(lerp(Math.log(cam.d), Math.log(want.d), kf));
-  cam.hd = angLerp(cam.hd, want.hd, kf); cam.p = lerp(cam.p, want.p, kf); cam.ox = lerp(cam.ox, want.ox, kf); cam.oy = lerp(cam.oy, want.oy, kf);
-  // vertical exaggeration: true scale close up, 1.6x for the overview
+  var cdt = Math.min(0.25, Math.max(0, rawDt)), kf = (TEST || drag.mode) ? 1 : 1 - Math.exp(-cdt * (flight ? 14 : 6)), ko = TEST ? 1 : 1 - Math.exp(-cdt * 6);
+  cam.E = lerp(cam.E, ex.E, kf); cam.N = lerp(cam.N, ex.N, kf);
+  cam.d = Math.exp(lerp(Math.log(cam.d), Math.log(ex.d), kf));
+  cam.hd = angLerp(cam.hd, ex.hd, kf); cam.p = lerp(cam.p, ex.p, kf); cam.ox = lerp(cam.ox, off.ox, ko); cam.oy = lerp(cam.oy, off.oy, ko);
   vz = lerp(1.0, VZ, sstep(1800, 7500, cam.d));
   U.uVZ.value = vz; U.uBZ.value = vz;
   placeCamera(cam, W, H);
   U.uSunMix.value = sstep(9500, 4300, cam.d);
   treeMat.uniforms.uTreeGrow.value = sstep(3300, 1900, cam.d);
 
-  var pa = PAR[keyA], pb = PAR[keyB];
-  ['focus', 'cont', 'muni'].forEach(function (k) { cur[k] = lerp(cur[k], lerp(pa[k], pb[k], tb), kf); });
+  var home = MODE === 'home' && !touring;
+  var tg = home ? { focus: 0.6, cont: 0.45, muni: 0.35 } : touring ? { focus: 1, cont: 0.85, muni: 0.9 } : { focus: 1, cont: 0.7, muni: MODE === 'gemeinden' ? 1 : 0.75 };
+  ['focus', 'cont', 'muni'].forEach(function (k) { cur[k] = lerp(cur[k], tg[k], ko); });
   var hiTarget = new Array(12).fill(0);
-  (HI[keyA] || []).forEach(function (n) { hiTarget[MUNI[n].id] += 1 - tb; });
-  (HI[keyB] || []).forEach(function (n) { hiTarget[MUNI[n].id] += tb; });
-  if (fin && filt.gem && MUNI[filt.gem]) hiTarget[MUNI[filt.gem].id] = 1;
-  for (var i = 0; i < 12; i++) hiCur[i] = lerp(hiCur[i], hiTarget[i], kf);
+  if (touring) TOUR[tourI].hi.forEach(function (n) { hiTarget[MUNI[n].id] = 1; });
+  else if (MODE === 'gemeinden' && selGem) hiTarget[selGem.m.id] = 1;
+  else if (filt[MODE] && filt[MODE].gem && MUNI[filt[MODE].gem]) hiTarget[MUNI[filt[MODE].gem].id] = 1;
+  for (var i = 0; i < 12; i++) hiCur[i] = lerp(hiCur[i], hiTarget[i], ko);
   var TU = terrainMat.uniforms;
   TU.uFocus.value = cur.focus; TU.uContourA.value = cur.cont; TU.uHiv.value = hiCur; TU.uHiAny.value = Math.min(1, Math.max.apply(null, hiCur));
   var intro = (reduce || TEST) ? 1 : sstep(0, 1, (now - tReady) / 2600);
   if (R.canton) R.canton.material.uniforms.uDraw.value = ready ? intro : 0;
   if (R.muni) R.muni.material.uniforms.uOpacity.value = 0.8 * Math.max(cur.muni, 0) * (1 - U.uOrthoMix.value * 0.5);
-  var yK = anchorY('kanton'), yZ = anchorY('zug'), yL = anchorY('lorze');
-  grown = Math.max(grown, clamp((st.y - yK) / (yZ - yK), 0, 1));
-  if (fin || anchors[st.a].y > yL) grown = 1;
-  bldMat.uniforms.uGrow.value = reduce ? (grown > 0.02 ? 1.2 : 0) : grown * 1.2;
-  lorzeDrawn = Math.max(lorzeDrawn, clamp((st.y - yZ - (yL - yZ) * 0.25) / ((yL - yZ) * 0.75), 0, 1));
-  if (R.lorze) { R.lorze.material.uniforms.uDraw.value = lorzeDrawn * 1.001; R.lorze.material.uniforms.uOpacity.value = lorzeDrawn > 0 ? 1 - U.uOrthoMix.value * 0.4 : 0;
-    R.cross.material.uniforms.uOpacity.value = 0.8 * sstep(0.55, 0.65, lorzeDrawn) * (1 - U.uOrthoMix.value); }
+  var grown = (reduce || TEST) ? 1 : clamp((now - tReady - 800) / 2800, 0, 1);
+  bldMat.uniforms.uGrow.value = ready ? grown * 1.2 : 0;
+  if (touring && TOUR[tourI].key === 'lorze') lorzeDrawn = clamp((now - lorzeStart - 700) / 3800, 0, 1);
+  if (R.lorze) {
+    var lo = touring && lorzeDrawn > 0 ? 1 - U.uOrthoMix.value * 0.4 : 0;
+    R.lorze.material.uniforms.uDraw.value = lorzeDrawn * 1.001; R.lorze.material.uniforms.uOpacity.value = lerp(R.lorze.material.uniforms.uOpacity.value, lo, ko);
+    R.cross.material.uniforms.uOpacity.value = 0.8 * sstep(0.55, 0.65, lorzeDrawn) * (touring ? 1 : 0) * (1 - U.uOrthoMix.value);
+  }
   if (R.shore) R.shore.material.uniforms.uOpacity.value = 0.65 * (1 - U.uOrthoMix.value * 0.6);
 
-  // markers per chapter
-  var wSp = (keyA === 'spiel' ? 1 - tb : 0) + (keyB === 'spiel' ? tb : 0), wSh = (keyA === 'schatten' ? 1 - tb : 0) + (keyB === 'schatten' ? tb : 0);
-  var mode = fin ? 'familie' : (wSh > wSp ? 'schatten' : (wSp > 0 ? 'spiel' : 'none'));
-  var mTarget = fin ? 1 : clamp((wSp + wSh) * 1.6 - 0.3, 0, 1);
-  // outline of the featured playground in the shade chapter
-  var wantFeat = !fin && wSh > 0.5;
-  if (wantFeat && !featOutline && FEAT.poly) { featOutline = (function () { var keep = outlineMesh; outlineMesh = null; makeOutline(FEAT); var m = outlineMesh; outlineMesh = keep; return m; })(); }
-  if (featOutline) featOutline.visible = wantFeat;
-  markerAlpha = lerp(markerAlpha, clamp(mTarget, 0, 1), TEST ? 1 : 1 - Math.exp(-dt * 6));
-  updateMarkers(mode, markerAlpha);
+  markerAlpha = lerp(markerAlpha, ready && !touring && MODE !== 'home' ? 1 : 0, TEST ? 1 : 1 - Math.exp(-dt * 6));
+  updateMarkers(markerAlpha);
 
-  // trees, aerial images, sun shadow map
   updateTrees();
   updateOrtho(now);
   updateShadow(now);
 
-  // list + detail refresh on time change (throttled)
-  if (listDirty && (fin || !listEl.childElementCount) && now - lastListUpd > 120) { lastListUpd = now; renderList(); }
-  if (selected && now - lastDetailUpd > 100) { lastDetailUpd = now; updateDetailLive(); }
+  if (listDirty && now - lastListUpd > 150) { if (MODE === 'familie') { lastListUpd = now; renderList(); } else listDirty = false; }
+  if (SEL && now - lastDetailUpd > 100) { lastDetailUpd = now; updateDetailLive(); }
 
   // hover
-  if (ptr.moved || drag.on || (ptr.over && HUDtick % 4 === 0)) {
+  if (ptr.moved || (ptr.over && HUDtick % 4 === 0)) {
     ptr.moved = false;
-    hoverMk = (ready && ptr.over && fine && !drag.on) ? pickMarker(ptr.cx, ptr.cy, W, H) : null;
-    var hit = (!hoverMk && ready && ptr.over && fine) ? pick(ptr.cx, ptr.cy) : null;
+    hoverMk = (ready && ptr.over && fine && !drag.mode) ? pickMarker(ptr.cx, ptr.cy, W, H) : null;
+    var hit = (!hoverMk && ready && ptr.over && fine && !drag.mode) ? groundAt(ptr.cx, ptr.cy) : null;
     hoverId = hit ? idAt(hit.E, hit.N) : 0;
-    TU.uHover.value = hoverId > 0 ? hoverId : -1;
-    var tx, ty;
+    TU.uHover.value = hoverId > 0 && !touring ? hoverId : -1;
     if (hoverMk) {
-      var hp = hoverMk.p;
-      if (hp) {
-        tipT.textContent = hp.title;
-        tipA.textContent = subLine(hp);
+      var hp = hoverMk;
+      if (hp.type === 'fam') {
+        tipT.textContent = hp.title; tipA.textContent = famSub(hp);
         var hs = shadeAt(hp, sunT);
-        tipB.textContent = hs != null ? 'Schatten um ' + fmtTime(sunT) + ' Uhr: ' + Math.round(hs * 100) + ' %' : (hp.zt ? 'Tipp von Zug Tourismus' : CATS[hp.cat].t);
-      } else {
-        tipT.textContent = hoverMk.type === 'w' ? 'Trinkbrunnen' : 'WC'; tipA.textContent = hoverMk.wick ? 'mit Wickeltisch' : ''; tipB.textContent = '';
-      }
+        tipB.textContent = hs != null ? 'Schatten am 21. Juli um ' + fmtTime(sunT) + ' Uhr: ' + Math.round(hs * 100) + ' %' : (hp.zt ? 'Tipp von Zug Tourismus' : CATS[hp.cat].t);
+      } else if (hp.type === 'sight') { tipT.textContent = hp.title; tipA.textContent = hp.kind; tipB.textContent = hp.gem; }
+      else if (hp.type === 'event') { var o = nextOcc(hp, Date.now()); tipT.textContent = hp.title; tipA.textContent = o ? occText(o) : ''; tipB.textContent = [hp.venue, hp.gem].filter(Boolean).join(' · '); }
+      else { tipT.textContent = hp.type === 'w' ? 'Trinkbrunnen' : 'WC'; tipA.textContent = hp.wick ? 'mit Wickeltisch' : ''; tipB.textContent = ''; }
       document.body.style.cursor = 'pointer';
-    } else if (hit && hoverId > 0 && !drag.on) {
+    } else if (hit && hoverId > 0) {
       var m = D.munis[hoverId - 1];
       tipT.textContent = m.name;
       tipA.textContent = dec(m.ha / 100) + ' km² · ' + m.hmin + '–' + m.hmax + ' m';
       tipB.textContent = 'Hier ' + Math.round(hit.h) + ' m · ' + swiss(hit.E) + ' / ' + swiss(hit.N);
-      document.body.style.cursor = fin ? 'pointer' : '';
+      document.body.style.cursor = 'pointer';
     }
-    if (hoverMk || (hit && hoverId > 0 && !drag.on)) {
-      tx = ptr.cx + 18; ty = ptr.cy + 18;
+    if (hoverMk || (hit && hoverId > 0)) {
+      var tx = ptr.cx + 18, ty = ptr.cy + 18;
       if (tx > W - 290) tx = ptr.cx - 290; if (ty > window.innerHeight - 100) ty = ptr.cy - 100;
       tip.style.transform = 'translate(' + tx + 'px,' + ty + 'px)';
       tip.classList.add('on');
-    } else { tip.classList.remove('on'); if (!drag.on) document.body.style.cursor = ''; }
+    } else { tip.classList.remove('on'); if (!drag.mode) document.body.style.cursor = ''; }
   }
 
-  // callout for the selected place
-  if (selected && fin) {
-    tmpV.set(X(selected.E), Y(hAt(selected.E, selected.N)), Z(selected.N)).project(camera);
+  // callout for the selected item
+  if (SEL && SEL.E && (SEL.type !== 'event' || SEL.exact)) {
+    tmpV.set(X(SEL.E), Y(hAt(SEL.E, SEL.N)), Z(SEL.N)).project(camera);
     if (tmpV.z < 1 && Math.abs(tmpV.x) < 1.1 && Math.abs(tmpV.y) < 1.1) {
       var csz = MK.mat ? MK.mat.uniforms.uSize.value * 1.45 : 30;
       calloutEl.style.transform = 'translate3d(' + ((tmpV.x + 1) / 2 * W + csz * 0.6).toFixed(1) + 'px,' + ((1 - tmpV.y) / 2 * H - csz * 1.25).toFixed(1) + 'px,0) translateY(-50%)';
-      if (calloutEl._p !== selected) { calloutEl._p = selected; calloutEl.innerHTML = esc(selected.title) + '<small>' + esc(selected.kind + ' · ' + selected.gem) + '</small>'; }
+      if (calloutEl._p !== SEL) { calloutEl._p = SEL; calloutEl.innerHTML = esc(SEL.title) + '<small>' + esc(itemSub(SEL)) + '</small>'; }
       calloutEl.classList.add('on');
     } else calloutEl.classList.remove('on');
   } else calloutEl.classList.remove('on');
 
   // labels
-  var wA = 1 - tb, wB = tb, placed = [];
-  var labelFade = 1 - sstep(2600, 1500, cam.d) * 0.85;
+  var placed = [], labelFade = 1 - sstep(2600, 1500, cam.d) * 0.85;
   for (i = 0; i < LBL.length; i++) {
-    var L = LBL[i], want_o = 0;
-    if (L.s.indexOf(keyA) >= 0) want_o += wA;
-    if (L.s.indexOf(keyB) >= 0) want_o += wB;
-    if (fin && L.kind === 'muni' && cam.d > 5000) want_o = Math.max(want_o, 1);
-    want_o = sstep(0.35, 0.85, want_o) * (L.kind === 'muni' ? 1 : labelFade);
-    if (!ready) want_o = 0;
+    var L = LBL[i], want_o = ready ? labelWant(L) : 0;
+    if (L.kind !== 'muni') want_o *= labelFade;
     L.p.set(X(L.E), Y(L.h) + L.lift, Z(L.N));
     tmpV.copy(L.p).project(camera);
     var vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.08 && Math.abs(tmpV.y) < 1.08;
@@ -1519,8 +2087,10 @@ function frame(now) {
     if (!vis || L.occ) want_o = 0;
     L.sx = (tmpV.x + 1) / 2 * W; L.sy = (1 - tmpV.y) / 2 * H; L.want = want_o;
   }
+  var fa = freeArea(W, H);
   for (i = 0; i < LBL_ORDER.length; i++) {
     L = LBL_ORDER[i];
+    if (L.want > 0.01 && (L.sx < fa.x0 + 10 || L.sy < fa.y0 + 6 || L.sy > fa.y1 - 6)) L.want = 0;
     if (L.want > 0.01) {
       if (!L.bw) { L.el.style.opacity = '0'; L.el.style.transform = 'translate3d(-9999px,0,0)'; L.bw = L.el.offsetWidth; L.bh = L.el.offsetHeight; }
       var left = (L.kind === 'peak' || L.kind === 'poi') ? L.sx - 5 : L.sx - L.bw / 2, tries = L.kind === 'muni' ? [0, -15, 15] : [0], ok = false;
@@ -1533,40 +2103,41 @@ function frame(now) {
     }
     L.o = TEST ? L.want : lerp(L.o, L.want, 1 - Math.exp(-dt * 6));
     if (L.o < 0.01) { if (L.w !== 0) { L.el.style.opacity = '0'; L.w = 0; } continue; }
-    var off = (L.kind === 'peak' || L.kind === 'poi') ? 'translate(-5px,-50%)' : 'translate(-50%,-50%)';
-    L.el.style.transform = 'translate3d(' + L.sx.toFixed(1) + 'px,' + (L.sy + (L.dy || 0)).toFixed(1) + 'px,0) ' + off;
+    var offs = (L.kind === 'peak' || L.kind === 'poi') ? 'translate(-5px,-50%)' : 'translate(-50%,-50%)';
+    L.el.style.transform = 'translate3d(' + L.sx.toFixed(1) + 'px,' + (L.sy + (L.dy || 0)).toFixed(1) + 'px,0) ' + offs;
     L.el.style.opacity = L.o.toFixed(3); L.w = 1;
   }
 
-  // HUD, progress, nav
+  // HUD
   HUDtick++;
   if (ready && HUDtick % 4 === 0) {
     var hh = hAt(cam.E, cam.N), id = idAt(cam.E, cam.N);
     hudA.textContent = swiss(cam.E) + ' / ' + swiss(cam.N);
-    hudB.textContent = (id ? D.munis[id - 1].name + ' · ' : '') + Math.round(hh) + ' m ü. M.' + (U.uSunMix.value > 0.5 ? ' · ' + fmtTime(sunT) + ' Uhr' : '');
+    hudB.textContent = (id ? D.munis[id - 1].name + ' · ' : '') + Math.round(hh) + ' m ü. M.' + (U.uSunMix.value > 0.5 ? ' · ' + fmtTime(sunT) + ' Uhr, ' + dayLabel(sunDay) : '');
   }
   north.style.transform = 'rotate(' + (-cam.hd).toFixed(1) + 'deg)';
-  var pr = clamp(window.scrollY / Math.max(1, docH - window.innerHeight), 0, 1);
-  prog.style.transform = 'scaleX(' + pr.toFixed(4) + ')';
-  mark.classList.toggle('on', window.scrollY > window.innerHeight * 0.55);
-  var active = st.t < 0.5 ? keyA : keyB;
-  for (i = 0; i < navLinks.length; i++) navLinks[i].classList.toggle('on', navLinks[i].dataset.for === active);
 
   renderer.render(scene, camera);
   if (!TEST) requestAnimationFrame(frame);
 }
-if (TEST) { window.__frame = function () { frame(performance.now()); return true; }; window.__R = R;
-  window.__api = { setSun: function (t) { userSunLock = true; setSunT(t, 'ui'); }, select: function (i) { selectPlace(PL[i], true); }, places: PL, state: function () { return { d: cam && cam.d, vz: vz, sunMix: U.uSunMix.value, ortho: U.uOrthoMix.value, shadowOn: U.uShadowOn.value, smFrames: smState.frames, trees: treeGeo.instanceCount, orthoOK: [OR.F.ok, OR.C.ok], cache: Object.keys(OR.cache).length, inflight: OR.inflight }; },
-    fly: function (o) { flyTo(o); }, ex: ex, feat: FEAT,
-    near: function (x, y) { var W = window.innerWidth, H = canvas.clientHeight || window.innerHeight, out = [], vis = MK.geo.attributes.aVis.array, inf = MK.geo.attributes.aInfo.array;
-      MK.items.forEach(function (it, i) { if (!vis[i]) return; projV.set(X(it.E), Y(hAt(it.E, it.N)), Z(it.N)).project(camera); var sx = (projV.x + 1) / 2 * W, sy = (1 - projV.y) / 2 * H - MK.mat.uniforms.uSize.value * 0.62;
-        if (Math.hypot(sx - x, sy - y) < 30) out.push([it.p ? it.p.title : it.type, it.cat, inf[i * 4], inf[i * 4 + 3], Math.round(sx), Math.round(sy)]); }); return out; } }; }
+if (/[?&]debug\b/.test(location.search)) window.__zgState = function () { return { ex: Object.assign({}, ex), cam: cam && Object.assign({}, cam), flight: flight && flight.to, mode: MODE, sel: SEL && [SEL.id, SEL.E, SEL.N] }; };
+if (TEST) {
+  window.__frame = function () { frame(performance.now()); return true; }; window.__R = R;
+  window.__api = { setSun: function (t) { setSunT(t, 'ui'); }, setDay: setSunDay, go: go, places: PL, sights: SIGHTS, events: function () { return EVENTS; },
+    state: function () { return { mode: MODE, sel: SEL && SEL.id, gem: selGem && selGem.id, d: cam && cam.d, E: cam && cam.E, N: cam && cam.N, vz: vz, sunMix: U.uSunMix.value, ortho: U.uOrthoMix.value, shadowOn: U.uShadowOn.value, smFrames: smState.frames, trees: treeGeo.instanceCount, markers: MK.items.length, visible: MK.geo ? Array.prototype.reduce.call(MK.geo.attributes.aVis.array, function (a, b) { return a + b; }, 0) : 0 }; },
+    fly: function (o) { flyTo(o); }, ex: ex, tour: startTour };
+}
 
 /* ---------------- boot ---------------- */
+function uiOnly() { GL = false; window.addEventListener('hashchange', applyRoute); setSheet('half'); applyRoute(); loadEvents(); }
 readTheme();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readTheme);
 new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
-updateSunUI(); renderList();
+window.addEventListener('hashchange', applyRoute);
+narrowMQ.addEventListener('change', function () { if (narrowMQ.matches) setSheet(sheet); });
+setSheet('half');
+applyRoute();
+loadEvents();
 (async function boot() {
   try {
     statusEl.textContent = 'Relief wird aufgebaut …';
@@ -1593,6 +2164,7 @@ updateSunUI(); renderList();
     var cv = document.createElement('canvas'); cv.width = IDW; cv.height = IDH;
     var cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(imgs[1], 0, 0);
     ids = cx.getImageData(0, 0, IDW, IDH).data;
+    refineEventGem();
 
     buildTerrain(small ? 2 : 1);
     var Ls = D.lines;
@@ -1605,15 +2177,15 @@ updateSunUI(); renderList();
     R.shore.renderOrder = 1; R.reuss.renderOrder = 2; R.muni.renderOrder = 3; R.canton.renderOrder = 4; R.lorze.renderOrder = 5; R.cross.renderOrder = 5;
 
     D.munis.forEach(function (m) {
-      var secs = ['kanton', 'spiel']; Object.keys(HI).forEach(function (k) { if (HI[k].indexOf(m.name) >= 0) secs.push(k); });
+      var secs = ['kanton']; TOUR.forEach(function (t) { if (t.hi.indexOf(m.name) >= 0) secs.push(t.key); });
       addLabel(m.name, 'muni', m.at[0], m.at[1], secs, m.sub);
     });
     D.labels.forEach(function (l) { addLabel(l.t, l.k, l.at[0], l.at[1], l.s, null, l.h); });
     LBL_ORDER = LBL.slice().sort(function (a, b) { return PRIO[a.kind] - PRIO[b.kind] || a.n - b.n; });
+    ready = true; tReady = performance.now();
     buildMarkers();
     readTheme();
 
-    ready = true; tReady = performance.now();
     canvas.style.opacity = '1';
     statusEl.textContent = '';
     hudA.textContent = '';
@@ -1626,7 +2198,7 @@ updateSunUI(); renderList();
     canvas.dataset.trees = String(buildTrees(tb2));
   } catch (err) {
     console.error(err);
-    fail('Das Relief konnte nicht aufgebaut werden. Liste und Texte bleiben nutzbar.');
+    fail('Das Relief konnte nicht aufgebaut werden. Listen und Texte bleiben nutzbar.');
   }
 })();
 })();

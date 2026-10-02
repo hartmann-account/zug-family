@@ -1,10 +1,10 @@
-<title>Zuger Familien</title>
+<title>Zug entdecken</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;1,400;1,600&display=swap">
 <style>
-/* Layout: the relief model sits fixed behind the page; one reading column (left on desktop, bottom on phones).
-   The opening repeats the Zug colour order Weiss-Blau-Weiss: sky, blue band, model. */
+/* Layout: the relief model fills the window; a top bar with the four sections, the start view over the model,
+   and one panel per section (left on desktop, bottom sheet on phones). Colours follow the Zug order Weiss-Blau-Weiss. */
 :root{
   --paper:#F5F8FB; --ink:#17203A; --ink-2:#47536F; --zug:#006FB5; --zug-text:#00609C; --on-zug:#FFFFFF;
   --mist:#E2E9F2; --rule:rgba(23,32,58,.14); --card:rgba(255,255,255,.92); --card-solid:#FFFFFF; --halo:rgba(255,255,255,.92);
@@ -14,12 +14,14 @@
   --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
   --f-body:"Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --top:56px; --pw:min(28rem, calc(100vw - 32px));
   /* relief model */
   --m-land:#EFF3F8; --m-lit:#FFFFFF; --m-shade:#7282A5; --m-forest:#E4EAF2; --m-out:#F1F4F8;
   --m-water:#2D8DD2; --m-water-deep:#00457A; --m-contour:#4C6190; --m-hi:#006FB5;
   --m-side:#006FB5; --m-side-2:#004E83; --m-roof:#FFFFFF; --m-wall:#D4DCE8; --m-window:#FFD58A;
   --m-line:#006FB5; --m-muni:#36466B; --m-river:#1F84CF; --m-shore:#1D6FAF; --m-lorze:#1E98F0;
   --m-tree:#DCE5EF; --m-trunk:#8F9BB0; --m-sun:#FFF6E6; --m-sky:#B9CBE6; --m-pin:#006FB5; --m-pin-ink:#FFFFFF;
+  --m-pin-sight:#B2442E; --m-pin-event:#7A3E9D;
   --m-ring-shade:#0E3460; --m-ring-sun:#F2B33D; --m-sel:#FFFFFF;
   --m-dark:0;
 }
@@ -35,6 +37,7 @@
     --m-side:#004A7C; --m-side-2:#01223D; --m-roof:#2F4268; --m-wall:#18253F; --m-window:#FFCF7D;
     --m-line:#57B4F2; --m-muni:#8EA6CC; --m-river:#3DA0E8; --m-shore:#2F86C9; --m-lorze:#6DC0FF;
     --m-tree:#2C4466; --m-trunk:#22324E; --m-sun:#B8C6E0; --m-sky:#3C5480; --m-pin:#2E8FD6; --m-pin-ink:#FFFFFF;
+    --m-pin-sight:#D9654B; --m-pin-event:#A46BC6;
     --m-ring-shade:#9CCBF5; --m-ring-sun:#F2B33D; --m-sel:#FFFFFF;
     --m-dark:1; color-scheme:dark;
   }
@@ -50,106 +53,207 @@
   --m-side:#004A7C; --m-side-2:#01223D; --m-roof:#2F4268; --m-wall:#18253F; --m-window:#FFCF7D;
   --m-line:#57B4F2; --m-muni:#8EA6CC; --m-river:#3DA0E8; --m-shore:#2F86C9; --m-lorze:#6DC0FF;
   --m-tree:#2C4466; --m-trunk:#22324E; --m-sun:#B8C6E0; --m-sky:#3C5480; --m-pin:#2E8FD6; --m-pin-ink:#FFFFFF;
+  --m-pin-sight:#D9654B; --m-pin-event:#A46BC6;
   --m-ring-shade:#9CCBF5; --m-ring-sun:#F2B33D; --m-sel:#FFFFFF;
   --m-dark:1; color-scheme:dark;
 }
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
-body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
-#scene{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;display:block;z-index:0;outline:none}
-#labels{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;z-index:1;pointer-events:none;overflow:hidden}
-main{position:relative;z-index:2;pointer-events:none}
-main a, main button, main select, main input, .card, .finale-panel{pointer-events:auto}
-.wrap{padding-inline:max(16px, 5vw);box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow:hidden;overscroll-behavior:none}
+#scene{position:fixed;left:0;top:0;width:100%;height:100%;display:block;z-index:0;outline:none;touch-action:none}
+#labels{position:fixed;left:0;top:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:hidden}
 svg.ic{width:18px;height:18px;flex:none;fill:currentColor}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+a{color:var(--zug-text)}
+button{font:inherit}
 
-/* ---------- top progress band and wordmark */
-.progress{position:fixed;left:0;right:0;top:0;height:calc(3px + env(safe-area-inset-top,0px));z-index:6;pointer-events:none}
-.progress span{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--zug);transform-origin:0 50%;transform:scaleX(0)}
-.mark{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:max(16px,5vw);z-index:5;
-  font-family:var(--f-display);font-variation-settings:"wdth" 118;font-weight:700;font-size:13px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--ink);opacity:0;transform:translateY(-6px);transition:opacity .4s, transform .4s;pointer-events:none;
-  text-shadow:0 0 6px var(--halo)}
-.mark.on{opacity:1;transform:none}
-.mark i{font-style:normal;color:var(--zug-text)}
+/* ---------- top bar */
+.top{position:fixed;left:0;right:0;top:0;z-index:8;height:calc(var(--top) + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);
+  box-sizing:border-box;display:flex;align-items:center;gap:20px;padding-inline:max(16px,2.4vw);
+  background:var(--card);-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);border-bottom:1px solid var(--rule)}
+.brand{font-family:var(--f-display);font-variation-settings:"wdth" 118;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;white-space:nowrap;display:flex;align-items:center;gap:10px}
+.brand::before{content:"";width:14px;height:22px;flex:none;background:linear-gradient(90deg,#fff 0 33%,var(--zug) 33% 67%,#fff 67%);border:1px solid var(--zug);box-sizing:border-box}
+.brand i{font-style:normal;color:var(--zug-text)}
+.tabs{display:flex;gap:2px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{display:flex;align-items:center;gap:7px;padding:8px 12px;color:var(--ink);text-decoration:none;font-size:15px;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-3px}
+.tabs a svg{width:17px;height:17px;fill:currentColor;opacity:.8}
+.tabs a:hover{color:var(--zug-text)}
+.tabs a[aria-current="page"]{color:var(--zug-text);border-bottom-color:var(--zug);font-weight:600}
+.tabs a:focus-visible,.brand:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
+.tabs .info{color:var(--ink-2)}
+@media (max-width:760px){
+  :root{--top:50px}
+  .top{gap:10px;padding-inline:12px}
+  .brand{font-size:12.5px;letter-spacing:.1em;gap:7px}
+  .brand::before{width:11px;height:18px}
+  .tabs a{padding:8px 8px;font-size:14px;gap:5px}
+  .tabs a span.l{display:none}
+  .tabs a[aria-current="page"] span.l{display:inline}
+}
 
-/* ---------- chapter index (desktop) */
-.nav{position:fixed;right:max(16px,2.4vw);top:50%;transform:translateY(-50%);z-index:5;display:none;flex-direction:column;gap:2px;pointer-events:auto}
-.nav a{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:5px 0;color:var(--ink-2);text-decoration:none;
-  font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-shadow:0 0 6px var(--halo)}
-.nav a span{opacity:0;transform:translateX(6px);transition:opacity .25s, transform .25s}
-.nav a::after{content:"";width:14px;height:2px;background:currentColor;opacity:.45;transition:width .25s, opacity .25s, background .25s}
-.nav:hover a span, .nav a.on span, .nav a:focus-visible span{opacity:1;transform:none}
-.nav a.on{color:var(--zug-text)}
-.nav a.on::after{width:28px;opacity:1;background:var(--zug)}
-.nav a:focus-visible{outline:2px solid var(--zug);outline-offset:3px}
-@media (min-width:1100px){ .nav{display:flex} body.explore .nav{display:none} }
+/* ---------- start view */
+.home{position:fixed;left:0;right:0;bottom:0;z-index:4;pointer-events:none;transition:opacity .45s, transform .45s}
+body:not(.m-home) .home,body.touring .home{opacity:0;transform:translateY(24px);visibility:hidden}
+.home .wrap{padding-inline:max(16px,5vw);box-sizing:border-box}
+.band{background:var(--zug);color:var(--on-zug);padding-block:clamp(16px,3vh,30px);pointer-events:auto}
+.band .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 32px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.9;margin-bottom:6px}
+.home h1{margin:0;font-family:var(--f-display);font-variation-settings:"wdth" 125;font-weight:700;
+  font-size:clamp(2.4rem, 7.4vw, 6.4rem);line-height:.92;letter-spacing:-.015em}
+.band .lead{margin:0;max-width:30rem;font-size:clamp(1rem,1.35vw,1.15rem);line-height:1.45}
+.under{background:var(--paper);padding-block:18px calc(22px + env(safe-area-inset-bottom,0px));pointer-events:auto}
+.entries{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.entry{display:grid;grid-template-columns:auto 1fr auto;gap:2px 14px;align-items:center;padding:14px 16px;text-decoration:none;color:var(--ink);
+  background:var(--card-solid);border:1px solid var(--rule);border-top:3px solid var(--zug);transition:border-color .2s, transform .2s, box-shadow .2s}
+.entry:hover{border-color:var(--zug);transform:translateY(-2px);box-shadow:0 14px 30px -22px var(--shadow)}
+.entry:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
+.entry .ei{grid-row:span 2;width:40px;height:40px;border-radius:50%;background:var(--zug);color:var(--on-zug);display:grid;place-items:center}
+.entry .ei svg{width:22px;height:22px;fill:currentColor}
+.entry b{font-family:var(--f-display);font-variation-settings:"wdth" 108;font-weight:680;font-size:1.2rem;line-height:1.15}
+.entry span{font-size:14px;color:var(--ink-2);line-height:1.3}
+.entry small{grid-row:span 2;font-family:var(--f-mono);font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.home .status{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-2);margin-top:10px}
+.home .tour{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-top:12px;font-size:14px;color:var(--ink-2)}
+.home .tour button{appearance:none;border:1px solid var(--rule);background:transparent;color:var(--ink);padding:6px 12px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.home .tour button:hover{border-color:var(--zug);color:var(--zug-text)}
+.home .tour button svg{width:14px;height:14px;fill:currentColor}
+@media (max-width:1000px){ .entries{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:760px){
+  .band .lead{display:none}
+  .entries{gap:8px}
+  .entry{grid-template-columns:auto minmax(0,1fr);padding:10px 10px;gap:0 8px;align-items:center}
+  .entry b{hyphens:auto;overflow-wrap:anywhere;grid-row:span 2}
+  .entry .ei{width:32px;height:32px}
+  .entry .ei svg{width:18px;height:18px}
+  .entry b{font-size:1.02rem}
+  .entry > span:not(.ei){display:none}
+  .entry small{display:none}
+  .home .tour{margin-top:8px;font-size:13px}
+}
 
-/* ---------- HUD: LV95 readout + north arrow */
-.hud{position:fixed;right:max(16px,2.4vw);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;align-items:center;gap:12px;
-  font-family:var(--f-mono);font-size:11.5px;line-height:1.45;color:var(--ink-2);font-variant-numeric:tabular-nums;pointer-events:none;
-  text-shadow:0 0 6px var(--halo), 0 0 2px var(--halo)}
-.hud svg{width:34px;height:34px;flex:none;transition:transform .1s linear}
-.hud #hudA{font-weight:500;color:var(--ink)}
-.hud .st{display:block}
-@media (max-width:640px){ .hud{left:16px;right:auto;top:calc(12px + env(safe-area-inset-top,0px));bottom:auto;font-size:10.5px} .hud svg{width:26px;height:26px} .mark{display:none} }
+/* ---------- tour caption */
+.caption{position:fixed;left:max(16px,5vw);bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:5;width:min(27rem,calc(100vw - 32px));box-sizing:border-box;
+  background:var(--card);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:4px solid var(--zug);padding:18px 22px 16px;
+  box-shadow:0 18px 40px -26px var(--shadow);transition:opacity .4s, transform .4s}
+.caption[hidden]{display:block!important;opacity:0;transform:translateY(16px);pointer-events:none;visibility:hidden}
+.caption .kicker{margin-bottom:6px}
+.caption h2{margin:0 0 8px;font-family:var(--f-display);font-variation-settings:"wdth" 104;font-weight:680;font-size:1.5rem;line-height:1.1}
+.caption p{margin:0 0 10px;font-size:15.5px}
+.caption .crow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.caption .crow button{appearance:none;border:1px solid var(--rule);background:transparent;color:var(--ink);padding:5px 10px;cursor:pointer;font-size:13px}
+.caption .crow button:hover{border-color:var(--zug)}
+.caption .bar{height:3px;background:var(--mist);margin:0 0 10px}
+.caption .bar i{display:block;height:100%;background:var(--zug);width:0}
 
-/* ---------- map controls (explorer) */
-.mapctl{position:fixed;right:max(16px,2.4vw);top:50%;transform:translateY(-50%);z-index:5;display:none;flex-direction:column;gap:6px;pointer-events:auto}
-body.explore .mapctl{display:flex}
-.mapctl button{appearance:none;width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--rule);background:var(--card);color:var(--ink);
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);cursor:pointer;font-family:var(--f-mono);font-size:18px;line-height:1;box-shadow:0 8px 20px -14px var(--shadow)}
-.mapctl button:hover{border-color:var(--zug);color:var(--zug-text)}
-.mapctl button[aria-pressed="true"]{background:var(--zug);color:var(--on-zug);border-color:var(--zug)}
-.mapctl button:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
-.mapctl .sep{height:6px}
-@media (max-width:760px){ .mapctl{top:auto;bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));transform:none} .mapctl button{width:38px;height:38px} }
-
-/* ---------- hero */
-.hero{position:relative;min-height:100svh;display:grid;grid-template-rows:1fr auto minmax(18vh,auto)}
-.band{grid-row:2;background:var(--zug);color:var(--on-zug);padding-block:clamp(22px,4vh,40px)}
-.band .wrap{display:grid;gap:10px}
-.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.9}
-.hero h1{margin:0;font-family:var(--f-display);font-variation-settings:"wdth" 125;font-weight:700;
-  font-size:clamp(2.6rem, 9vw, 7.6rem);line-height:.92;letter-spacing:-.015em;text-wrap:balance}
-.under{grid-row:3;padding-block:22px 40px}
-.under .wrap{display:flex;flex-wrap:wrap;gap:18px 48px;align-items:flex-start;justify-content:space-between}
-.lead{margin:0;max-width:36rem;font-size:clamp(1.05rem,1.6vw,1.25rem);line-height:1.5;color:var(--ink)}
-.cue{display:flex;align-items:center;gap:12px;font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);padding-top:6px}
-.cue::before{content:"";width:1px;height:36px;background:linear-gradient(var(--zug),transparent);animation:cue 2.2s ease-in-out infinite}
-@keyframes cue{0%{transform:scaleY(.2);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}100%{transform:scaleY(.2);transform-origin:bottom}}
-@media (prefers-reduced-motion: reduce){ .cue::before{animation:none} }
-.status{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
-
-/* ---------- chapters */
-.chapter{min-height:150vh;display:flex;align-items:center}
-.chapter.long{min-height:280vh;align-items:flex-start}
-.chapter.long .wrap{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:center;padding-block:56px 24px}
-.mob{display:none}
-.chapter .wrap{width:100%}
-.card{width:min(25.5rem,100%);box-sizing:border-box;background:var(--card);
+/* ---------- panel */
+.panel{position:fixed;z-index:6;left:max(16px,2.4vw);top:calc(var(--top) + env(safe-area-inset-top,0px) + 14px);bottom:16px;width:var(--pw);
+  display:flex;flex-direction:column;box-sizing:border-box;background:var(--card);
   -webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);
-  border-top:4px solid var(--zug);padding:22px 26px 22px;box-shadow:0 18px 40px -26px var(--shadow)}
-.kicker{margin:0 0 10px;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--zug-text);line-height:1.5}
-.card h2{margin:0 0 12px;font-family:var(--f-display);font-variation-settings:"wdth" 104;font-weight:680;font-size:clamp(1.55rem,2.6vw,2.15rem);
-  line-height:1.06;letter-spacing:-.01em;text-wrap:balance}
-.card p{margin:0 0 14px;color:var(--ink)}
-.card p.hint{color:var(--ink-2);font-size:15px}
-.card p.small{font-size:14px;color:var(--ink-2);margin:10px 0 0}
-@media (hover:none){ .hint-hover{display:none} }
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:12px 18px;margin:16px 0 0;padding-top:14px;border-top:1px solid var(--rule)}
+  border-top:4px solid var(--zug);box-shadow:0 18px 40px -26px var(--shadow);transition:transform .45s cubic-bezier(.2,.7,.2,1), opacity .35s}
+body.m-home .panel,body.touring .panel{transform:translateX(calc(-100% - 40px));opacity:0;pointer-events:none}
+.panel .ph{flex:none;padding:16px 20px 8px}
+.panel .pscroll{flex:1;min-height:0;overflow:auto;padding:0 12px 12px;overscroll-behavior:contain}
+.panel .pfoot{flex:none;padding:8px 20px 10px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:10px}
+.panel .pfoot a{color:var(--ink-2)}
+.handle{display:none}
+.kicker{margin:0 0 6px;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--zug-text);line-height:1.5}
+.panel h2{margin:0 0 6px;font-family:var(--f-display);font-variation-settings:"wdth" 104;font-weight:680;font-size:clamp(1.3rem,1.9vw,1.65rem);line-height:1.08;letter-spacing:-.01em;text-wrap:balance}
+.panel .intro{margin:0 0 10px;font-size:15px;color:var(--ink-2)}
+.panel.has-detail .ph > :not(.kicker){display:none}
+.panel.has-detail .ph{padding-bottom:0}
+@media (max-width:760px){
+  .panel{left:0;right:0;top:auto;bottom:0;width:auto;height:var(--sheet,46svh);border-top-width:3px;padding-bottom:env(safe-area-inset-bottom,0px);transition:transform .45s cubic-bezier(.2,.7,.2,1), opacity .35s, height .3s}
+  body.m-home .panel,body.touring .panel{transform:translateY(calc(100% + 30px))}
+  .handle{display:block;appearance:none;border:0;background:transparent;width:100%;height:22px;flex:none;cursor:pointer;position:relative;padding:0}
+  .handle::before{content:"";position:absolute;left:50%;top:8px;width:42px;height:4px;border-radius:2px;background:var(--rule);transform:translateX(-50%)}
+  .panel .ph{padding:2px 16px 6px}
+  .panel .pscroll{padding:0 8px 8px}
+  .panel h2{font-size:1.2rem}
+  .panel .intro{font-size:14px;margin-bottom:6px}
+  .panel .pfoot{display:none}
+}
+
+/* ---------- filters */
+.flt{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 6px}
+.chip{appearance:none;display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid var(--rule);background:transparent;color:var(--ink);
+  font-family:var(--f-body);font-size:13.5px;line-height:1.2;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.chip svg{width:15px;height:15px;fill:currentColor}
+.chip small{font-family:var(--f-mono);font-size:11px;color:var(--ink-2)}
+.chip:hover{border-color:var(--zug)}
+.chip[aria-pressed="true"]{background:var(--zug);border-color:var(--zug);color:var(--on-zug)}
+.chip[aria-pressed="true"] small{color:var(--on-zug)}
+.chip:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
+.flt select{appearance:auto;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--rule);background:var(--card-solid);color:var(--ink);max-width:100%}
+.flt select:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);margin:6px 0 4px;display:flex;justify-content:space-between;gap:8px}
+@media (max-width:760px){ .flt{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px} .flt::-webkit-scrollbar{display:none} .chip{white-space:nowrap} }
+
+/* ---------- lists */
+.list{display:grid;gap:0}
+.grp{position:sticky;top:0;z-index:1;margin:8px 0 0;padding:6px 6px 4px;background:var(--card-solid);font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-2);display:flex;justify-content:space-between;border-bottom:1px solid var(--rule)}
+.grp:first-child{margin-top:0}
+.it{appearance:none;display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;padding:8px 6px;
+  border:0;border-bottom:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer;font:inherit}
+.it:hover{background:var(--mist)}
+.it:focus-visible{outline:2px solid var(--zug);outline-offset:-2px}
+.it .pin{width:28px;height:28px;border-radius:50%;background:var(--zug);color:var(--on-zug);display:grid;place-items:center}
+.it .pin.sight{background:var(--m-pin-sight)}
+.it .pin.event{background:var(--m-pin-event)}
+.it .pin svg{width:16px;height:16px;fill:currentColor}
+.it .tx{min-width:0}
+.it .tx b{display:block;font-weight:600;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .tx span{display:block;font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .sh{font-family:var(--f-mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-2);text-align:right;min-width:3.6em}
+.it .sh i{display:block;height:4px;margin-top:3px;background:linear-gradient(90deg,var(--shadec) var(--p),var(--sunc) var(--p))}
+.it .thumb{width:64px;height:48px;object-fit:cover;background:var(--mist);display:block}
+.it.ev{grid-template-columns:64px minmax(0,1fr)}
+.it.ev .when{display:block;font-family:var(--f-mono);font-size:11.5px;color:var(--zug-text);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline;font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--zug-text);margin-left:6px;white-space:nowrap}
+.empty{padding:18px 6px;color:var(--ink-2);font-size:15px}
+.more{appearance:none;width:100%;margin:8px 0 0;padding:8px;border:1px solid var(--rule);background:transparent;color:var(--zug-text);cursor:pointer;font-size:14px}
+.more:hover{border-color:var(--zug)}
+
+/* ---------- detail */
+.detail .back{appearance:none;border:0;background:none;color:var(--zug-text);font:inherit;font-size:14px;cursor:pointer;padding:4px 0;margin:0 0 6px}
+.detail .back:focus-visible{outline:2px solid var(--zug)}
+.detail figure{margin:0 0 10px;background:var(--mist)}
+.detail figure img, .detail figure canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.detail figure.ev img{aspect-ratio:auto;max-height:22rem;object-fit:contain;background:var(--mist)}
+.detail figcaption{font-size:11.5px;color:var(--ink-2);padding:5px 8px;line-height:1.35}
+.detail figcaption a{color:inherit}
+.detail .media{position:relative}
+.detail .media .inset{position:absolute;right:8px;bottom:8px;width:34%;aspect-ratio:4/3;border:2px solid #fff;border-radius:3px;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+.detail h3{margin:0 0 2px;font-family:var(--f-display);font-variation-settings:"wdth" 104;font-weight:680;font-size:1.35rem;line-height:1.15}
+.detail .sub{margin:0 0 10px;font-size:14px;color:var(--ink-2)}
+.detail p.txt{margin:0 0 10px;font-size:15.5px;white-space:pre-line;overflow-wrap:anywhere}
+.detail .when{font-family:var(--f-mono);font-size:13px;color:var(--zug-text);margin:0 0 6px}
+.detail .dates{list-style:none;margin:6px 0 10px;padding:0;font-family:var(--f-mono);font-size:12.5px;color:var(--ink-2);display:grid;gap:2px}
+.detail .spark{margin:10px 0 0}
+.detail .spark svg{display:block;width:100%;height:64px;overflow:visible}
+.detail .spark .area{fill:var(--shadec);fill-opacity:.18}
+.detail .spark .line{fill:none;stroke:var(--shadec);stroke-width:2}
+.detail .spark .now{stroke:var(--sunc);stroke-width:2}
+.detail .spark .ax{fill:var(--ink-2);font-family:var(--f-mono);font-size:10px}
+.detail .links{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px;font-size:14.5px}
+.detail .links a{color:var(--zug-text)}
+.detail .note{font-size:14px;color:var(--ink-2);margin:8px 0 0}
+.detail .btns{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.detail .btns a{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--rule);text-decoration:none;color:var(--ink);font-size:14px}
+.detail .btns a:hover{border-color:var(--zug);color:var(--zug-text)}
+.detail .btns a small{font-family:var(--f-mono);font-size:11px;color:var(--ink-2)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:10px 18px;margin:10px 0 0;padding-top:12px;border-top:1px solid var(--rule)}
 .facts div{min-width:0}
 .facts dt{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
-.facts dd{margin:2px 0 0;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
-.rows{list-style:none;margin:16px 0 0;padding:12px 0 0;border-top:1px solid var(--rule);display:grid;gap:5px;
-  font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
-.rows li{display:flex;justify-content:space-between;gap:12px}
-.rows li span:first-child{font-family:var(--f-body);font-size:15px}
-.rows li span:last-child{color:var(--ink-2)}
+.facts dd{margin:2px 0 0;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.flist{margin:8px 0 0;padding-left:18px;font-size:14.5px;color:var(--ink)}
+.flist li{margin:2px 0}
 
 /* ---------- sun control */
-.sun{margin:14px 0 4px;padding:12px 0 2px;border-top:1px solid var(--rule)}
+.sun{margin:12px 0 4px;padding:10px 0 2px;border-top:1px solid var(--rule)}
 .sun-top{display:flex;align-items:center;gap:10px}
 .sun-play{appearance:none;flex:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer}
 .sun-play:hover{border-color:var(--zug);color:var(--zug-text)}
@@ -162,17 +266,24 @@ body.explore .mapctl{display:flex}
   border:1px solid var(--rule);color:var(--ink);white-space:nowrap}
 .uv i{width:10px;height:10px;border-radius:50%;background:var(--uv1);flex:none}
 .uv[data-c="2"] i{background:var(--uv2)} .uv[data-c="3"] i{background:var(--uv3)} .uv[data-c="4"] i{background:var(--uv4)} .uv[data-c="5"] i{background:var(--uv5)}
-.sun-arc{display:block;width:100%;height:46px;margin:8px 0 0;overflow:visible}
+.sun-date{display:flex;gap:4px;margin:8px 0 0;flex-wrap:wrap}
+.sun-date button{appearance:none;border:1px solid var(--rule);background:transparent;color:var(--ink);padding:3px 8px;font-size:12.5px;cursor:pointer}
+.sun-date button[aria-pressed="true"]{background:var(--zug);border-color:var(--zug);color:var(--on-zug)}
+.sun-arc{display:block;width:100%;height:42px;margin:8px 0 0;overflow:visible}
 .sun-arc .path{fill:none;stroke:var(--rule);stroke-width:1.5}
 .sun-arc .day{fill:none;stroke:var(--sunc);stroke-width:2;stroke-linecap:round}
 .sun-arc .horizon{stroke:var(--ink-2);stroke-opacity:.35;stroke-width:1}
 .sun-arc .dot{fill:var(--sunc);stroke:var(--card-solid);stroke-width:2}
 .sun input[type=range]{width:100%;margin:2px 0 0;accent-color:var(--zug);height:28px}
 .sun-scale{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--ink-2);margin-top:-2px;padding-inline:4px}
+.sun .shint{font-size:12.5px;color:var(--ink-2);margin:4px 0 0}
+#sunFam .sun-arc{display:none}
 
 /* ---------- small chart */
-.mini{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--rule)}
-.mini figcaption{font-size:13.5px;color:var(--ink-2);margin:0 0 6px}
+details.more-info{margin:6px 0 0;font-size:14px}
+details.more-info summary{cursor:pointer;color:var(--zug-text);font-size:13.5px}
+.mini{margin:8px 0 0}
+.mini figcaption{font-size:13px;color:var(--ink-2);margin:0 0 6px}
 .mini figcaption b{color:var(--ink);font-weight:600}
 .mini svg{display:block;width:100%;height:auto;overflow:visible}
 .mini .b{fill:var(--bar);cursor:pointer}
@@ -180,78 +291,40 @@ body.explore .mapctl{display:flex}
 .mini .ax{fill:var(--ink-2);font-family:var(--f-mono);font-size:10px}
 .mini .val{fill:var(--ink);font-family:var(--f-mono);font-size:11px;font-weight:500}
 .mini .base{stroke:var(--rule);stroke-width:1}
-.feat{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:baseline;margin:12px 0 0;padding:10px 12px;background:var(--mist)}
-.feat span{font-size:14px;color:var(--ink-2)}
-.feat b{font-family:var(--f-mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--ink);grid-row:span 2;align-self:center}
-.feat strong{font-weight:600;font-size:15px}
 
-/* ---------- explorer */
-.finale{min-height:130vh;display:flex;align-items:flex-start}
-.finale .wrap{width:100%;position:sticky;top:max(5vh,52px);padding-block:0 4vh}
-.explorer{width:min(29rem,100%);max-height:calc(100vh - max(10vh, 90px));display:flex;flex-direction:column;overflow:hidden;padding-bottom:12px}
-.explorer > .head{flex:none}
-.explorer h2{font-size:clamp(1.25rem,1.9vw,1.6rem);margin-bottom:10px}
-#sunB .sun-arc{display:none}
-#sunB{margin-top:10px}
-.explorer.has-detail .chips,.explorer.has-detail .row2,.explorer.has-detail .count,.explorer.has-detail h2{display:none}
-.explorer.has-detail #sunB{margin-top:0;border-top:0;padding-top:0}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
-.chip{appearance:none;display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--rule);background:transparent;color:var(--ink);
-  font-family:var(--f-body);font-size:13.5px;line-height:1.2;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
-.chip svg{width:15px;height:15px;fill:currentColor}
-.chip .ic{width:15px;height:15px}
-.chip small{font-family:var(--f-mono);font-size:11px;color:var(--ink-2)}
-.chip:hover{border-color:var(--zug)}
-.chip[aria-pressed="true"]{background:var(--zug);border-color:var(--zug);color:var(--on-zug)}
-.chip[aria-pressed="true"] small{color:var(--on-zug)}
-.chip:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
-.row2{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 4px}
-.row2 select{appearance:auto;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--rule);background:var(--card-solid);color:var(--ink);max-width:100%}
-.row2 select:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
-.count{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);margin:8px 0 6px;display:flex;justify-content:space-between;gap:8px}
-.scroll{flex:1;min-height:120px;overflow:auto;margin:0 -8px;padding:0 8px;overscroll-behavior:contain}
-.list{display:grid;gap:2px}
-.it{appearance:none;display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;padding:8px 6px;
-  border:0;border-bottom:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer;font:inherit}
-.it:hover{background:var(--mist)}
-.it:focus-visible{outline:2px solid var(--zug);outline-offset:-2px}
-.it .pin{width:28px;height:28px;border-radius:50%;background:var(--zug);color:var(--on-zug);display:grid;place-items:center}
-.it .pin svg{width:16px;height:16px;fill:currentColor}
-.it .tx{min-width:0}
-.it .tx b{display:block;font-weight:600;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.it .tx span{display:block;font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.it .sh{font-family:var(--f-mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-2);text-align:right;min-width:3.6em}
-.it .sh i{display:block;height:4px;margin-top:3px;background:linear-gradient(90deg,var(--shadec) var(--p),var(--sunc) var(--p))}
-.it .tx b .tag, .tag{display:inline;font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--zug-text);margin-left:6px;white-space:nowrap}
-.detail .back{appearance:none;border:0;background:none;color:var(--zug-text);font:inherit;font-size:14px;cursor:pointer;padding:4px 0;margin:0 0 6px}
-.detail .back:focus-visible{outline:2px solid var(--zug)}
-.detail figure{margin:0 0 10px;background:var(--mist)}
-.detail figure img, .detail figure canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
-.detail figcaption{font-size:11.5px;color:var(--ink-2);padding:5px 8px;line-height:1.35}
-.detail figcaption a{color:inherit}
-.detail .media{position:relative}
-.detail .media .inset{position:absolute;right:8px;bottom:8px;width:34%;aspect-ratio:4/3;border:2px solid #fff;border-radius:3px;box-shadow:0 1px 6px rgba(0,0,0,.35)}
-.detail h3{margin:0 0 2px;font-family:var(--f-display);font-variation-settings:"wdth" 104;font-weight:680;font-size:1.35rem;line-height:1.15}
-.detail .sub{margin:0 0 10px;font-size:14px;color:var(--ink-2)}
-.detail .facts{margin-top:8px}
-.detail .spark{margin:10px 0 0}
-.detail .spark svg{display:block;width:100%;height:64px;overflow:visible}
-.detail .spark .area{fill:var(--shadec);fill-opacity:.18}
-.detail .spark .line{fill:none;stroke:var(--shadec);stroke-width:2}
-.detail .spark .now{stroke:var(--sunc);stroke-width:2}
-.detail .spark .ax{fill:var(--ink-2);font-family:var(--f-mono);font-size:10px}
-.detail .links{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px;font-size:14.5px}
-.detail .links a{color:var(--zug-text)}
-.detail .note{font-size:14px;color:var(--ink-2);margin:8px 0 0}
+/* ---------- map controls, HUD */
+.mapctl{position:fixed;right:max(16px,2.4vw);top:calc(var(--top) + env(safe-area-inset-top,0px) + 14px);z-index:5;display:flex;flex-direction:column;gap:6px}
+.mapctl button{appearance:none;width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--rule);background:var(--card);color:var(--ink);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);cursor:pointer;font-family:var(--f-mono);font-size:18px;line-height:1;box-shadow:0 8px 20px -14px var(--shadow)}
+.mapctl button:hover{border-color:var(--zug);color:var(--zug-text)}
+.mapctl button[aria-pressed="true"]{background:var(--zug);color:var(--on-zug);border-color:var(--zug)}
+.mapctl button:focus-visible{outline:2px solid var(--zug);outline-offset:2px}
+.mapctl .sep{height:4px}
+.mapctl #north{transition:transform .1s linear}
+@media (max-width:760px){ .mapctl{right:10px;top:calc(var(--top) + env(safe-area-inset-top,0px) + 10px);gap:4px} .mapctl button{width:36px;height:36px;font-size:16px} body.m-home .mapctl{display:none} }
+.hud{position:fixed;right:max(16px,2.4vw);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:3;
+  font-family:var(--f-mono);font-size:11.5px;line-height:1.45;color:var(--ink-2);font-variant-numeric:tabular-nums;pointer-events:none;text-align:right;
+  text-shadow:0 0 6px var(--halo), 0 0 2px var(--halo)}
+.hud #hudA{font-weight:500;color:var(--ink)}
+.hud .st{display:block}
+body.m-home .hud{display:none}
+@media (max-width:760px){ .hud{display:none} }
+.hint{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:3;pointer-events:none;
+  font-size:13px;color:var(--ink-2);background:var(--card);padding:5px 12px;border:1px solid var(--rule);opacity:0;transition:opacity .5s;white-space:nowrap}
+.hint.on{opacity:1}
+@media (min-width:761px){ body:not(.m-home) .hint{left:calc(var(--pw) + max(16px,2.4vw) + (100vw - var(--pw) - max(16px,2.4vw)) / 2)} }
+@media (max-width:760px){ .hint{display:none} }
 
-/* ---------- footer */
-footer{position:relative;z-index:2;background:var(--paper);border-top:1px solid var(--rule)}
-footer .wrap{padding-block:34px 44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:22px 40px;max-width:76rem}
-footer h3{margin:0 0 6px;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
-footer p{margin:0 0 8px;font-size:14.5px;color:var(--ink-2);max-width:62ch}
-footer .sig{font-family:var(--f-display);font-variation-settings:"wdth" 118;font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin-bottom:8px}
-footer a{color:var(--zug-text)}
-footer address{font-style:normal;font-size:14.5px;color:var(--ink);line-height:1.5}
+/* ---------- info dialog */
+.info-dlg{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:rgba(8,16,29,.45);padding:16px}
+.info-dlg[hidden]{display:none}
+.info-dlg .box{background:var(--card-solid);border-top:4px solid var(--zug);max-width:52rem;width:100%;max-height:calc(100svh - 32px);overflow:auto;box-sizing:border-box;padding:24px 28px;position:relative}
+.info-dlg .x{position:absolute;right:12px;top:10px;appearance:none;border:0;background:none;font-size:22px;line-height:1;color:var(--ink-2);cursor:pointer;padding:6px}
+.info-dlg h2{margin:0 0 14px;font-family:var(--f-display);font-variation-settings:"wdth" 104;font-weight:680;font-size:1.5rem}
+.info-dlg .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:18px 32px}
+.info-dlg h3{margin:0 0 6px;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+.info-dlg p{margin:0 0 8px;font-size:14.5px;color:var(--ink-2)}
+.info-dlg address{font-style:normal;font-size:14.5px;line-height:1.5}
 
 /* ---------- map labels */
 .lbl{position:absolute;left:0;top:0;white-space:nowrap;opacity:0;will-change:transform,opacity;
@@ -271,239 +344,116 @@ footer address{font-style:normal;font-size:14.5px;color:var(--ink);line-height:1
   font-family:var(--f-display);font-variation-settings:"wdth" 106;font-weight:650;font-size:14px;box-shadow:0 10px 24px -16px var(--shadow)}
 .callout.on{opacity:1}
 .callout small{display:block;font-family:var(--f-mono);font-weight:400;font-size:11px;color:var(--ink-2)}
+@media (max-width:760px){ .callout{display:none} }
 
 /* ---------- hover tooltip */
 .tip{position:fixed;left:0;top:0;z-index:7;pointer-events:none;opacity:0;transition:opacity .15s;
   background:var(--card);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:3px solid var(--zug);
   padding:9px 12px 10px;min-width:11rem;max-width:18rem;box-shadow:0 10px 26px -16px var(--shadow)}
 .tip.on{opacity:1}
-.tip b{display:block;font-family:var(--f-display);font-variation-settings:"wdth" 108;font-weight:680;font-size:15px;letter-spacing:.01em}
+.tip b{display:block;font-family:var(--f-display);font-variation-settings:"wdth" 108;font-weight:680;font-size:15px;letter-spacing:.01em;white-space:normal}
 .tip span{display:block;font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
-
-/* ---------- small screens: cards sit low, the model above */
-@media (max-width:760px){
-  body{font-size:16px}
-  .chapter{align-items:flex-end;min-height:140svh}
-  .chapter .wrap{padding-bottom:9svh}
-  .chapter.long{min-height:260svh}
-  .chapter.long .wrap{align-items:flex-end;padding-block:0 4svh}
-  .chapter.long .desk{display:none}
-  .chapter.long .mob{display:block}
-  .chapter.long .card h2{font-size:1.35rem;margin-bottom:6px}
-  .chapter.long .feat{margin-top:6px}
-  .card{padding:18px 18px 16px}
-  .card p{font-size:15.5px}
-  .hero{grid-template-rows:1fr auto auto}
-  .under{padding-block:18px 28px}
-  .finale .wrap{top:auto;padding-top:46svh}
-  .explorer{max-height:52svh}
-  .callout{display:none}
-  .sun-arc{height:36px}
-}
-.noscene .cue{display:none}
+.noscene #scene{display:none}
+.noscene .hud{display:none}
 </style>
 
-<canvas id="scene" aria-hidden="true" tabindex="-1"></canvas>
+<canvas id="scene" aria-label="3D-Karte des Kantons Zug. Ziehen verschiebt, rechte Maustaste oder zwei Finger drehen, Mausrad oder Pinch zoomt." tabindex="0"></canvas>
 <div id="labels" aria-hidden="true"></div>
-<div class="progress" aria-hidden="true"><span id="prog"></span></div>
-<div class="mark" id="mark" aria-hidden="true">Zuger <i>Familien</i></div>
 <div class="callout" id="callout" aria-hidden="true"></div>
 
-<nav class="nav" id="nav" aria-label="Kapitel">
-  <a href="#kanton" data-for="kanton"><span>Kanton</span></a>
-  <a href="#zug" data-for="zug"><span>Stadt Zug</span></a>
-  <a href="#lorze" data-for="lorze"><span>Lorze</span></a>
-  <a href="#aegeri" data-for="aegeri"><span>Ägerital</span></a>
-  <a href="#berg" data-for="berg"><span>Menzingen · Neuheim</span></a>
-  <a href="#rossberg" data-for="walchwil"><span>Rossberg</span></a>
-  <a href="#spielplaetze" data-for="spiel"><span>Spielplätze</span></a>
-  <a href="#schatten" data-for="schatten"><span>Schatten</span></a>
-  <a href="#familienorte" data-for="familie"><span>Familienorte</span></a>
-</nav>
+<header class="top">
+  <a class="brand" href="#/" aria-label="Zug entdecken, Startseite">Zug <i>entdecken</i></a>
+  <nav class="tabs" id="tabs" aria-label="Bereiche">
+    <a href="#/gemeinden" data-mode="gemeinden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg><span class="l">Gemeinden</span></a>
+    <a href="#/sehenswuerdigkeiten" data-mode="sights"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg><span class="l">Sehenswürdigkeiten</span></a>
+    <a href="#/familien" data-mode="familie"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5a2.4 2.4 0 1 1 0 4.8a2.4 2.4 0 1 1 0-4.8zM17 4.5a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM4.5 8.6h5l1.6 6.4H9.6V22H6.4v-7H3zM14.6 10h4.8l1.6 5.4h-1.4V22h-2.6v-4h-1v4h-2.6v-6.6H12z"/></svg><span class="l">Familien</span></a>
+    <a href="#/events" data-mode="events"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zM5 9v10h14V9zm2 2h4v4H7z"/></svg><span class="l">Events</span></a>
+    <a href="#/info" class="info" data-mode="info"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20a10 10 0 1 1 0-20zm-1 8v7h2v-7zm0-4v2h2V6z"/></svg><span class="l sr">Info</span></a>
+  </nav>
+</header>
+
+<section class="home" id="home" aria-labelledby="homeTitle">
+  <div class="band">
+    <div class="wrap">
+      <div>
+        <div class="eyebrow">Kanton Zug · 47° 10′ N · 8° 31′ O</div>
+        <h1 id="homeTitle">Zug entdecken</h1>
+      </div>
+      <p class="lead">Elf Gemeinden zwischen Zugersee, Ägerisee und Wildspitz, als Relief aus den Höhendaten von swisstopo. Wählen Sie einen Bereich, die Karte fliegt hin.</p>
+    </div>
+  </div>
+  <div class="under">
+    <div class="wrap">
+      <nav class="entries" aria-label="Einstiege">
+        <a class="entry" href="#/gemeinden"><span class="ei"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg></span><b>Gemeinden</b><small id="nGem">11</small><span>Elf Gemeinden mit Lage, Zahlen und Ausflugszielen</span></a>
+        <a class="entry" href="#/sehenswuerdigkeiten"><span class="ei"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg></span><b>Sehens&shy;würdig&shy;keiten</b><small id="nSight"></small><span>Altstadt, Burgen, Klöster, Museen, Aussichtspunkte</span></a>
+        <a class="entry" href="#/familien"><span class="ei"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5a2.4 2.4 0 1 1 0 4.8a2.4 2.4 0 1 1 0-4.8zM17 4.5a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM4.5 8.6h5l1.6 6.4H9.6V22H6.4v-7H3zM14.6 10h4.8l1.6 5.4h-1.4V22h-2.6v-4h-1v4h-2.6v-6.6H12z"/></svg></span><b>Für Familien</b><small id="nFam"></small><span>Spielplätze mit Schatten, Badis, Feuerstellen, Ausflüge</span></a>
+        <a class="entry" href="#/events"><span class="ei"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zM5 9v10h14V9zm2 2h4v4H7z"/></svg></span><b>Events</b><small id="nEv"></small><span>Live aus dem Veranstaltungskalender von Zug Tourismus</span></a>
+      </nav>
+      <div class="tour"><button type="button" id="tourBtn"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z"/></svg>Rundflug über den Kanton</button><span class="status" id="status"></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="caption" id="caption" hidden aria-live="polite">
+  <div class="bar"><i id="capBar"></i></div>
+  <p class="kicker" id="capKick"></p>
+  <h2 id="capTitle"></h2>
+  <p id="capText"></p>
+  <div class="crow"><span id="capStep"></span><span><button type="button" id="capPrev">Zurück</button> <button type="button" id="capNext">Weiter</button> <button type="button" id="capStop">Beenden</button></span></div>
+</section>
+
+<aside class="panel" id="panel" aria-label="Inhalt">
+  <button class="handle" id="handle" type="button" aria-label="Panel grösser oder kleiner"></button>
+  <div class="ph" id="ph"></div>
+  <div class="pscroll" id="pscroll">
+    <div class="list" id="list"></div>
+    <div class="detail" id="detail" hidden></div>
+  </div>
+  <div class="pfoot"><span id="pfootL"></span><a href="#/info">Impressum &amp; Daten</a></div>
+</aside>
 
 <div class="mapctl" id="mapctl" role="group" aria-label="Kartensteuerung">
   <button type="button" id="zoomIn" aria-label="Näher heran">+</button>
   <button type="button" id="zoomOut" aria-label="Weiter weg">−</button>
-  <button type="button" id="home" aria-label="Ganzer Kanton"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg></button>
+  <button type="button" id="homeBtn" aria-label="Ganzer Kanton"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg></button>
+  <button type="button" id="northBtn" aria-label="Nach Norden ausrichten"><svg class="ic" viewBox="0 0 34 34" id="north"><path d="M17 3 L22.5 18 L17 15.2 L11.5 18 Z" fill="var(--zug)"/><path d="M17 31 L11.5 18 L17 20.8 L22.5 18 Z" fill="currentColor" fill-opacity=".4"/></svg></button>
   <div class="sep"></div>
   <button type="button" id="tPhoto" aria-pressed="true" aria-label="Luftbild beim Heranzoomen"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 12h14l-4.5-6-3.5 4.5-2.5-3z"/></svg></button>
 </div>
 
-<div class="hud" aria-hidden="true">
-  <svg viewBox="0 0 34 34" id="north"><circle cx="17" cy="17" r="15.5" fill="none" stroke="currentColor" stroke-opacity=".35"/><path d="M17 5 L21.5 18 L17 15.6 L12.5 18 Z" fill="var(--zug)"/><path d="M17 29 L12.5 18 L17 20.4 L21.5 18 Z" fill="currentColor" fill-opacity=".35"/><text x="17" y="4.2" text-anchor="middle" font-size="5.5" font-family="IBM Plex Mono, monospace" fill="currentColor">N</text></svg>
-  <div><span class="st" id="hudA">Höhenmodell wird geladen …</span><span class="st" id="hudB">swissALTI3D · LV95</span></div>
-</div>
-
+<div class="hud" aria-hidden="true"><span class="st" id="hudA">Höhenmodell wird geladen …</span><span class="st" id="hudB">swissALTI3D · LV95</span></div>
+<div class="hint" id="hint" aria-hidden="true">Ziehen verschiebt · rechte Maustaste dreht · Mausrad zoomt</div>
 <div class="tip" id="tip" role="status" aria-live="polite"><b id="tipT"></b><span id="tipA"></span><span id="tipB"></span></div>
 
-<main>
-  <section class="hero" data-cam="hero" id="top">
-    <div aria-hidden="true"></div>
-    <div class="band">
-      <div class="wrap">
-        <div class="eyebrow">Kanton Zug · 47° 10′ N · 8° 31′ O</div>
-        <h1>Zuger Familien</h1>
+<div class="info-dlg" id="infoDlg" hidden role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+  <div class="box">
+    <button class="x" type="button" id="infoClose" aria-label="Schliessen">×</button>
+    <h2 id="infoTitle">Zug entdecken: Impressum und Daten</h2>
+    <div class="cols">
+      <div>
+        <h3>Impressum</h3>
+        <address>Hartmann Association<br>6300 Zug</address>
+        <p style="margin-top:10px">Ein Portal für den Kanton Zug: Relief, Gemeinden, Sehenswürdigkeiten, Familienorte und Veranstaltungen auf einer Karte.</p>
       </div>
-    </div>
-    <div class="under">
-      <div class="wrap">
-        <p class="lead">Ein Relief des Kantons aus den Höhendaten von swisstopo, mit den Spielplätzen, Badis und Feuerstellen aus OpenStreetMap. Scrollen Sie von der Stadt am See bis auf den Wildspitz und sehen Sie, wo im Sommer Schatten liegt.</p>
-        <div>
-          <div class="cue">Scrollen</div>
-          <div class="status" id="status"></div>
-        </div>
+      <div>
+        <h3>Geodaten</h3>
+        <p>Bundesamt für Landestopografie swisstopo: Höhenmodell swissALTI3D, Oberflächenmodell swissSURFACE3D (Befliegungen 2020 bis 2025), Luftbilder SWISSIMAGE, Grenzen swissBOUNDARIES3D (Stand 2026), Gebäude, Gewässer und Seetiefen aus der Basiskarte Vektor.</p>
+        <p>Spielplätze, Badis, Feuerstellen, Trinkbrunnen, WCs und weitere Orte: © <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap-Mitwirkende</a>, ODbL.</p>
       </div>
-    </div>
-  </section>
-
-  <section class="chapter" data-cam="kanton" id="kanton">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Der Kanton</p>
-        <h2>Elf Gemeinden auf 239&nbsp;km²</h2>
-        <p>Vom Zugersee auf 414&nbsp;m ü.&nbsp;M. bis zum Wildspitz auf 1580&nbsp;m. Die blauen Linien zeigen die Grenzen von Kanton und Gemeinden, Stand 2026.</p>
-        <p class="hint hint-hover">Fahren Sie mit der Maus über das Relief, um eine Gemeinde zu sehen.</p>
-        <dl class="facts">
-          <div><dt>Fläche</dt><dd>238,7 km²</dd></div>
-          <div><dt>Höhenlage</dt><dd>386–1580 m</dd></div>
-          <div><dt>Gemeinden</dt><dd>11</dd></div>
-        </dl>
-      </article>
-    </div>
-  </section>
-
-  <section class="chapter" data-cam="zug" id="zug">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Stadt Zug</p>
-        <h2>Die Stadt am See</h2>
-        <p>Altstadt, Zytturm und Seeufer liegen auf wenigen hundert Metern. Hinter der Stadt steigt der Zugerberg auf 1039&nbsp;m an, und das Gemeindegebiet reicht bis an den Wildspitz.</p>
-        <dl class="facts">
-          <div><dt>Fläche mit Seeanteil</dt><dd>33,8 km²</dd></div>
-          <div><dt>Höhenlage</dt><dd>411–1574 m</dd></div>
-        </dl>
-      </article>
-    </div>
-  </section>
-
-  <section class="chapter" data-cam="lorze" id="lorze">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Baar · Steinhausen · Cham · Hünenberg · Risch</p>
-        <h2>Der Weg der Lorze</h2>
-        <p>Die Lorze verlässt den Ägerisee bei Unterägeri, fliesst durch das Lorzentobel und erreicht bei Baar die Ebene. Sie mündet in den Zugersee, tritt bei Cham wieder aus und fliesst an der nördlichen Kantonsgrenze in die Reuss.</p>
-        <ul class="rows" id="rowsLorze"></ul>
-      </article>
-    </div>
-  </section>
-
-  <section class="chapter" data-cam="aegeri" id="aegeri">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Unterägeri · Oberägeri</p>
-        <h2>Das Ägerital</h2>
-        <p>Der Ägerisee liegt auf 724&nbsp;m ü.&nbsp;M., rund 310&nbsp;m über dem Zugersee. Seine tiefste Stelle liegt mehr als 80&nbsp;m unter dem Wasserspiegel. Am Südende erinnert das Denkmal bei Morgarten an die Schlacht von 1315.</p>
-        <ul class="rows" id="rowsAegeri"></ul>
-      </article>
-    </div>
-  </section>
-
-  <section class="chapter" data-cam="berg" id="berg">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Menzingen · Neuheim</p>
-        <h2>Hügelland über dem Tobel</h2>
-        <p>Nördlich und östlich des Lorzentobels steigt das Land zu einem welligen Plateau an. Neuheim liegt zwischen 482 und 766&nbsp;m, Menzingen reicht bis an den Gottschalkenberg.</p>
-        <ul class="rows" id="rowsBerg"></ul>
-      </article>
-    </div>
-  </section>
-
-  <section class="chapter" data-cam="walchwil" id="rossberg">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Walchwil · Wildspitz</p>
-        <h2>Am Hang des Rossbergs</h2>
-        <p>Walchwil liegt am Ostufer des Zugersees und reicht bis auf 1248&nbsp;m. Darüber erreicht der Kanton am Wildspitz seinen höchsten Punkt, direkt an der Grenze zum Kanton Schwyz.</p>
-        <dl class="facts">
-          <div><dt>Walchwil, mit Seeanteil</dt><dd>15,9 km²</dd></div>
-          <div><dt>Wildspitz</dt><dd>1580 m</dd></div>
-        </dl>
-      </article>
-    </div>
-  </section>
-
-  <section class="chapter" data-cam="spiel" id="spielplaetze">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Spielplätze</p>
-        <h2><span id="nSpiel">205</span> öffentliche Spielplätze</h2>
-        <p>Jeder Punkt ist ein Spielplatz aus OpenStreetMap, private Anlagen sind ausgeblendet. Die meisten liegen in den Siedlungen am See und in der Lorzenebene.</p>
-        <ul class="rows" id="rowsSpiel"></ul>
-      </article>
-    </div>
-  </section>
-
-  <section class="chapter long" data-cam="schatten" id="schatten">
-    <div class="wrap">
-      <article class="card">
-        <p class="kicker">Schatten · 21. Juli, wolkenlos</p>
-        <h2>Wo am Nachmittag Schatten liegt</h2>
-        <p class="desk">Für jeden Spielplatz ist berechnet, welcher Teil der Fläche im Schatten von Bäumen, Gebäuden und Gelände liegt. Grundlage ist das Oberflächenmodell swissSURFACE3D. Beim Scrollen wandert die Sonne über den Tag.</p>
-        <p class="mob small">Schatten von Bäumen, Gebäuden und Gelände, berechnet aus swissSURFACE3D. Scrollen bewegt die Sonne.</p>
-        <div class="feat"><span>Abenteuerspielplatz Schattwäldli, Zugerberg</span><b id="featShade">–</b><strong id="featText">im Schatten</strong></div>
-        <div class="sun" id="sunA"></div>
-        <figure class="mini desk" id="miniChart"></figure>
-      </article>
-    </div>
-  </section>
-
-  <section class="finale" data-cam="familie" id="familienorte">
-    <div class="wrap">
-      <article class="card explorer finale-panel" aria-label="Orte für Familien">
-        <div class="head">
-          <p class="kicker">Orte für Familien</p>
-          <h2>Spielplätze, Badis, Feuerstellen, Ausflugsziele</h2>
-          <div class="chips" id="chips" role="group" aria-label="Kategorien"></div>
-          <div class="row2">
-            <label for="fGem" class="hint-sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Gemeinde</label>
-            <select id="fGem"><option value="">Alle Gemeinden</option></select>
-            <button type="button" class="chip" id="fShade" aria-pressed="false">Schattig ab 50&nbsp;%</button>
-            <button type="button" class="chip" id="fZT" aria-pressed="false">Tipps Zug Tourismus</button>
-            <button type="button" class="chip" id="tWater" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C9 7 6 10.5 6 14a6 6 0 0 0 12 0c0-3.5-3-7-6-12z"/></svg>Trinkbrunnen</button>
-            <button type="button" class="chip" id="tWC" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 2.6a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM5 8h5v7.4H9V22H6v-6.6H5zM16.5 2.6a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM16.5 8l3.6 8.2H18V22h-3v-5.8h-2.1z"/></svg>WC</button>
-          </div>
-          <div class="sun" id="sunB"></div>
-          <div class="count"><span id="count"></span><span id="countHint"></span></div>
-        </div>
-        <div class="scroll" id="scroll">
-          <div class="list" id="list" role="list"></div>
-          <div class="detail" id="detail" hidden></div>
-        </div>
-      </article>
-    </div>
-  </section>
-</main>
-
-<footer>
-  <div class="wrap">
-    <div>
-      <div class="sig">Zuger Familien</div>
-      <h3>Impressum</h3>
-      <address>Hartmann Association<br>6300 Zug</address>
-    </div>
-    <div>
-      <h3>Daten</h3>
-      <p>Bundesamt für Landestopografie swisstopo: Höhenmodell swissALTI3D, Oberflächenmodell swissSURFACE3D (Befliegungen 2020 bis 2025), Luftbilder SWISSIMAGE, Grenzen swissBOUNDARIES3D (Stand 2026), Gebäude, Gewässer und Seetiefen aus der Basiskarte Vektor.</p>
-      <p>Spielplätze, Badis, Feuerstellen, Trinkbrunnen und WCs: © <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap-Mitwirkende</a>, ODbL. Familienangebote: <a href="https://www.zug-tourismus.ch/de/familien/" rel="noopener" target="_blank">Zug Tourismus</a>, verlinkt. Fotos: Wikimedia Commons, Urheber jeweils beim Bild.</p>
-    </div>
-    <div>
-      <h3>Methode</h3>
-      <p>Schatten und Sonnenstand gelten für den 21. Juli bei wolkenlosem Himmel, Uhrzeiten in Sommerzeit. Ein Punkt der Fläche gilt als beschattet, wenn auf Kopfhöhe eines Kindes Bäume, Gebäude oder Gelände die Sonne verdecken. Der UV-Index ist aus dem Sonnenstand geschätzt und ersetzt keine Tagesprognose von <a href="https://www.meteoschweiz.admin.ch" rel="noopener" target="_blank">MeteoSchweiz</a>.</p>
-      <p>In der Übersicht ist das Relief 1,6-fach überhöht, in der Nahansicht massstabsgetreu. Koordinaten im Landeskoordinatensystem LV95.</p>
+      <div>
+        <h3>Inhalte und Bilder</h3>
+        <p id="infoSources">Fotos der Sehenswürdigkeiten und Familienorte: Wikimedia Commons, Urheber und Lizenz jeweils beim Bild. Veranstaltungen: <a href="https://www.zug-tourismus.ch/de/event-calendar/" rel="noopener" target="_blank">Veranstaltungskalender von Zug Tourismus</a> (Guidle), Bildnachweis jeweils beim Anlass. Hinweise auf Angebote von Zug Tourismus sind verlinkt.</p>
+        <p id="infoGem">Einwohnerzahlen: Bundesamt für Statistik und Statistik Kanton Zug, Stichtag jeweils angegeben.</p>
+      </div>
+      <div>
+        <h3>Methode</h3>
+        <p>Sonnenstand nach dem NOAA-Verfahren für 47,17° N. Schatten auf Spielplätzen für den 21. Juli bei wolkenlosem Himmel: Ein Punkt gilt als beschattet, wenn auf Kopfhöhe eines Kindes Bäume, Gebäude oder Gelände die Sonne verdecken. In der 3D-Ansicht rechnet die Karte die Schatten für das gewählte Datum und die Uhrzeit direkt. Der UV-Index ist aus dem Sonnenstand geschätzt und ersetzt keine Tagesprognose von <a href="https://www.meteoschweiz.admin.ch" rel="noopener" target="_blank">MeteoSchweiz</a>.</p>
+        <p>In der Übersicht ist das Relief 1,6-fach überhöht, in der Nahansicht massstabsgetreu. Koordinaten im Landeskoordinatensystem LV95.</p>
+      </div>
     </div>
   </div>
-</footer>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.1/three.min.js"></script>
 <script>/*DATA*/</script>
