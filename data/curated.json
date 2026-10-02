@@ -42,22 +42,26 @@
   {
    "i": 221,
    "x": "Seit dem 9. Mai 2026 erweitert: neue Sandbucht, rund 5000 m² Liegefläche, zwei eingeschossige Holzbauten mit Garderoben, WC und Restaurant mit Pergola, dazu Kiosk und Bar. Saison Mai bis September, Eintritt frei. Die Neubauten und die Bucht sind in der 3D-Karte nach Plänen nachgebildet; das Luftbild stammt noch aus der Bauzeit 2025.",
-   "t": [
-    [
-     "Strandbad Zug",
-     "https://strandbadzug.ch/"
-    ],
-    [
-     "Projekt der Stadt Zug",
-     "https://www.baudepartement-stadtzug.ch/page/de/projekte/details?prid=5"
-    ]
-   ],
    "src": [
     "https://www.baudepartement-stadtzug.ch/page/de/projekte/details?prid=5",
     "https://www.nau.ch/ort/zug/doppelt-so-viel-platz-neues-strandbad-ist-bereit-fur-die-saison-67125935",
     "https://strandbadzug.ch/",
     "https://www.evz.ch/news/arena/gastronomie/2026/05/sommer-event-mit-evz-gastro/",
     "https://www.openstreetmap.org/way/1502798337"
+   ],
+   "w": [
+    [
+     "Website Strandbad Zug",
+     "https://strandbadzug.ch/"
+    ],
+    [
+     "Fotos auf Instagram @strandbad.zug",
+     "https://www.instagram.com/strandbad.zug/"
+    ],
+    [
+     "Projekt der Stadt Zug",
+     "https://www.baudepartement-stadtzug.ch/page/de/projekte/details?prid=5"
+    ]
    ]
   }
  ],

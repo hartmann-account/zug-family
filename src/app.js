@@ -82,9 +82,10 @@ var PL = F.places.map(function (p, i) {
 });
 (PD.famLinks || []).forEach(function (l) {
   var p = PL[l.i]; if (!p) return;
-  p.zt = (p.zt || []).concat(l.t.filter(function (x) { return !(p.zt || []).some(function (y) { return y[1] === x[1]; }); }));
+  if (l.t && l.t.length) p.zt = (p.zt || []).concat(l.t.filter(function (x) { return !(p.zt || []).some(function (y) { return y[1] === x[1]; }); }));
   if (l.n && !p.name) { p.name = l.n; p.title = l.n; }
   if (l.x) p.note = l.x;
+  if (l.w) p.web = (p.web || []).concat(l.w);
 });
 (PD.famHide || []).forEach(function (i) { if (PL[i]) PL[i].hide = true; });
 (PD.famExtra || []).forEach(function (p) {
@@ -694,7 +695,7 @@ function detailHTML(it) {
     h += '<div class="sun" id="sunDet"></div>';
     if (p.flags && p.flags.length) h += '<p class="note">Vor Ort: ' + p.flags.map(esc).join(', ') + '</p>';
     if (p.note) h += '<p class="note">' + esc(p.note) + '</p>';
-    var L = (p.zt || []).map(function (l) { return [l[0] + ' bei Zug Tourismus', l[1]]; }); var ol = osmLink(p.osm); if (ol) L.push(ol);
+    var L = (p.web || []).concat((p.zt || []).map(function (l) { return [l[0] + ' bei Zug Tourismus', l[1]]; })); var ol = osmLink(p.osm); if (ol) L.push(ol);
     h += linkList(L);
   } else if (it.type === 'sight') {
     var g = it;
