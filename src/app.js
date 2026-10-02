@@ -86,6 +86,7 @@ var PL = F.places.map(function (p, i) {
   if (l.n && !p.name) { p.name = l.n; p.title = l.n; }
   if (l.x) p.note = l.x;
 });
+(PD.famHide || []).forEach(function (i) { if (PL[i]) PL[i].hide = true; });
 (PD.famExtra || []).forEach(function (p) {
   var i = PL.length;
   PL.push({ type: 'fam', i: i, id: String(i), cat: p.c, mk: p.c, kind: p.k, name: p.n, hint: p.h || '', gem: p.g, E: p.E, N: p.N, z: p.z || 430, s: null, cover: null,
@@ -372,6 +373,8 @@ function applyRoute() {
   var changed = r.mode !== MODE;
   setMode(r.mode, changed);
   var it = r.id ? findItem(r.mode, r.id) : null;
+  var nf = $('#notFound'), pending = r.mode === 'events' && EVMETA.state !== 'ok' && EVMETA.state !== 'error';
+  if (nf) nf.hidden = !(r.id && !it && !pending);
   if (it) {
     if (it !== SEL && it !== selGem) openItem(it);
   } else if (SEL || selGem) {
@@ -408,26 +411,30 @@ function gemSelect(id, val, counts, outLabel) {
     (counts && counts._out ? '<option value="_out"' + (val === '_out' ? ' selected' : '') + '>' + (outLabel || 'Ausserhalb') + ' (' + counts._out + ')</option>' : '') + '</select>';
 }
 function countBy(arr) { var c = {}; arr.forEach(function (x) { if (MUNI[x.gem]) c[x.gem] = (c[x.gem] || 0) + 1; else c._out = (c._out || 0) + 1; }); return c; }
+function fmtISODate(x) { var m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(x || ''); return m ? (+m[3]) + '.' + (+m[2]) + '.' + m[1] : (x || ''); }
+function allChip(arr) { return '<button type="button" class="chip" data-cat="all" aria-pressed="' + arr.every(Boolean) + '">Alle</button>'; }
+function normQ(x) { return String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'ss'); }
+function qMatch(q, it) { if (!q) return true; var hay = normQ(it.title + ' ' + itemSub(it) + ' ' + (it.kind || '')); return normQ(q).split(/\s+/).every(function (w) { return !w || hay.indexOf(w) >= 0; }); }
 function renderHead() {
   var h = '', m = MODE;
   if (m === 'gemeinden') {
-    var pop = KANTON.pop ? swiss(KANTON.pop) + ' Einwohnerinnen und Einwohner' + (KANTON.popDate ? ' (' + esc(KANTON.popDate) + ')' : '') + ', ' : '';
+    var pop = KANTON.pop ? swiss(KANTON.pop) + ' Einwohnerinnen und Einwohner' + (KANTON.popDate ? ' (' + esc(fmtISODate(KANTON.popDate)) + ')' : '') + ', ' : '';
     h = '<p class="kicker">' + svgIcon('gem') + 'Gemeinden</p><h2>Elf Gemeinden zwischen Zugersee und Ägerisee</h2><p class="intro">' + pop + dec(KANTON.area || 238.7) + ' km². Wählen Sie eine Gemeinde in der Liste oder auf der Karte.</p>';
   } else if (m === 'sights') {
     var cs = countBy(SIGHTS), f = filt.sights;
-    h = '<p class="kicker">' + svgIcon('stadt') + 'Sehenswürdigkeiten</p><h2>' + SIGHTS.length + ' Orte in elf Gemeinden</h2>' +
-      '<div class="flt">' + gemSelect('fGemS', f.gem, cs) + '</div>' +
-      '<div class="flt scroll" id="chipsS" role="group" aria-label="Kategorien">' + SCATS.map(function (c, k) {
+    h = '<p class="kicker">' + svgIcon('stadt') + 'Sehenswürdigkeiten</p><h2>' + SIGHTS.length + ' Orte in ' + (Object.keys(cs).filter(function (k) { return k !== '_out'; }).length === 11 ? 'elf Gemeinden' : 'den Zuger Gemeinden') + '</h2>' +
+      '<div class="flt">' + '<div class="srch"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg><input type="search" id="fQ" placeholder="Suchen" value="' + esc(f.q || '') + '" aria-label="' + 'Sehenswürdigkeit suchen' + '" autocomplete="off" enterkeyhint="search"></div>' + gemSelect('fGemS', f.gem, cs) + '</div>' +
+      '<div class="flt scroll" id="chipsS" role="group" aria-label="Kategorien">' + allChip(f.cats) + SCATS.map(function (c, k) {
         var n = SIGHTS.filter(function (s) { return s.cat === k; }).length; if (!n) return '';
         return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + f.cats[k] + '">' + svgIcon(c.k) + esc(c.t) + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
       '<div class="count"><span id="count"></span><span id="countHint">Sortiert nach Gemeinde</span></div>';
   } else if (m === 'familie') {
-    var ff = filt.familie, cf = countBy(PL), summer = sunDay.k === 'sommer', nMore = (ff.sunMax < 100 && summer ? 1 : 0) + (ff.zt ? 1 : 0) + (showWater ? 1 : 0) + (showWC ? 1 : 0);
+    var ff = filt.familie, cf = countBy(PL.filter(function (p) { return !p.hide; })), summer = sunDay.k === 'sommer', nMore = (ff.sunMax < 100 && summer ? 1 : 0) + (ff.zt ? 1 : 0) + (showWater ? 1 : 0) + (showWC ? 1 : 0);
     h = '<p class="kicker">' + svgIcon('spiel') + 'Für Familien</p><h2>Spielplätze und Ausflüge</h2>' +
-      '<div class="flt scroll" id="chipsF" role="group" aria-label="Kategorien">' + CATS.map(function (c, k) {
-        var n = PL.filter(function (p) { return p.cat === k; }).length;
+      '<div class="flt scroll" id="chipsF" role="group" aria-label="Kategorien">' + allChip(ff.cats) + CATS.map(function (c, k) {
+        var n = PL.filter(function (p) { return p.cat === k && !p.hide; }).length;
         return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + ff.cats[k] + '">' + svgIcon(c.k) + c.t + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
-      '<div class="flt">' + gemSelect('fGemF', ff.gem, cf) +
+      '<div class="flt">' + '<div class="srch"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg><input type="search" id="fQ" placeholder="Suchen" value="' + esc(ff.q || '') + '" aria-label="Familienort suchen" autocomplete="off" enterkeyhint="search"></div>' + gemSelect('fGemF', ff.gem, cf) +
       '<button type="button" class="chip morebtn" id="fMore" aria-expanded="' + ff.more + '" aria-controls="fBox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3zm4 6h10v2H7zm3 6h4v2h-4z"/></svg>Filter' + (nMore ? ' <small class="badge">' + nMore + '</small>' : '') + '</button></div>' +
       '<div class="fbox" id="fBox"' + (ff.more ? '' : ' hidden') + '>' +
         '<div class="sunflt"><div class="sf-top"><label for="fSun">Sonne höchstens</label><b id="fSunV">' + (ff.sunMax >= 100 ? 'alle Orte' : ff.sunMax + '&nbsp;%') + '</b></div>' +
@@ -450,7 +457,7 @@ function renderHead() {
     var WIN = [['alle', 'Alle'], ['heute', 'Heute'], ['we', 'Wochenende'], ['7', '7 Tage'], ['30', '30 Tage']];
     h = '<p class="kicker">' + svgIcon('event') + 'Veranstaltungen</p><h2>Was im Kanton Zug läuft</h2>' +
       '<div class="flt" id="winE" role="group" aria-label="Zeitraum">' + WIN.map(function (w) { return '<button type="button" class="chip" data-win="' + w[0] + '" aria-pressed="' + (fe.win === w[0]) + '">' + w[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="flt">' + gemSelect('fGemE', fe.gem, ce, 'Kantonsweit oder ausserhalb') +
+      '<div class="flt">' + '<div class="srch"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg><input type="search" id="fQ" placeholder="Suchen" value="' + esc(fe.q || '') + '" aria-label="Veranstaltung suchen" autocomplete="off" enterkeyhint="search"></div>' + gemSelect('fGemE', fe.gem, ce, 'Kantonsweit oder ausserhalb') +
       (Object.keys(cats).length > 1 ? '<label class="sr" for="fCatE">Kategorie</label><select id="fCatE"><option value="">Alle Kategorien</option>' + Object.keys(cats).sort(function (a, b) { return a.localeCompare(b, 'de'); }).map(function (k) {
         return '<option value="' + esc(k) + '"' + (fe.cat === k ? ' selected' : '') + '>' + esc(k) + ' (' + cats[k] + ')</option>'; }).join('') + '</select>' : '') + '</div>' +
       '<div class="count"><span id="count"></span><span id="countHint"></span></div>';
@@ -460,7 +467,8 @@ function renderHead() {
   $('#pfootL').textContent = m === 'events' && EVMETA.updated ? 'Stand ' + new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ }).format(new Date(EVMETA.updated)) : '';
 }
 function wireHead() {
-  var m = MODE;
+  var m = MODE, qi = $('#fQ');
+  if (qi) qi.addEventListener('input', function () { var f = filt[m === 'sights' ? 'sights' : m === 'familie' ? 'familie' : 'events']; f.q = qi.value.trim(); evShown = 60; listDirty = true; markerVisDirty = true; renderList(); });
   function onGem(sel, f) {
     if (!sel) return;
     sel.addEventListener('change', function () {
@@ -501,10 +509,11 @@ function updMoreBadge() {
   if (n && !sm) { b.insertAdjacentHTML('beforeend', ' <small class="badge">' + n + '</small>'); } else if (sm) { if (n) sm.textContent = n; else sm.remove(); }
 }
 function toggleCat(arr, k, wrap) {
-  var allOn = arr.every(Boolean);
-  if (allOn) { for (var j = 0; j < arr.length; j++) arr[j] = j === k; }
+  var allOn = arr.every(Boolean), j;
+  if (isNaN(k)) { for (j = 0; j < arr.length; j++) arr[j] = true; }
+  else if (allOn) { for (j = 0; j < arr.length; j++) arr[j] = j === k; }
   else { arr[k] = !arr[k]; if (!arr.some(Boolean)) for (j = 0; j < arr.length; j++) arr[j] = true; }
-  Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', arr[+c.dataset.cat] ? 'true' : 'false'); });
+  Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', String(c.dataset.cat === 'all' ? arr.every(Boolean) : !!arr[+c.dataset.cat])); });
   listDirty = true; markerVisDirty = true; renderList(); syncHash();
 }
 
@@ -512,7 +521,8 @@ function toggleCat(arr, k, wrap) {
 function gemMatch(want, gem) { return !want || (want === '_out' ? !MUNI[gem] : gem === want); }
 function matchFam(p) {
   var f = filt.familie;
-  if (!f.cats[p.cat]) return false;
+  if (p.hide || !f.cats[p.cat]) return false;
+  if (f.q && !qMatch(f.q, p)) return false;
   if (!gemMatch(f.gem, p.gem)) return false;
   if (f.zt && !p.zt) return false;
   if (f.sunMax < 100 && sunDay.k === 'sommer') { var e = sunExposure(p); if (e == null || e > f.sunMax / 100 + 1e-6) return false; }
@@ -527,7 +537,7 @@ function sunExposure(p) {
   }
   var sh = shadeAt(p, sunT); return sh == null ? null : 1 - sh;
 }
-function matchSight(s) { var f = filt.sights; return f.cats[s.cat] && gemMatch(f.gem, s.gem); }
+function matchSight(s) { var f = filt.sights; return f.cats[s.cat] && gemMatch(f.gem, s.gem) && qMatch(f.q, s); }
 function winRange(w) {
   var now = Date.now(), p = fmtYMD.format(new Date()).split('-'), y = +p[0], mo = +p[1] - 1, d = +p[2];
   var start = Date.UTC(y, mo, d) - tzOff({ y: y, m: mo, d: d }) * 3600e3, day = 86400e3;
@@ -545,6 +555,7 @@ function matchEvent(e) {
   var f = filt.events, r = winRange(f.win);
   if (!gemMatch(f.gem, e.gem)) return false;
   if (f.cat && e.cats.indexOf(f.cat) < 0) return false;
+  if (f.q && !qMatch(f.q, e)) return false;
   for (var i = 0; i < e.occ.length; i++) { var o = e.occ[i]; if (o.t1 >= r[0] && o.t0 < r[1]) return true; }
   return false;
 }
@@ -664,6 +675,7 @@ function sparkSVG(p) {
     '<text class="ax" x="2" y="12">100 %</text></svg></div>';
 }
 function backLabel(it) { return '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5 1.4-1.4L7.8 8l3.6-3.6z"/></svg>' + (it.type === 'fam' ? 'Alle Familienorte' : it.type === 'sight' ? 'Alle Sehenswürdigkeiten' : it.type === 'event' ? 'Alle Veranstaltungen' : 'Alle Gemeinden'); }
+function shareBtn() { return '<button type="button" class="btn btn-soft share" id="shareBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7l-6.7 3.4a3 3 0 1 0 0 3.2L15 17a3 3 0 1 0 3-1z"/></svg>Teilen</button>'; }
 function linkList(items) { var h = ''; items.forEach(function (l) { if (safeURL(l[1])) h += '<li><a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' + esc(l[0]) + '</a></li>'; }); return h ? '<ul class="links">' + h + '</ul>' : ''; }
 function osmLink(o) { if (!o) return null; var tp = { n: 'node', w: 'way', r: 'relation' }[o[0]]; return tp ? ['In OpenStreetMap ansehen', 'https://www.openstreetmap.org/' + tp + '/' + o.slice(1)] : null; }
 function detailHTML(it) {
@@ -709,7 +721,7 @@ function detailHTML(it) {
     h += '<h3>' + esc(m.name) + '</h3><p class="sub">Gemeinde im Kanton Zug' + (m.m.bfs ? ' · BFS-Nr. ' + m.m.bfs : '') + '</p>';
     if (m.text) h += '<p class="txt">' + esc(m.text) + '</p>';
     h += '<dl class="facts">';
-    if (m.pop) h += '<div><dt>Einwohner' + (m.popDate ? ' ' + esc(m.popDate) : '') + '</dt><dd>' + swiss(m.pop) + '</dd></div>';
+    if (m.pop) h += '<div><dt>Einwohner' + (m.popDate ? ', Stand ' + esc(fmtISODate(m.popDate)) : '') + '</dt><dd>' + swiss(m.pop) + '</dd></div>';
     h += '<div><dt>Fläche</dt><dd>' + dec(m.area) + ' km²</dd></div><div><dt>Höhenlage</dt><dd>' + m.hmin + '–' + m.hmax + ' m</dd></div>';
     if (m.elev) h += '<div><dt>Dorfkern</dt><dd>' + swiss(m.elev) + ' m ü. M.</dd></div>';
     h += '</dl>';
@@ -742,12 +754,21 @@ function eventMoreHTML(e) {
   if (dl) h += '<dl class="facts one">' + dl + '</dl>';
   return h;
 }
+var listScroll = 0;
 function openItem(it) {
+  if (!listEl.hidden) listScroll = pscroll.scrollTop;
   if (it.type === 'gem') { selGem = it; SEL = null; } else { SEL = it; selGem = null; }
   detailEl.innerHTML = detailHTML(it);
   fillWx(it);
   detailEl.hidden = false; listEl.hidden = true; pscroll.scrollTop = 0; panel.classList.add('has-detail');
   $('#back').addEventListener('click', backFromDetail);
+  var shb = $('#back'); if (shb) shb.insertAdjacentHTML('afterend', shareBtn());
+  var sbt = $('#shareBtn');
+  if (sbt) sbt.addEventListener('click', function () {
+    var url = location.href, title = (it.title || it.name) + ' · Zug entdecken';
+    if (navigator.share) navigator.share({ title: title, url: url }).catch(function () {});
+    else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { sbt.lastChild.textContent = 'Link kopiert'; setTimeout(function () { if (sbt.isConnected) sbt.lastChild.textContent = 'Teilen'; }, 2200); }).catch(function () {});
+  });
   var sd = $('#sunDet'), termin = null;
   if (it.type === 'event') {
     var o = nextOcc(it, Date.now());
@@ -786,6 +807,7 @@ function closeDetail(silent) {
   if (GL) { clearOutline(); calloutEl.classList.remove('on'); }
   detailEl.hidden = true; detailEl.innerHTML = ''; listEl.hidden = false; panel.classList.remove('has-detail');
   markerVisDirty = true; listDirty = true;
+  var ls = listScroll; requestAnimationFrame(function () { if (!SEL && !selGem) pscroll.scrollTop = ls; });
   if (!silent) syncHash();
 }
 function updateDetailLive(full) {
@@ -893,7 +915,7 @@ function showHint() { if (hintShown || !fine || TEST) return; hintShown = true; 
 
 /* home counts */
 $('#nSight').textContent = SIGHTS.length || '';
-$('#nFam').textContent = PL.length;
+$('#nFam').textContent = PL.filter(function (p) { return !p.hide; }).length;
 /* ---------------- WebGL setup ---------------- */
 if (!window.THREE) { fail('Die 3D-Bibliothek konnte nicht geladen werden. Liste und Texte bleiben nutzbar.'); uiOnly(); return; }
 if (typeof DecompressionStream === 'undefined') { fail('Dieser Browser kann die Geodaten nicht entpacken. Liste und Texte bleiben nutzbar.'); uiOnly(); return; }

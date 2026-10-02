@@ -101,7 +101,14 @@ for a in load('attractions.json', 'attractions2.json') or []:
         local = im['local'] if os.path.isabs(im['local']) else os.path.join(SRC, im['local'])
         if os.path.exists(local) and im.get('author') and im.get('license'):
             dst = os.path.join(fotodir, sid + '.webp')
-            shutil.copyfile(local, dst)
+            try:  # auf 900 px Breite verkleinern, damit die Seite leicht bleibt
+                from PIL import Image
+                pic = Image.open(local).convert('RGB')
+                if pic.width > 900:
+                    pic = pic.resize((900, round(pic.height * 900 / pic.width)), Image.LANCZOS)
+                pic.save(dst, 'WEBP', quality=72)
+            except ImportError:
+                shutil.copyfile(local, dst)
             s['ph'] = dict(f='foto/s/' + sid + '.webp', a=im['author'], l=im['license'], u=url(im.get('page_url')),
                            lu=url(im.get('license_url')), w=im.get('caption') or im.get('what') or name)
         else:

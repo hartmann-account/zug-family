@@ -1,1 +1,3701 @@
-{"sights": [{"id": "bellevue-380", "n": "Bellevue", "g": "Menzingen", "c": 4, "E": 2691750.5, "N": 1223658.2, "f": [], "zt": ""}, {"id": "guggi-382", "n": "Guggi", "g": "Zug", "c": 4, "E": 2681821.7, "N": 1224697.4, "f": [], "zt": ""}, {"id": "hochwacht-383", "n": "Hochwacht", "g": "Zug", "c": 4, "E": 2683585.4, "N": 1222403.8, "f": [], "zt": ""}, {"id": "wildenburg-384", "n": "Wildenburg", "g": "Baar", "c": 2, "E": 2684788.8, "N": 1225697.1, "f": [], "zt": ""}, {"id": "höllgrotten-386", "n": "Höllgrotten", "g": "Menzingen", "c": 6, "E": 2684771.6, "N": 1226717.3, "f": [], "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/hoellgrotten-baar/"}, {"id": "chänzeli-389", "n": "Chänzeli", "g": "Unterägeri", "c": 4, "E": 2688037.2, "N": 1216505.0, "f": [], "zt": ""}, {"id": "wildspitz-390", "n": "Wildspitz", "g": "Unterägeri", "c": 4, "E": 2686487.2, "N": 1215459.4, "f": [], "zt": ""}, {"id": "weisses-kreuz-397", "n": "Weisses Kreuz", "g": "Unterägeri", "c": 4, "E": 2687508.7, "N": 1222218.4, "f": [], "zt": ""}, {"id": "pulverturm-399", "n": "Pulverturm", "g": "Zug", "c": 0, "E": 2681725.4, "N": 1224218.8, "f": [], "zt": ""}, {"id": "kapuzinerturm-400", "n": "Kapuzinerturm", "g": "Zug", "c": 0, "E": 2681809.0, "N": 1224550.1, "f": [], "zt": ""}, {"id": "knopfliturm-401", "n": "Knopfliturm", "g": "Zug", "c": 0, "E": 2681852.7, "N": 1224427.6, "f": [], "zt": ""}, {"id": "reuss-402", "n": "Reuss", "g": "Hünenberg", "c": 4, "E": 2674596.5, "N": 1225484.6, "f": [], "zt": ""}, {"id": "schneit-404", "n": "Schneit", "g": "Oberägeri", "c": 4, "E": 2688114.5, "N": 1222090.6, "f": [], "zt": ""}, {"id": "grosse-modelleisenbahn-411", "n": "Grosse Modelleisenbahn", "g": "Unterägeri", "c": 0, "E": 2685157.6, "N": 1220914.6, "f": [], "zt": ""}, {"id": "bruhsthöchi-415", "n": "Bruhsthöchi", "g": "Oberägeri", "c": 4, "E": 2689853.2, "N": 1222828.4, "f": [], "zt": ""}, {"id": "josefsgütsch-416", "n": "Josefsgütsch", "g": "Neuheim", "c": 4, "E": 2685618.9, "N": 1228994.8, "f": [], "zt": ""}, {"id": "grindelegg-420", "n": "Grindelegg", "g": "Oberägeri", "c": 4, "E": 2691492.2, "N": 1220082.6, "f": [], "zt": ""}, {"id": "foren-422", "n": "Foren", "g": "Unterägeri", "c": 4, "E": 2685505.6, "N": 1221328.8, "f": [], "zt": ""}, {"id": "schlaufensteg-431", "n": "Schlaufensteg", "g": "Baar", "c": 0, "E": 2683699.3, "N": 1227478.9, "f": [], "zt": ""}, {"id": "zugerberg-bahn-432", "n": "Zugerberg Bahn", "g": "Zug", "c": 8, "E": 2682093.4, "N": 1222832.5, "f": [], "zt": ""}, {"id": "sagi-küntwil-436", "n": "Sagi Küntwil", "g": "Risch", "c": 0, "E": 2675019.4, "N": 1221060.9, "f": [], "zt": ""}, {"id": "burg-hünenberg-439", "n": "Burg Hünenberg", "g": "Hünenberg", "c": 2, "E": 2674678.9, "N": 1225097.8, "f": [], "zt": ""}, {"id": "zytturm-444", "n": "Zytturm", "g": "Zug", "c": 0, "E": 2681620.1, "N": 1224464.6, "f": [], "zt": ""}, {"id": "huwilerturm-448", "n": "Huwilerturm", "g": "Zug", "c": 0, "E": 2681810.3, "N": 1224300.4, "f": [], "zt": ""}, {"id": "sika-hirsche-450", "n": "Sika Hirsche", "g": "Zug", "c": 6, "E": 2681363.3, "N": 1225034.4, "f": [], "zt": ""}, {"id": "volieren-455", "n": "Volieren", "g": "Zug", "c": 6, "E": 2681549.5, "N": 1224556.6, "f": [], "zt": ""}, {"id": "museum-für-urgeschichte(n)-471", "n": "Museum für Urgeschichte(n)", "g": "Zug", "c": 3, "E": 2681667.4, "N": 1223760.6, "f": [], "zt": "https://www.zug-tourismus.ch/de/museum-fuer-urgeschichten/"}, {"id": "museum-burg-zug-479", "n": "Museum Burg Zug", "g": "Zug", "c": 3, "E": 2681738.5, "N": 1224356.9, "f": [], "zt": "https://www.zug-tourismus.ch/de/museum-burg-zug/"}, {"id": "bloodhound-museum-480", "n": "Bloodhound-Museum", "g": "Menzingen", "c": 3, "E": 2686969.6, "N": 1223697.6, "f": [], "zt": ""}, {"id": "ziegelei-museum-482", "n": "Ziegelei-Museum", "g": "Cham", "c": 3, "E": 2674790.4, "N": 1227736.3, "f": [], "zt": "https://www.zug-tourismus.ch/de/ziegelei-museum/"}], "gem": [], "kanton": {}}
+{
+ "sightCats": [
+  "Altstadt & Stadtbild",
+  "Kirche & Kloster",
+  "Burg & Schloss",
+  "Museum & Kunst",
+  "Aussicht & Berg",
+  "See & Wasser",
+  "Natur & Landschaft",
+  "Denkmal & Geschichte",
+  "Bahn & Schiff"
+ ],
+ "sights": [
+  {
+   "id": "lorzentobel-bruecken",
+   "n": "Lorzentobel mit Tobelbrücken",
+   "g": "Baar",
+   "c": 6,
+   "E": 2684675,
+   "N": 1225909,
+   "z": 543,
+   "t": "Im Lorzentobel zwischen Baar und Menzingen stehen drei Brücken aus verschiedenen Epochen nebeneinander: eine gedeckte Holzbrücke von 1759, der 1910 fertiggestellte Bogenviadukt aus Ägeri-Sandstein und eine neuere Betonbrücke. In der Schlucht liegen auch die Höllgrotten und die Burgruine Wildenburg.",
+   "f": [
+    "Holzbrücke von 1759, Stützweite rund 14,5 m",
+    "Bogenviadukt 1910: 187 m lang, Pfeiler bis 58 m hoch",
+    "Lorze: Hauptfluss des Kantons Zug",
+    "Teil der BLN-Landschaft «Glaziallandschaft Lorze – Sihl mit Höhronenkette und Schwantenau»"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/hoellgrotten/",
+   "wd": "Q1870418",
+   "osm": "w39357452",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/lorzentobel-bruecken.webp",
+    "a": "MCaviglia, digimen.ch",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zweite_Tobelbruecke.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Lorzentobel mit Tobelbrücken"
+   }
+  },
+  {
+   "id": "baarburg",
+   "n": "Baarburg",
+   "g": "Baar",
+   "c": 6,
+   "E": 2684572,
+   "N": 1228820,
+   "z": 675,
+   "t": "Die Baarburg ist ein dicht bewaldeter, freistehender Hügel östlich von Baar mit einem rund 13 Hektar grossen Gipfelplateau auf 683 m ü. M. Ausgrabungen von 1994 bis 1999 wiesen Siedlungsspuren von der Mittelbronzezeit bis ins frühe Mittelalter nach.",
+   "f": [
+    "Höhe 683 m ü. M.",
+    "Erste Erwähnung 1348 als «Barreburg»",
+    "Spuren von sieben Siedlungen (ab ca. 1550 v. Chr. bis um 700 n. Chr.)"
+   ],
+   "wd": "Q797486",
+   "osm": "n495337924",
+   "ph": {
+    "f": "foto/s/baarburg.webp",
+    "a": "Stefan Schuler - schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Baarburg.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Baarburg"
+   }
+  },
+  {
+   "id": "burgruine-wildenburg",
+   "n": "Burgruine Wildenburg",
+   "g": "Baar",
+   "c": 2,
+   "E": 2684789,
+   "N": 1225697,
+   "z": 634,
+   "t": "Die Wildenburg wurde im 13. Jahrhundert von einem Zweig der Herren von Hünenberg auf einem Felssporn über dem Lorzentobel gegründet und überwachte den Übergang über die Lorze. Erhalten sind Umfassungsmauern, Palas und Bergfried mit 3,5 Meter dicken Mauern; 1985 wurde die Ruine saniert.",
+   "f": [
+    "Erste Erwähnung 1309 (als «Wildenberg»)",
+    "Mauerdicke des Bergfrieds 3,5 m",
+    "Seit 1978 im Eigentum des Kantons Zug",
+    "Sanierung 1985 durch den Verein Pro Wildenburg"
+   ],
+   "wd": "Q1014600",
+   "osm": "n573262035",
+   "ph": {
+    "f": "foto/s/burgruine-wildenburg.webp",
+    "a": "MCaviglia digimen.ch",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Wildenburg_Zug.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Burgruine Wildenburg"
+   }
+  },
+  {
+   "id": "kirche-st-martin-baar",
+   "n": "Kirche St. Martin",
+   "g": "Baar",
+   "c": 1,
+   "E": 2682137,
+   "N": 1227487,
+   "z": 441,
+   "t": "Die Pfarrkirche St. Martin wird 1243 erstmals erwähnt; ihr Turm stammt aus dem 11./12. Jahrhundert. Der gotische Bau wurde 1769 bis 1797 spätbarock umgestaltet, sein freitragender Dachstuhl datiert von 1557. An der Südflanke steht das ehemalige Beinhaus St. Anna.",
+   "f": [
+    "Erste Erwähnung 1243",
+    "Turm aus dem 11./12. Jahrhundert, Turmuhr von 1526",
+    "Freitragender Dachstuhl von 1557",
+    "Spätbarocke Umgestaltung 1769–1797"
+   ],
+   "wd": "Q29929719",
+   "osm": "w54362420",
+   "ph": {
+    "f": "foto/s/kirche-st-martin-baar.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:2020-Baar-Kath-Kirche_%28cropped%29.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Kirche St. Martin"
+   }
+  },
+  {
+   "id": "schlaufensteg-baar",
+   "n": "Schlaufensteg",
+   "g": "Baar",
+   "c": 4,
+   "E": 2683699,
+   "N": 1227479,
+   "z": 467,
+   "t": "Der 2024 erbaute Schlaufensteg der Korporation Baar-Dorf führt auf 350 Metern mit Treppen und Plattformen durch den Wald zwischen Buebegunte und Vogelwinkel. Die Plattform des Treppenturms Buebegunte liegt 22 Meter hoch. Die Anlage aus einheimischem Holz ist ganzjährig frei zugänglich und liegt nahe den Höllgrotten.",
+   "f": [
+    "Baujahr 2024",
+    "Länge 350 m, Höhendifferenz 45 m",
+    "Treppenturm Buebegunte: 125 Stufen, Plattform auf 22 m",
+    "Ganzjährig frei zugänglich"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/schlaufensteg-baar/",
+   "wd": "Q127269188",
+   "osm": "n14144415901",
+   "ph": {
+    "f": "foto/s/schlaufensteg-baar.webp",
+    "a": "Tschubby",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Treppenturm_Buebegunte.jpg",
+    "lu": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "w": "Schlaufensteg"
+   }
+  },
+  {
+   "id": "spinnerei-an-der-lorze",
+   "n": "Spinnerei an der Lorze",
+   "g": "Baar",
+   "c": 7,
+   "E": 2683266,
+   "N": 1227782,
+   "z": 457,
+   "t": "Mit der 1854 in Betrieb genommenen Spinnerei an der Lorze entstand am Ostrand von Baar ein neues Industriegebiet mit Kosthäusern für die Arbeiterfamilien. 1993 wurde der Betrieb eingestellt; zur erhaltenen Gebäudegruppe gehören Altbau, Kesselhaus, Kraftwerk und Wasserreservoir. Der Industriepfad Lorze erläutert die Industriegeschichte entlang des Flusses.",
+   "f": [
+    "Inbetriebnahme 1854",
+    "Kulturgut-Objekt: Altbau, Verwaltungsgebäude, Kosthäuser, Kesselhaus, Kraftwerk, Wasserreservoir (Wikidata)",
+    "Betrieb 1993 eingestellt",
+    "Industriepfad Lorze: 70 Schautafeln auf 30 km"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/industriepfad-lorze/",
+   "wd": "Q29929827",
+   "ph": {
+    "f": "foto/s/spinnerei-an-der-lorze.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:B-Baar-Spinnerei-Lorze.jpg",
+    "lu": "https://creativecommons.org/licenses/by/3.0",
+    "w": "Spinnerei an der Lorze"
+   }
+  },
+  {
+   "id": "kloster-frauenthal",
+   "n": "Kloster Frauenthal",
+   "g": "Cham",
+   "c": 1,
+   "E": 2674628,
+   "N": 1229633,
+   "z": 394,
+   "t": "Die Zisterzienserinnenabtei liegt auf einer von der Lorze gebildeten Insel nördlich von Hagendorn. Als Gründungsjahr gilt 1231; seit 1245 gehört der Konvent dem Zisterzienserorden an und lebt bis heute am Ort seiner Gründung.",
+   "f": [
+    "Überliefertes Gründungsjahr 1231",
+    "Aufnahme in den Zisterzienserorden 1245",
+    "Konvent besteht seit der Gründung am selben Ort",
+    "Auengebiet von nationaler Bedeutung rund um das Kloster"
+   ],
+   "web": "https://kloster-frauenthal.ch/",
+   "wd": "Q1565418",
+   "osm": "r7353516",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/kloster-frauenthal.webp",
+    "a": "chrisaliv",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:20140209_Frauenthal_ZG.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kloster Frauenthal"
+   }
+  },
+  {
+   "id": "villette-park",
+   "n": "Villette Park",
+   "g": "Cham",
+   "c": 6,
+   "E": 2677383,
+   "N": 1225712,
+   "z": 414,
+   "t": "Der Villette Park am Nordufer des Zugersees wurde 1865 von Theodor Froebel im englischen Stil angelegt und ist für seine seltenen Bäume bekannt. Die Villa von Leonhard Zeugheer dient heute als Restaurant und Kulturzentrum; das «Inseli» wurde beim Bahnbau mit Aushub aufgeschüttet.",
+   "f": [
+    "Angelegt 1865 von Theodor Froebel",
+    "Fläche rund 46 000 m²",
+    "Öffentliche Parkanlage"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/villettepark/",
+   "wd": "Q59586381",
+   "osm": "w97715715",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/villette-park.webp",
+    "a": "Chris.urs-o",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Villette.Park.2732.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Villette Park"
+   }
+  },
+  {
+   "id": "kirche-st-jakob-cham",
+   "n": "Kirche St. Jakob",
+   "g": "Cham",
+   "c": 1,
+   "E": 2677374,
+   "N": 1225883,
+   "z": 428,
+   "t": "Die Pfarrkirche St. Jakob ist eine spätbarocke Saalkirche mit Deckenfresken und einem Hochaltar von 1785 des Altarbauers Carlo Andrea Galetti. Cham wird bereits 858 als Königshof erwähnt; in der Kirche liegt das Grab des in der Region verehrten «Bischofs ohne Namen».",
+   "f": [
+    "Hochaltar 1785 von Carlo Andrea Galetti",
+    "Ersterwähnung Chams 858",
+    "Grab des «Bischofs ohne Namen»"
+   ],
+   "wd": "Q29573957",
+   "osm": "w82811530",
+   "ph": {
+    "f": "foto/s/kirche-st-jakob-cham.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Cham_Katholische_Kirche_St._Jakob_1.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kirche St. Jakob"
+   }
+  },
+  {
+   "id": "kloster-heiligkreuz-cham",
+   "n": "Kloster Heiligkreuz",
+   "g": "Cham",
+   "c": 1,
+   "E": 2676010,
+   "N": 1227300,
+   "z": 434,
+   "t": "Das Kloster Heiligkreuz bei Cham wurde 1862 von Schwestern aus Baldegg bei der Heiligkreuzkapelle gegründet und widmete sich lange der Ausbildung junger Frauen. Heute leben hier Olivetaner-Benediktinerinnen; das Chorwandbild der Kirche schuf der Kirchenmaler Fritz Kunz.",
+   "f": [
+    "Gründung 1862",
+    "Seit 1892 bei der Benediktinerkongregation von Monte Oliveto",
+    "Chorwandbild von Fritz Kunz (1868–1947)"
+   ],
+   "web": "https://www.kloster-heiligkreuz.ch/",
+   "wd": "Q1775320",
+   "osm": "w1107712643",
+   "ph": {
+    "f": "foto/s/kloster-heiligkreuz-cham.webp",
+    "a": "Alexey M.",
+    "l": "CC BY 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Kloster_Heiligkreuz-2.jpg",
+    "lu": "https://creativecommons.org/licenses/by/4.0",
+    "w": "Kloster Heiligkreuz"
+   }
+  },
+  {
+   "id": "st-andreas-cham",
+   "n": "Schloss und Kapelle St. Andreas",
+   "g": "Cham",
+   "c": 2,
+   "E": 2677893,
+   "N": 1225816,
+   "z": 429,
+   "t": "Das Schloss St. Andreas auf einer Landzunge am Zugersee geht auf eine mittelalterliche Burg zurück und erhielt sein heutiges Aussehen im Stil des Historismus nach Plänen von Dagobert Keiser; es ist nicht öffentlich zugänglich. Die benachbarte Kapelle St. Andreas von 1488 steht über einer frühmittelalterlichen Kirche und kann besichtigt werden.",
+   "f": [
+    "Hof St. Andreas 1282 erstmals erwähnt",
+    "Kapelle 1488 mit spätgotischen Fresken",
+    "Schloss: Kulturgut von nationaler Bedeutung",
+    "Schloss nicht öffentlich zugänglich, Kapelle zugänglich"
+   ],
+   "wd": "Q383059",
+   "osm": "r13019125",
+   "ph": {
+    "f": "foto/s/st-andreas-cham.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Cham_Schloss_St._Andreas_2.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Schloss und Kapelle St. Andreas"
+   }
+  },
+  {
+   "id": "ziegelei-museum-cham",
+   "n": "Ziegelei-Museum",
+   "g": "Cham",
+   "c": 3,
+   "E": 2674790,
+   "N": 1227736,
+   "z": 401,
+   "t": "Das Ziegelei-Museum in Hagendorn ist in einer Ziegelhütte auf einer Waldlichtung untergebracht, laut Zug Tourismus der einzigen noch intakten der Deutschschweiz. Neben der Ausstellung zur Ziegelherstellung gibt es einen Werkplatz, auf dem Kinder mit Lehm arbeiten, und ein vom Museum gepflegtes Flachmoor.",
+   "f": [
+    "Kurse im Ziegelschlagen und Führungen",
+    "Werkplatz für Kinder",
+    "Saisonbetrieb Frühling bis Herbst (laut OpenStreetMap)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/ziegelei-museum/",
+   "web": "https://www.ziegelei-museum.ch/",
+   "wd": "Q27479972",
+   "osm": "n4362460804",
+   "ph": {
+    "f": "foto/s/ziegelei-museum-cham.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Cham_Ziegelh%C3%BCtte_6.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Ziegelei-Museum"
+   }
+  },
+  {
+   "id": "burgruine-huenenberg",
+   "n": "Burgruine Hünenberg",
+   "g": "Hünenberg",
+   "c": 2,
+   "E": 2674678,
+   "N": 1225098,
+   "z": 445,
+   "t": "Die Ruine auf einer bewaldeten Anhöhe südwestlich des Dorfes war die Stammburg der Ritter von Hünenberg. Nach der Schlacht bei Sempach 1386 wurde die Burg zerstört; 1944/45 wurde sie freigelegt und 1961 unter Bundesschutz gestellt.",
+   "f": [
+    "Besiedlung um 1100",
+    "Zerstörung 1386",
+    "Ausgrabung 1944–1945",
+    "Bergfried um die Mitte des 13. Jahrhunderts (C14-Datierung)",
+    "Lage auf 440 m ü. M."
+   ],
+   "wd": "Q1012539",
+   "osm": "w52671046",
+   "ph": {
+    "f": "foto/s/burgruine-huenenberg.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:B-Huenenberg-Burgruine.jpg",
+    "lu": "https://creativecommons.org/licenses/by/3.0",
+    "w": "Burgruine Hünenberg"
+   }
+  },
+  {
+   "id": "kirche-st-wolfgang",
+   "n": "Kirche St. Wolfgang",
+   "g": "Hünenberg",
+   "c": 1,
+   "E": 2674984,
+   "N": 1226699,
+   "z": 453,
+   "t": "Die spätgotische Kirche St. Wolfgang wurde 1473 bis 1475 von Hans Felder erbaut und steht weithin sichtbar am Hang zur Reuss. Bis ins 19. Jahrhundert war sie ein lokaler Wallfahrtsort; das Sakramentshaus im Chor ist an seinen ursprünglichen Platz zurückgekehrt.",
+   "f": [
+    "Grundsteinlegung 1473, Weihe 1475",
+    "Baumeister Hans Felder",
+    "Unter eidgenössischem Denkmalschutz seit der Renovierung 1946–1949",
+    "Kulturgut von nationaler Bedeutung (KGS A)"
+   ],
+   "wd": "Q1449892",
+   "osm": "w86260498",
+   "ph": {
+    "f": "foto/s/kirche-st-wolfgang.webp",
+    "a": "Bobo11",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Kirche-St-Wolfgang-ZG.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kirche St. Wolfgang"
+   }
+  },
+  {
+   "id": "reussspitz",
+   "n": "Reussspitz",
+   "g": "Hünenberg",
+   "c": 6,
+   "E": 2673686,
+   "N": 1232155,
+   "z": 388,
+   "t": "Am Reussspitz mündet die Lorze in die Reuss. Die flache Auenlandschaft ist Naturschutzgebiet und als Amphibienlaichgebiet von nationaler Bedeutung eingestuft; der letzte Abschnitt der Lorze ist im Bundesinventar der Landschaften (BLN) verzeichnet.",
+   "f": [
+    "Naturschutzgebiet",
+    "Amphibienlaichgebiet von nationaler Bedeutung «Rüss-Spitz»",
+    "Ufergebiet an Lorze und Reuss als Auenlandschaft von nationaler Bedeutung klassiert"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/moore/",
+   "wd": "Q108089553",
+   "osm": "r6055984",
+   "ph": {
+    "f": "foto/s/reussspitz.webp",
+    "a": "Buendia22",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Maschwander_Allmend_%28R%C3%BCssspitz%29_DSC00014.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Reussspitz"
+   }
+  },
+  {
+   "id": "weinrebenkapelle",
+   "n": "Weinrebenkapelle",
+   "g": "Hünenberg",
+   "c": 1,
+   "E": 2674606,
+   "N": 1225484,
+   "z": 447,
+   "t": "Die kleine Kapelle an der Hangkante zur Reussebene wurde 1770/71 anstelle eines Kapellchens von 1762 erbaut; ihr Name verweist auf ein nahes Rebgebiet. Sie gehört 13 Hünenberger Familien und steht unter Denkmalschutz.",
+   "f": [
+    "Rohbau 1770, Innenausstattung 1771",
+    "Chorbogenbild von 1772",
+    "Private Kapelle von 13 Familien"
+   ],
+   "wd": "Q1317758",
+   "osm": "w86387521",
+   "ph": {
+    "f": "foto/s/weinrebenkapelle.webp",
+    "a": "Bobo11",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Weinrebenkapelle1.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Weinrebenkapelle"
+   }
+  },
+  {
+   "id": "gottschalkenberg",
+   "n": "Gottschalkenberg mit Aussichtspunkt Bellevue",
+   "g": "Menzingen",
+   "c": 4,
+   "E": 2691750,
+   "N": 1223658,
+   "z": 1162,
+   "t": "Der Gottschalkenberg (1186 m ü. M.) liegt in der Südostecke der Gemeinde Menzingen oberhalb des Ägerisees. Vom Aussichtspunkt Bellevue reicht der Blick über die Zürichseeregion bis zu den Glarner Alpen; ein Gasthaus gibt es hier spätestens seit 1886.",
+   "f": [
+    "Höhe 1186 m ü. M.",
+    "Gasthaus spätestens seit 1886",
+    "Zugang über den Raten oder ab Finstersee",
+    "Wanderung Menzingen–Raten ca. 4 Std. (Zug Tourismus)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/aussicht-gottschalkenberg-oberaegeri/",
+   "wd": "Q686558",
+   "osm": "n389895202",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/gottschalkenberg.webp",
+    "a": "Chris.urs-o",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zuerichsee.u.Zuerich.Gottschalkenberg.Zug.Ausschnitt.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Gottschalkenberg mit Aussichtspunkt Bellevue"
+   }
+  },
+  {
+   "id": "hoellgrotten",
+   "n": "Höllgrotten",
+   "g": "Menzingen",
+   "c": 6,
+   "E": 2684772,
+   "N": 1226717,
+   "z": 514,
+   "t": "Die Tropfsteinhöhlen im Lorzentobel bei Baar wurden 1863 entdeckt. Sie liegen in einem Quelltuffhügel, der sich vor rund 8500 bis 5500 Jahren gebildet hat, und zeigen kleine Seen, Stalaktiten und Stalagmiten. Die Höhlen sind von April bis Oktober geöffnet.",
+   "f": [
+    "Entdeckt 1863",
+    "Quelltuffbildung vor ca. 8500–5500 Jahren",
+    "Geöffnet April bis Oktober",
+    "Gutes Schuhwerk und Jacke empfohlen",
+    "Standort auf Gemeindegebiet Menzingen"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/hoellgrotten-baar/",
+   "web": "https://www.hoellgrotten.ch/",
+   "wd": "Q1644071",
+   "osm": "w152540507",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/hoellgrotten.webp",
+    "a": "Daniel Kraft",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:H%C3%B6llgrotten_Baar_upper_cave_20201015.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Höllgrotten"
+   }
+  },
+  {
+   "id": "bloodhound-gubel",
+   "n": "Bloodhound-Lenkwaffenstellung Gubel",
+   "g": "Menzingen",
+   "c": 7,
+   "E": 2686832,
+   "N": 1223754,
+   "z": 942,
+   "t": "Zwischen Gubel und Neuhof liegt die ehemalige Fliegerabwehr-Lenkwaffenstellung BL-64 «Bloodhound», die von 1964 bis 1999 in Betrieb war. Die nördliche Feuereinheit blieb erhalten, steht seit 2000 unter Denkmalschutz und kann bei Führungen besichtigt werden.",
+   "f": [
+    "In Betrieb 1964–1999",
+    "Unter Denkmalschutz seit 2000",
+    "Zu sehen: Zielbeleuchtungsradar, Lenkwaffenwerfer, Kommandobunker",
+    "Besichtigung mit Führung"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/bloodhound-anlage-gubel/",
+   "web": "https://www.mhsz.ch/bloodhound",
+   "wd": "Q29930883",
+   "osm": "w161334882"
+  },
+  {
+   "id": "kloster-gubel",
+   "n": "Kloster Gubel",
+   "g": "Menzingen",
+   "c": 1,
+   "E": 2686044,
+   "N": 1224033,
+   "z": 910,
+   "t": "Auf dem Gubel (909 m ü. M.) steht das Kapuzinerinnenkloster Maria Hilf, erbaut 1843 bis 1847 und seit 1851 von Kapuzinerinnen bewohnt. Die Wallfahrtskapelle erinnert an das Gefecht am Gubel vom 24. Oktober 1531; beim Gasthaus nebenan liegt ein Aussichtspunkt über das Zugerland.",
+   "f": [
+    "Klosterbau 1843–1847",
+    "Kapuzinerinnen seit 1851",
+    "Schlacht am Gubel am 24. Oktober 1531",
+    "Schützenswertes Ortsbild und Kulturgut von regionaler Bedeutung"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/aussicht-gubel-menzingen/",
+   "wd": "Q29930853",
+   "osm": "w751349873",
+   "ph": {
+    "f": "foto/s/kloster-gubel.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Gubel_Kloster02.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kloster Gubel"
+   }
+  },
+  {
+   "id": "institut-menzingen",
+   "n": "Institut der Schwestern vom Heiligen Kreuz",
+   "g": "Menzingen",
+   "c": 1,
+   "E": 2687153,
+   "N": 1225889,
+   "z": 802,
+   "t": "In Menzingen wurde 1844 die Kongregation der Schwestern vom Heiligen Kreuz gegründet; die «Menzinger Schwestern» sind heute weltweit tätig. Zu ihrem Institut im Dorf gehören Klosteranlage, Garten, Friedhofkapelle und Einsiedelei; bis 2006 führten sie hier das Lehrerinnenseminar Bernarda.",
+   "f": [
+    "Kongregation gegründet 1844",
+    "Lehrerinnenseminar Bernarda bis 2006",
+    "Klosteranlage mit Garten, Friedhofkapelle und Einsiedelei (KGS B)"
+   ],
+   "wd": "Q29930942",
+   "osm": "w1131120942",
+   "ph": {
+    "f": "foto/s/institut-menzingen.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Menzingen-Institut.jpg",
+    "lu": "https://creativecommons.org/licenses/by/3.0",
+    "w": "Institut der Schwestern vom Heiligen Kreuz"
+   }
+  },
+  {
+   "id": "wilersee",
+   "n": "Wilersee",
+   "g": "Menzingen",
+   "c": 5,
+   "E": 2689472,
+   "N": 1225129,
+   "z": 729,
+   "t": "Der Wilersee ist ein kleiner Toteissee auf 729 m ü. M. in einer Mulde vor dem Dorf Finstersee. Er entstand nach der letzten Eiszeit in einer abflusslosen Geländesenke.",
+   "f": [
+    "Seespiegel 729 m ü. M.",
+    "Fischen erlaubt (Wikipedia)",
+    "Bushaltestelle in der Nähe"
+   ],
+   "wd": "Q5825174",
+   "osm": "w4933770",
+   "ph": {
+    "f": "foto/s/wilersee.webp",
+    "a": "Tschubby",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Wilersee.JPG",
+    "lu": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "w": "Wilersee"
+   }
+  },
+  {
+   "id": "aussicht-josefsguetsch",
+   "n": "Aussicht Josefsgütsch",
+   "g": "Neuheim",
+   "c": 4,
+   "E": 2685619,
+   "N": 1228995,
+   "z": 720,
+   "t": "Der Aussichtspunkt Josefsgütsch liegt rund 15 Gehminuten von der Bushaltestelle Neuheim Dorf entfernt. Von hier überblickt man die Hügellandschaft des Zugerlands bis zur Alpenkette.",
+   "f": [
+    "Fussweg ca. 15 Minuten ab Neuheim Dorf",
+    "Parkplatz bei der Lindenhalle"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/aussicht-josef-guetsch-neuheim/",
+   "osm": "n7573382759"
+  },
+  {
+   "id": "pfarrkirche-neuheim",
+   "n": "Pfarrkirche St. Maria",
+   "g": "Neuheim",
+   "c": 1,
+   "E": 2686144,
+   "N": 1228907,
+   "z": 665,
+   "t": "Die Kirche «Unserer Lieben Frau» in Neuheim wird 1173 erstmals urkundlich erwähnt; ihre Gründung wird den Freiherren von Sellenbüren zugeschrieben. Die Pfarrkirche St. Maria steht am Dorfplatz.",
+   "f": [
+    "Erste urkundliche Erwähnung 1173",
+    "Schweizer Kulturgut von kantonaler oder lokaler Bedeutung"
+   ],
+   "wd": "Q55381060",
+   "osm": "w307972885",
+   "ph": {
+    "f": "foto/s/pfarrkirche-neuheim.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:2017-Neuheim-Pfarrkirche.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Pfarrkirche St. Maria"
+   }
+  },
+  {
+   "id": "zdt-neuheim",
+   "n": "ZDT – Zuger Depot Technikgeschichte",
+   "g": "Neuheim",
+   "c": 3,
+   "E": 2686766,
+   "N": 1228916,
+   "z": 617,
+   "t": "Das Zuger Depot Technikgeschichte in Neuheim zeigt restaurierte Fahrzeuge und Objekte aus öffentlichem Verkehr, Industrie, Feuerwehr und Militär des Kantons Zug. Dazu gehört das Schaulager «Sammlung Zuger Industrieobjekte» des Vereins Industriepfad Lorze.",
+   "f": [
+    "Bereiche: öffentlicher Verkehr, Industriegeschichte, Feuerwehr, Militär",
+    "Schaulager «Sammlung Zuger Industrieobjekte»",
+    "Offen am Internationalen Museumstag (Mai) und am Europäischen Tag des Denkmals (September); Gruppenführungen April–Oktober auf Anfrage (museums.ch)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/poi-und-infrastruktur/zdt-zuger-depot-technikgeschichte/"
+  },
+  {
+   "id": "morgarten-denkmal",
+   "n": "Morgarten-Denkmal",
+   "g": "Oberägeri",
+   "c": 7,
+   "E": 2691375,
+   "N": 1218022,
+   "z": 751,
+   "t": "Das 1908 eingeweihte Denkmal steht über dem Ägerisee, rund zwei Kilometer nördlich des Schlachtgeländes. Es erinnert an die Schlacht am Morgarten vom 15. November 1315; jedes Jahr am 15. November findet hier das Morgartenschiessen statt.",
+   "f": [
+    "Eingeweiht 1908",
+    "Schlacht am Morgarten am 15. November 1315",
+    "Morgartenschiessen jährlich am 15. November",
+    "Schiffsanlegestelle «Morgarten Denkmal»"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/morgarten/",
+   "wd": "Q29931252",
+   "osm": "n273507321",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/morgarten-denkmal.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Morgarten_Schlachtdenkmal_2.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Morgarten-Denkmal"
+   }
+  },
+  {
+   "id": "aegerisee",
+   "n": "Ägerisee",
+   "g": "Oberägeri",
+   "c": 5,
+   "E": 2689337,
+   "N": 1219454,
+   "z": 724,
+   "t": "Der 7,2 km² grosse Ägerisee liegt auf 724 m ü. M. im Ägerital und ist durch einen Gletscher entstanden. Hauptzufluss ist der Hüribach, Abfluss die Lorze. Auf dem See wird bis heute Holz geflösst, weil am Westufer keine Strasse verläuft.",
+   "f": [
+    "Fläche 7,2 km²",
+    "Seespiegel 724 m ü. M.",
+    "Trinkwasserreservoir seit 1992",
+    "Holz vom Westufer wird über den See geflösst"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/ort/aegerital-sattel/",
+   "wd": "Q14507",
+   "osm": "r1676873",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/aegerisee.webp",
+    "a": "Carsten Steger",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Aerial_image_of_%C3%84gerisee_%28view_from_the_east%29.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Ägerisee"
+   }
+  },
+  {
+   "id": "kapelle-st-jost",
+   "n": "Kapelle St. Jost",
+   "g": "Oberägeri",
+   "c": 1,
+   "E": 2692997,
+   "N": 1221018,
+   "z": 1152,
+   "t": "Die Kapelle der Einsiedelei St. Jost steht bei Alosen auf einer Hügelkuppe am Pilgerweg nach Einsiedeln. Sie wurde um 1701 erbaut und ist ein Kulturgut von regionaler Bedeutung.",
+   "f": [
+    "Erbaut um 1701",
+    "Am Pilgerweg nach Einsiedeln",
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "wd": "Q29931248",
+   "osm": "w199240344",
+   "ph": {
+    "f": "foto/s/kapelle-st-jost.webp",
+    "a": "Mabelt",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Kapelle_St._Jost.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kapelle St. Jost"
+   }
+  },
+  {
+   "id": "kirche-st-peter-paul-oberaegeri",
+   "n": "Kirche St. Peter und Paul mit Beinhaus",
+   "g": "Oberägeri",
+   "c": 1,
+   "E": 2689208,
+   "N": 1221075,
+   "z": 736,
+   "t": "Die neugotische Pfarrkirche St. Peter und Paul wurde 1905 bis 1908 nach Plänen von August Hardegger gebaut; der Glockenturm der spätgotischen Vorgängerkirche blieb erhalten. Im 1496 geweihten Beinhaus St. Michael daneben ist ein umfangreicher spätgotischer Freskenzyklus erhalten.",
+   "f": [
+    "Bauzeit 1905–1908",
+    "Architekt August Hardegger",
+    "Beinhaus St. Michael geweiht 1496",
+    "Spätgotischer Freskenzyklus im Beinhaus St. Michael"
+   ],
+   "wd": "Q29931249",
+   "osm": "w35154093",
+   "ph": {
+    "f": "foto/s/kirche-st-peter-paul-oberaegeri.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:B-Oberaegeri-Kath-Kirche.jpg",
+    "lu": "https://creativecommons.org/licenses/by/3.0",
+    "w": "Kirche St. Peter und Paul mit Beinhaus"
+   }
+  },
+  {
+   "id": "raten",
+   "n": "Raten",
+   "g": "Oberägeri",
+   "c": 4,
+   "E": 2692894,
+   "N": 1221927,
+   "z": 1076,
+   "t": "Der Raten ist ein Pass auf 1077 m ü. M. zwischen Oberägeri und Biberbrugg und ein Naherholungsgebiet. Er ist mit dem Bus ab Oberägeri erreichbar; Zug Tourismus empfiehlt zudem eine rund vierstündige Wanderung von Menzingen zum Raten.",
+   "f": [
+    "Passhöhe 1077 m ü. M.",
+    "Busverbindung ab Oberägeri",
+    "Wanderung Menzingen–Raten ca. 4 Std. (Zug Tourismus)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/hoehronen-raten-gottschalkenberg/",
+   "wd": "Q677620",
+   "osm": "n2548847799",
+   "ph": {
+    "f": "foto/s/raten.webp",
+    "a": "Adrian Michael",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Raten_2022.jpeg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Raten"
+   }
+  },
+  {
+   "id": "aegerisee-schifffahrt",
+   "n": "Ägerisee Schifffahrt",
+   "g": "Oberägeri",
+   "c": 8,
+   "E": 2688719,
+   "N": 1220950,
+   "z": 724,
+   "t": "Die Ägerisee Schifffahrt verkehrt mit Motorschiffen zwischen den Anlegestellen rund um den See, darunter Unterägeri, Oberägeri und Morgarten Denkmal. Touristische Schifffahrt gibt es auf dem Ägerisee seit 1890; die heutige Gesellschaft wurde 2002 gegründet.",
+   "f": [
+    "Touristische Schifffahrt seit 1890",
+    "Ägerisee Schifffahrt AG seit 2002 (Tochter der Zugerland Verkehrsbetriebe)",
+    "Zwei Motorschiffe",
+    "Familienangebot «Ritterfahrt» (Zug Tourismus)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/anbieter/aegerisee-schifffahrt/",
+   "wd": "Q132201326",
+   "osm": "n192431799"
+  },
+  {
+   "id": "kapelle-st-german-buonas",
+   "n": "Kapelle St. German",
+   "g": "Risch",
+   "c": 1,
+   "E": 2677239,
+   "N": 1221620,
+   "z": 429,
+   "t": "Die Kapelle St. German steht in Buonas oberhalb von Schiffstation und Gasthaus. Sie wurde um 1635 weitgehend vollendet und 1662 geweiht. Das Hauptaltarbild gilt als erste realitätsnahe Darstellung des Zugersees mit seiner Umgebung.",
+   "f": [
+    "Bau um 1635 vollendet, Weihe 1662",
+    "Restaurierung 1992/1993",
+    "Hauptstifter: Gerichtsherr Johann Martin Schwytzer"
+   ],
+   "wd": "Q29931342",
+   "osm": "w315829057",
+   "ph": {
+    "f": "foto/s/kapelle-st-german-buonas.webp",
+    "a": "Beni Wattenhofer",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Buonas_Kapelle_1.jpg",
+    "lu": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "w": "Kapelle St. German"
+   }
+  },
+  {
+   "id": "kirche-st-verena-risch",
+   "n": "Kirche St. Verena",
+   "g": "Risch",
+   "c": 1,
+   "E": 2677999,
+   "N": 1220843,
+   "z": 441,
+   "t": "Die Pfarrkirche St. Verena steht auf einem Hügelvorsprung über dem Zugersee; Vorgängerbauten reichen ins 8./9. Jahrhundert zurück, erstmals erwähnt wird die Kirche 1159. Der heutige Bau entstand 1680 bis 1684, der Turm datiert auf 1310.",
+   "f": [
+    "Erste Erwähnung 1159",
+    "Heutiger Bau 1680–1684, Weihe 1684",
+    "Turm von 1310",
+    "Beinhaus (heute Friedhofkapelle), erwähnt 1598"
+   ],
+   "web": "https://www.pfarrei-risch.ch/",
+   "wd": "Q29931400",
+   "osm": "w138647921",
+   "ph": {
+    "f": "foto/s/kirche-st-verena-risch.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Risch_Kirche01.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kirche St. Verena"
+   }
+  },
+  {
+   "id": "schloss-buonas",
+   "n": "Schloss Buonas",
+   "g": "Risch",
+   "c": 2,
+   "E": 2678268,
+   "N": 1221575,
+   "z": 443,
+   "t": "Das Schloss Buonas steht auf einer Halbinsel am Westufer des Zugersees. Nach einem Brand 1478 wurde es 1494 bis 1498 wieder aufgebaut; der weitläufige Park entstand 1873 bis 1877. Schloss und Park gehören der F. Hoffmann-La Roche AG und dienen als Ausbildungszentrum.",
+   "f": [
+    "Wiederaufbau 1494–1498 nach dem Brand von 1478",
+    "Schlosspark 1873–1877 nach Plänen von William Wilkinson und Adolf Nabholz",
+    "Privatbesitz (Roche Forum Buonas)",
+    "Kulturgut von nationaler Bedeutung (KGS A)"
+   ],
+   "wd": "Q1262431",
+   "osm": "w38359602",
+   "ph": {
+    "f": "foto/s/schloss-buonas.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Schloss_Buonas01.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Schloss Buonas"
+   }
+  },
+  {
+   "id": "schloss-freudenberg",
+   "n": "Schloss Freudenberg",
+   "g": "Risch",
+   "c": 2,
+   "E": 2677127,
+   "N": 1223103,
+   "z": 435,
+   "t": "Das Schloss Freudenberg wurde 1929 bis 1933 für Generaldirektor Erwin Hürlimann auf einer Anhöhe über dem Zugersee erbaut; die Pläne stammen von den britischen Architekten Howard Robertson und John Murray Easton, den Garten entwarf Russell Page. Schloss und Park sind in Privatbesitz und nicht öffentlich zugänglich.",
+   "f": [
+    "Bauzeit 1929–1933",
+    "Nicht öffentlich zugänglich",
+    "Teil des BLN-Objekts 1309 «Zugersee»"
+   ],
+   "wd": "Q1631229",
+   "osm": "w42416089",
+   "ph": {
+    "f": "foto/s/schloss-freudenberg.webp",
+    "a": "Rastatter",
+    "l": "Public domain",
+    "u": "https://commons.wikimedia.org/wiki/File:Schloss_Freudenberg.JPG",
+    "lu": "",
+    "w": "Schloss Freudenberg"
+   }
+  },
+  {
+   "id": "nicola-erni-collection",
+   "n": "Nicola Erni Collection",
+   "g": "Steinhausen",
+   "c": 3,
+   "E": 2679756,
+   "N": 1226733,
+   "z": 419,
+   "t": "Die private Kunstsammlung von Nicola Erni am Erlenweg in Steinhausen konzentriert sich auf Fotografie, insbesondere Mode- und Zeitgeistfotografie, sowie auf zeitgenössische Kunst. Seit 2020 ist sie öffentlich zugänglich; Besuche sind nur mit kostenloser, online gebuchter Führung möglich.",
+   "f": [
+    "Öffentlich zugänglich seit 2020",
+    "Nur mit Führung (kostenlos, Anmeldung online)",
+    "Jugendliche ab 12 Jahren in Begleitung Erwachsener",
+    "Fotografieren nicht gestattet"
+   ],
+   "web": "https://www.nicolaernicollection.ch/",
+   "osm": "w345827350"
+  },
+  {
+   "id": "pfarrkirche-st-matthias",
+   "n": "Pfarrkirche St. Matthias",
+   "g": "Steinhausen",
+   "c": 1,
+   "E": 2679297,
+   "N": 1227752,
+   "z": 428,
+   "t": "Die katholische Pfarrkirche St. Matthias steht mit Beinhaus und Kaplanenhaus im Ortskern von Steinhausen. Kirche und Beinhaus sind als Kulturgut von regionaler Bedeutung eingestuft.",
+   "f": [
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "wd": "Q29931411",
+   "osm": "w52831320",
+   "ph": {
+    "f": "foto/s/pfarrkirche-st-matthias.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:2017-Steinhausen-Pfarrkirche.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Pfarrkirche St. Matthias"
+   }
+  },
+  {
+   "id": "kapelle-mittenaegeri",
+   "n": "Dreifaltigkeitskapelle Mittenägeri",
+   "g": "Unterägeri",
+   "c": 1,
+   "E": 2687768,
+   "N": 1221395,
+   "z": 738,
+   "t": "Die Kapelle Heilige Dreifaltigkeit mit Einsiedelei steht im Ortsteil Mittenägeri. Sie wurde 1705 erbaut und ist ein Kulturgut von regionaler Bedeutung.",
+   "f": [
+    "Baujahr 1705 (Wikidata)",
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "wd": "Q29931427",
+   "osm": "w383829182",
+   "ph": {
+    "f": "foto/s/kapelle-mittenaegeri.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Dreifaltigkeitskapelle_Mitten%C3%A4geri.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Dreifaltigkeitskapelle Mittenägeri"
+   }
+  },
+  {
+   "id": "innere-spinnerei-unteraegeri",
+   "n": "Innere Spinnerei",
+   "g": "Unterägeri",
+   "c": 7,
+   "E": 2685975,
+   "N": 1221785,
+   "z": 719,
+   "t": "Die Innere Spinnerei in Neuägeri ist ein Industrieensemble aus dem 19. Jahrhundert. Sie steht für die Industrialisierung des Ägeritals, die die Wasserkraft der Lorze nutzte; der Industriepfad Lorze erläutert die Geschichte mit Schautafeln.",
+   "f": [
+    "Gründungsjahr 1834 (Wikidata)",
+    "Kulturgut von regionaler Bedeutung, Teil eines schützenswerten Ortsbilds",
+    "Industriepfad Lorze: 70 Schautafeln auf 30 km"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/industriepfad-lorze/",
+   "wd": "Q133115138",
+   "ph": {
+    "f": "foto/s/innere-spinnerei-unteraegeri.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Unter%C3%A4geri_Zugerstr_86.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Innere Spinnerei"
+   }
+  },
+  {
+   "id": "kirche-heilige-familie-unteraegeri",
+   "n": "Kirche Heilige Familie",
+   "g": "Unterägeri",
+   "c": 1,
+   "E": 2686796,
+   "N": 1221438,
+   "z": 732,
+   "t": "Die katholische Pfarrkirche Heilige Familie wurde 1857 bis 1860 nach Plänen von Ferdinand Stadler erbaut, nachdem sich Unterägeri kirchlich von Oberägeri gelöst hatte.",
+   "f": [
+    "Bauzeit 1857–1860",
+    "Architekt Ferdinand Stadler",
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "wd": "Q29931421",
+   "osm": "w31718851",
+   "ph": {
+    "f": "foto/s/kirche-heilige-familie-unteraegeri.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:B-Unteraegeri-Kath-Kirche.jpg",
+    "lu": "https://creativecommons.org/licenses/by/3.0",
+    "w": "Kirche Heilige Familie"
+   }
+  },
+  {
+   "id": "marienkirche-unteraegeri",
+   "n": "Marienkirche",
+   "g": "Unterägeri",
+   "c": 1,
+   "E": 2686944,
+   "N": 1221519,
+   "z": 734,
+   "t": "Die Marienkirche von 1719 ist die alte Pfarrkirche von Unterägeri. Sie blieb neben der im 19. Jahrhundert gebauten neuen Pfarrkirche erhalten und ist als Kulturgut von regionaler Bedeutung eingestuft.",
+   "f": [
+    "Baujahr 1719",
+    "Alte Pfarrkirche von Unterägeri",
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "wd": "Q29931425",
+   "osm": "w126263625",
+   "ph": {
+    "f": "foto/s/marienkirche-unteraegeri.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:B-Unteraegeri-Marienkirche.jpg",
+    "lu": "https://creativecommons.org/licenses/by/3.0",
+    "w": "Marienkirche"
+   }
+  },
+  {
+   "id": "wildspitz",
+   "n": "Wildspitz",
+   "g": "Unterägeri",
+   "c": 4,
+   "E": 2686487,
+   "N": 1215459,
+   "z": 1579,
+   "t": "Der Wildspitz (1580 m ü. M.) ist der mittlere Gipfel des Rossbergs; über dessen Grat verläuft die Grenze zwischen den Kantonen Zug und Schwyz. Der Gipfel ist nur aus eigener Kraft erreichbar, etwa von Unterägeri über den Leiterweg am Alplihorn.",
+   "f": [
+    "Höhe 1580 m ü. M.",
+    "Hauptgipfel des Rossbergs",
+    "Nur mit Muskelkraft erreichbar (Zug Tourismus)",
+    "Berggasthaus beim Gipfel (OpenStreetMap)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/wildspitz-im-sommer/",
+   "wd": "Q92779096",
+   "osm": "n2525128185",
+   "ph": {
+    "f": "foto/s/wildspitz.webp",
+    "a": "Björn S...",
+    "l": "CC BY-SA 2.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Cross_at_the_summit_of_the_Wildspitz_%2814217930132%29.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/2.0",
+    "w": "Wildspitz"
+   }
+  },
+  {
+   "id": "kirche-st-johannes-walchwil",
+   "n": "Kirche St. Johannes der Täufer",
+   "g": "Walchwil",
+   "c": 1,
+   "E": 2681691,
+   "N": 1217145,
+   "z": 442,
+   "t": "Die katholische Pfarrkirche St. Johannes der Täufer steht im Dorfzentrum von Walchwil. Sie wurde 1838 im klassizistischen Stil erbaut und ist als Kulturgut von regionaler Bedeutung eingestuft.",
+   "f": [
+    "Baujahr 1838 (Wikidata)",
+    "Stil: Klassizismus (Wikidata)",
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "wd": "Q29931430",
+   "osm": "w95393872"
+  },
+  {
+   "id": "reformierte-kirche-walchwil",
+   "n": "Reformierte Kirche Walchwil",
+   "g": "Walchwil",
+   "c": 1,
+   "E": 2681947,
+   "N": 1216735,
+   "z": 449,
+   "t": "Die 1964 eingeweihte Sichtbetonkirche von Hans-Peter Ammann steht auf einer Geländerippe über dem Zugersee. Durchscheinende Fassadenplatten ersetzen die Fenster; seit 1998 steht der Bau unter Denkmalschutz.",
+   "f": [
+    "Eingeweiht 1964",
+    "Architekt Hans-Peter Ammann",
+    "Denkmalschutz seit 1998",
+    "Fassadenplatten bei der Restaurierung neu hergestellt"
+   ],
+   "wd": "Q29931433",
+   "osm": "w280672302",
+   "ph": {
+    "f": "foto/s/reformierte-kirche-walchwil.webp",
+    "a": "Port(u*o)s",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Reformierte_Kirche_Walchwil_Ammann_und_Baumann_01.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Reformierte Kirche Walchwil"
+   }
+  },
+  {
+   "id": "seeufer-walchwil",
+   "n": "Seeufer Walchwil",
+   "g": "Walchwil",
+   "c": 5,
+   "E": 2681525,
+   "N": 1217078,
+   "z": 415,
+   "t": "Walchwil liegt am Ostufer des Zugersees am Südhang des Zugerbergs und wird oft «Zuger Riviera» genannt. In der geschützten Lage gedeihen Edelkastanien, Feigen und Trauben; an der Schiffstation im Dorf legen Kursschiffe an.",
+   "f": [
+    "Spitzname «Zuger Riviera»",
+    "Edelkastanien, Feigen, Kiwis und Trauben",
+    "Viele Kirschbäume für Zuger Kirsch",
+    "Schiffstation Walchwil"
+   ],
+   "osm": "n333120990",
+   "ph": {
+    "f": "foto/s/seeufer-walchwil.webp",
+    "a": "Pascal Schnyder",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Walchwil_Sunset.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Seeufer Walchwil"
+   }
+  },
+  {
+   "id": "burg-zug",
+   "n": "Burg Zug (Museum Burg Zug)",
+   "g": "Zug",
+   "c": 2,
+   "E": 2681743,
+   "N": 1224359,
+   "z": 436,
+   "t": "Die Burg Zug geht auf das 11. Jahrhundert zurück; den Riegelbau setzte Johannes Zurlauben 1555 auf die alte Schildmauer. Nach der Restaurierung von 1979 bis 1982 zog das kulturgeschichtliche Museum von Stadt und Kanton Zug ein. Es zeigt Zuger Alltags- und Kulturgeschichte der letzten rund 500 Jahre, unter anderem mit einem Stadtmodell um 1730.",
+   "f": [
+    "Anfänge im 11. Jahrhundert",
+    "Riegelbau 1555 (Johannes Zurlauben)",
+    "Restaurierung 1979–1982",
+    "Museum Burg Zug seit 1983",
+    "Stadtmodell zeigt die Stadtentwicklung bis 1730"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/museum-burg-zug/",
+   "web": "https://www.burgzug.ch/",
+   "wd": "Q186586",
+   "osm": "w192218312",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/burg-zug.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Burg_Zug_6.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Burg Zug (Museum Burg Zug)"
+   }
+  },
+  {
+   "id": "kirche-st-oswald-zug",
+   "n": "Kirche St. Oswald",
+   "g": "Zug",
+   "c": 1,
+   "E": 2681682,
+   "N": 1224366,
+   "z": 431,
+   "t": "Die spätgotische Kirche St. Oswald wurde ab 1478 unter Baumeister Hans Felder als Saalkirche begonnen und bis 1545 zur dreischiffigen Basilika ausgebaut. Die ehemalige Hauptkirche der Stadt prägt mit ihrem Spitzturm die Silhouette der Altstadt; das Doppelportal ist reich mit Figuren geschmückt.",
+   "f": [
+    "Baubeginn 1478",
+    "Ausbau zur Basilika 1492–1545",
+    "Turmhelm 1558",
+    "Baumeister Hans Felder"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/religioese-staette/kirche-st-oswald/",
+   "wd": "Q14537610",
+   "osm": "w30781523",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/kirche-st-oswald-zug.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Katholische_Kirche_St._Oswald_5.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kirche St. Oswald"
+   }
+  },
+  {
+   "id": "kunsthaus-zug",
+   "n": "Kunsthaus Zug",
+   "g": "Zug",
+   "c": 3,
+   "E": 2681791,
+   "N": 1224339,
+   "z": 439,
+   "t": "Das Kunsthaus Zug ist seit 1990 im «Hof im Dorf» untergebracht, einer Anlage aus dem 16. Jahrhundert am Rand der Altstadt. Es besitzt eine Sammlung der Wiener Moderne mit Werken von Klimt, Schiele und Kokoschka und zeigt seine Bestände in wechselnden Ausstellungen.",
+   "f": [
+    "Am heutigen Standort seit 1990",
+    "Sammlung der Wiener Moderne (Dauerleihgabe der Stiftung Sammlung Kamm)",
+    "Weitere Schwerpunkte: Schweizer Surrealismus und Fantastik, Kunst mit Zuger Bezug",
+    "Sammlung wird in Wechselausstellungen gezeigt"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/kunsthaus-zug/",
+   "web": "https://kunsthauszug.ch/",
+   "wd": "Q18410543",
+   "osm": "n4970202924",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/kunsthaus-zug.webp",
+    "a": "Baikonur",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Kunsthaus_Zug.jpg",
+    "lu": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "w": "Kunsthaus Zug"
+   }
+  },
+  {
+   "id": "seeufer-vorstadt-katastrophenbucht",
+   "n": "Vorstadt und Katastrophenbucht",
+   "g": "Zug",
+   "c": 7,
+   "E": 2681500,
+   "N": 1224852,
+   "z": 414,
+   "t": "Am 5. Juli 1887 brach das Seeufer der Zuger Vorstadt ein: 35 Häuser versanken im See, elf Menschen kamen ums Leben. Die dabei entstandene, rund 150 Meter lange Katastrophenbucht gehört heute zur Flaniermeile der Vorstadt; ein Gedenkstein von 1887 erinnert an das Unglück.",
+   "f": [
+    "Vorstadtkatastrophe am 5. Juli 1887",
+    "35 Gebäude zerstört, 11 Tote, rund 650 Obdachlose",
+    "Bucht rund 150 m lang, reicht etwa 70 m ins Land",
+    "Gedenkstein seit 1887",
+    "Schiffsanlegestelle Zug Bahnhofsteg nebenan"
+   ],
+   "wd": "Q59586378",
+   "osm": "n6796661458",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/seeufer-vorstadt-katastrophenbucht.webp",
+    "a": "Ⲩ.Ⲅ.",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Vorstadtquai.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Vorstadt und Katastrophenbucht"
+   }
+  },
+  {
+   "id": "zuger-altstadt",
+   "n": "Zuger Altstadt",
+   "g": "Zug",
+   "c": 0,
+   "E": 2681589,
+   "N": 1224394,
+   "z": 421,
+   "t": "Die Zuger Altstadt am Seeufer blickt auf rund 800 Jahre Geschichte zurück und hat einen grossen Bestand an Bauten aus dem Mittelalter bewahrt. Die Gassen Ober und Unter Altstadt führen zwischen Zytturm, Rathaus und See hindurch.",
+   "f": [
+    "Rund 800-jährige Stadtgeschichte",
+    "Zahlreiche mittelalterliche Bauten erhalten",
+    "Zytturm, Rathaus, Kolinplatz und Landsgemeindeplatz liegen in der Altstadt"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/zuger-altstadt/",
+   "wd": "Q29931434",
+   "osm": "w30764675",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/zuger-altstadt.webp",
+    "a": "Roland zh",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_-_Unterstadt_2010-06-18_17-45-48_ShiftN.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Zuger Altstadt"
+   }
+  },
+  {
+   "id": "zugerberg",
+   "n": "Zugerberg",
+   "g": "Zug",
+   "c": 4,
+   "E": 2682995,
+   "N": 1222030,
+   "z": 922,
+   "t": "Der Zugerberg ist der Hausberg der Stadt Zug und erreicht im Hünggigütsch 1039 m ü. M.; die Standseilbahn endet auf 926 m. Oben gibt es rund 80 Kilometer markierte Wanderwege und eine Moorlandschaft von nationaler Bedeutung.",
+   "f": [
+    "Höchster Punkt Hünggigütsch, 1039 m ü. M.",
+    "Bergstation Zugerbergbahn auf 926 m ü. M.",
+    "Rund 80 km markierte Wanderwege",
+    "Moorlandschaft von nationaler Bedeutung",
+    "Strasse über den Zugerberg an Wochenenden für privaten Motorverkehr gesperrt"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/natur/zugerberg/",
+   "wd": "Q228379",
+   "osm": "n252819120",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/zugerberg.webp",
+    "a": "Roland Zumbuehl",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:2005-Zugerberg-Moor.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Zugerberg"
+   }
+  },
+  {
+   "id": "zugersee-schifffahrt",
+   "n": "Zugersee Schifffahrt",
+   "g": "Zug",
+   "c": 8,
+   "E": 2681479,
+   "N": 1224904,
+   "z": 414,
+   "t": "Die Zugersee Schifffahrt betreibt Kurs- und Rundfahrten auf dem Zugersee; die Kursschiffe verkehren von Mitte April bis Anfang November. Die Dampfschifffahrt auf dem See begann 1852 mit dem Raddampfer «Rigi». In Zug legen die Schiffe unter anderem beim Bahnhofsteg an.",
+   "f": [
+    "Kursschiffe Mitte April bis Anfang November",
+    "Erste Schifffahrtsgesellschaft 1851 gegründet",
+    "Zugersee: 38,41 km², bis 198 m tief"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/befoerderungsanlage/zugersee-schifffahrt/",
+   "web": "https://www.zugersee-schifffahrt.ch/",
+   "wd": "Q21698509",
+   "osm": "n324735453",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/zugersee-schifffahrt.webp",
+    "a": "Luroos",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:MS_Schwyz_in_Zug.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Zugersee Schifffahrt"
+   }
+  },
+  {
+   "id": "zytturm",
+   "n": "Zytturm",
+   "g": "Zug",
+   "c": 0,
+   "E": 2681620,
+   "N": 1224465,
+   "z": 421,
+   "t": "Der 41,5 Meter hohe Zytturm am Kolinplatz gilt als Wahrzeichen der Stadt Zug. Er geht auf das 13. Jahrhundert zurück, erhielt 1557 seine heutige Form mit Wachtstube und Walmdach und 1574 die grosse Uhr; darunter zeigt eine astronomische Uhr Wochentag, Monat und Mondphase. Der Turm kann täglich besichtigt werden, der Zutritt erfolgt über die eZug-App oder einen Badge.",
+   "f": [
+    "Höhe 41,5 m",
+    "Erbaut im 13. Jahrhundert, 1478–1480 erhöht",
+    "Heutige Dachform mit Wachtstube seit 1557",
+    "Grosse Uhr seit 1574, darunter astronomische Uhr mit vier Zeigern",
+    "Zutritt täglich 10–18 Uhr (letzter Einlass 17.30 Uhr) via eZug-App oder Badge, Stand Zug Tourismus"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/zytturm/",
+   "wd": "Q246192",
+   "osm": "w112732399",
+   "big": 1,
+   "ph": {
+    "f": "foto/s/zytturm.webp",
+    "a": "Baikonur",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zytturm_Ostseite_Zug.jpg",
+    "lu": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "w": "Zytturm"
+   }
+  },
+  {
+   "id": "afrikamuseum-zug",
+   "n": "Afrika-Museum Zug",
+   "g": "Zug",
+   "c": 3,
+   "E": 2681627,
+   "N": 1224313,
+   "z": 428,
+   "t": "Das Afrika-Museum in der äusseren Altstadt wird von der Ordensgemeinschaft St.-Petrus-Claver-Sodalität betrieben. Ausgestellt sind Masken, Schnitzereien, Schmuck und Musikinstrumente aus verschiedenen afrikanischen Ländern.",
+   "f": [
+    "Trägerin: St.-Petrus-Claver-Sodalität"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/afrikamuseum/"
+  },
+  {
+   "id": "aussicht-gnipen",
+   "n": "Aussicht Gnipen",
+   "g": "Zug",
+   "c": 4,
+   "E": 2685395,
+   "N": 1215176,
+   "z": 1534,
+   "t": "Der Gnipen (1567 m ü. M.) ist der westliche Gipfel des Rossbergs hoch über dem Ägerital. Unterhalb des Gnipens brach 1806 der Bergsturz von Goldau ab. Zug Tourismus empfiehlt dazu die rund sechsstündige Wanderung vom Zugerberg über den Wildspitz nach Unterägeri.",
+   "f": [
+    "Gipfelhöhe 1567 m ü. M.",
+    "Abbruchgebiet des Goldauer Bergsturzes von 1806",
+    "Wanderung Zugerberg–Wildspitz–Ägeri ca. 6 Std. (Zug Tourismus)",
+    "Aussichtspunkt laut Zug Tourismus auf Gebiet der Stadt Zug, Gipfel in Arth SZ"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/aussicht-gnipen/",
+   "wd": "Q22352349",
+   "ph": {
+    "f": "foto/s/aussicht-gnipen.webp",
+    "a": "Paradise Chronicle",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Gnipen%2C_Rossberg%2C_Zugersee.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Aussicht Gnipen"
+   }
+  },
+  {
+   "id": "aussichtspunkt-guggi",
+   "n": "Aussichtspunkt Guggi und Rosengarten",
+   "g": "Zug",
+   "c": 4,
+   "E": 2681822,
+   "N": 1224697,
+   "z": 455,
+   "t": "Der Guggi ist ein aufgeschütteter Hügel hinter der Hauptpost, wenige Schritte von der Altstadt entfernt. Von hier sieht man über Altstadt, Wehrtürme und See bis zu den Alpen; am Südhang pflegt die Rosengesellschaft Zug einen Rosengarten.",
+   "f": [
+    "Rosengarten der Rosengesellschaft Zug"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/aussichtspunkt-guggi/",
+   "osm": "n458247024"
+  },
+  {
+   "id": "bahnhof-zug-turrell",
+   "n": "Bahnhof Zug mit Lichtinstallation von James Turrell",
+   "g": "Zug",
+   "c": 3,
+   "E": 2681607,
+   "N": 1225317,
+   "z": 424,
+   "t": "Der 2003 neu eröffnete Bahnhof Zug wird ab der Dämmerung von der Lichtinstallation «light transport» des Künstlers James Turrell beleuchtet. Fluoreszenzröhren hinter der südlichen Glasfront erzeugen wechselnde Farben aus Rot, Grün und Blau.",
+   "f": [
+    "Neuer Bahnhof eröffnet am 28. November 2003",
+    "Beleuchtung ab Dämmerung bis 23 Uhr",
+    "Brunel Award 2005 für Lichtinstallation und Architektur",
+    "Bei anhaltender Kälte zeitweise ausgeschaltet"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/poi-und-infrastruktur/kunst-der-stadt-zug/",
+   "web": "https://www.sbb.ch/de/reiseinformationen/bahnhoefe/bahnhof-finden/bahnhof-zug.html",
+   "wd": "Q178444",
+   "osm": "n1280652702",
+   "ph": {
+    "f": "foto/s/bahnhof-zug-turrell.webp",
+    "a": "Elena Ternovaja",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Lichtinstallation_von_James_Turrell%2C_Bahnhof%2C_Zug.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Bahnhof Zug mit Lichtinstallation von James Turrell"
+   }
+  },
+  {
+   "id": "fischereimuseum-zug",
+   "n": "Fischereimuseum Zug",
+   "g": "Zug",
+   "c": 3,
+   "E": 2681544,
+   "N": 1224425,
+   "z": 417,
+   "t": "Das kleine Museum am Seeufer der Altstadt zeigt die Fischerei am Zugersee um 1900. In einer Schaubrutanlage werden Eier von Felchen, Hechten, Forellen und Zuger Rötel ausgebrütet.",
+   "f": [
+    "Schaubrutanlage",
+    "Thema: Fischerei um 1900"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/fischereimuseum/",
+   "web": "https://www.fischereimuseumzug.ch",
+   "osm": "n6522032432",
+   "ph": {
+    "f": "foto/s/fischereimuseum-zug.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Fischereimuseum.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Fischereimuseum Zug"
+   }
+  },
+  {
+   "id": "kapuzinerkloster-zug",
+   "n": "Kapuzinerkloster Zug",
+   "g": "Zug",
+   "c": 1,
+   "E": 2681793,
+   "N": 1224519,
+   "z": 437,
+   "t": "Das Kloster in der äusseren Altstadt war von 1595 bis 1997 von Kapuzinern bewohnt. Seit 2000 lebt hier die katholische Gemeinschaft der Seligpreisungen; Eigentümerin des Gebäudes ist die Bürgergemeinde Zug.",
+   "f": [
+    "Kapuziner 1595–1997",
+    "Seit 2000 Gemeinschaft der Seligpreisungen",
+    "Klosterkirche St. Anna"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/religioese-staette/kapuzinerkloster/",
+   "wd": "Q99024515",
+   "osm": "r18849125",
+   "ph": {
+    "f": "foto/s/kapuzinerkloster-zug.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Kapuzinerkloser_St._Anna_2.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Kapuzinerkloster Zug"
+   }
+  },
+  {
+   "id": "kapuzinerturm-zug",
+   "n": "Kapuzinerturm",
+   "g": "Zug",
+   "c": 7,
+   "E": 2681809,
+   "N": 1224550,
+   "z": 440,
+   "t": "Der 1526 erbaute Turm bildete die Nordostecke der Zuger Stadtbefestigung; seinen heutigen Namen erhielt er vom nahen Kapuzinerkloster. Er trägt eine Uhr mit grossem Zifferblatt. Seit 1945 läutet hier jeweils am 8. Mai ein Friedensglöcklein zur Erinnerung an das Ende des Zweiten Weltkriegs.",
+   "f": [
+    "Baujahr 1526",
+    "Friedensglöcklein jeweils am 8. Mai (seit 1945)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/kapuzinerturm/",
+   "osm": "n4192679200",
+   "ph": {
+    "f": "foto/s/kapuzinerturm-zug.webp",
+    "a": "JoachimKohler-HB",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Kapuzinerturm_in_Zug_%282022%29.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Kapuzinerturm"
+   }
+  },
+  {
+   "id": "kirche-st-michael-zug",
+   "n": "Kirche St. Michael",
+   "g": "Zug",
+   "c": 1,
+   "E": 2681828,
+   "N": 1224091,
+   "z": 457,
+   "t": "Die Pfarrkirche St. Michael entstand 1898 bis 1902 nach Plänen von Karl Moser (Curjel & Moser) und ersetzte eine ältere Kirche weiter oben am Hang. Die bauzeitliche Ausstattung in neuromanischen, neugotischen und Jugendstil-Formen ist vollständig erhalten.",
+   "f": [
+    "Bauzeit 1898–1902, Weihe 1902",
+    "Architekt Karl Moser",
+    "Dem Stadtpatron St. Michael geweiht"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/religioese-staette/kirche-st-michael/",
+   "wd": "Q29931896",
+   "osm": "w112732262",
+   "ph": {
+    "f": "foto/s/kirche-st-michael-zug.webp",
+    "a": "Paebi (changes by Rabanus Flavus)",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:St._Michael_%28Zug%29.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Kirche St. Michael"
+   }
+  },
+  {
+   "id": "knopfliturm-zug",
+   "n": "Knopfliturm und Stadtmauer",
+   "g": "Zug",
+   "c": 7,
+   "E": 2681853,
+   "N": 1224428,
+   "z": 438,
+   "t": "Am Knopfliturm sind beidseits des Turms Abschnitte der zweiten Zuger Stadtmauer aus dem 16. Jahrhundert erhalten. Auf der Südwestseite verläuft ein hölzerner Wehrgang, der 1992 instand gestellt wurde.",
+   "f": [
+    "Zweite Stadtmauer, 16. Jahrhundert",
+    "Wehrgang 1992 instand gestellt"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/knopfliturm/",
+   "osm": "n4193791352",
+   "ph": {
+    "f": "foto/s/knopfliturm-zug.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Knopfliturm_1.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Knopfliturm und Stadtmauer"
+   }
+  },
+  {
+   "id": "kolinplatz-kolinbrunnen",
+   "n": "Kolinplatz mit Kolinbrunnen",
+   "g": "Zug",
+   "c": 0,
+   "E": 2681672,
+   "N": 1224461,
+   "z": 424,
+   "t": "Der Kolinplatz liegt am Zytturm. Der Kolinbrunnen von 1541 mit der Figur eines Bannerträgers gab dem Platz den Namen; rundherum stehen Bauten aus dem 16. und 17. Jahrhundert, darunter das Kolinhaus von 1665.",
+   "f": [
+    "Brunnen 1541 errichtet, ursprünglich «Lindenbrunnen»",
+    "Figur eines Bannerträgers mit Zuger Schild und Standarte",
+    "Altes Stadthaus (Bossardhaus) 1543, Kolinhaus 1665"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/kolinbrunnen/",
+   "wd": "Q22137500",
+   "osm": "n492727064",
+   "ph": {
+    "f": "foto/s/kolinplatz-kolinbrunnen.webp",
+    "a": "Paul Bissegger",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug%2C_Kolinbrunnen_1541_01.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Kolinplatz mit Kolinbrunnen"
+   }
+  },
+  {
+   "id": "landsgemeindeplatz",
+   "n": "Landsgemeindeplatz",
+   "g": "Zug",
+   "c": 0,
+   "E": 2681619,
+   "N": 1224535,
+   "z": 420,
+   "t": "Auf dem Platz am Seeufer tagte früher die Zuger Landsgemeinde. Heute ist er ein Treffpunkt mit Restaurants, Wochenmärkten und Festen und bietet Sicht über den Zugersee.",
+   "f": [
+    "Ehemaliger Versammlungsort der Landsgemeinde",
+    "Wochenmärkte und Veranstaltungen"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/gebiet/landsgemeindeplatz/",
+   "ph": {
+    "f": "foto/s/landsgemeindeplatz.webp",
+    "a": "Baikonur",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Landsgemeindeplatz_Zug.jpg",
+    "lu": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "w": "Landsgemeindeplatz"
+   }
+  },
+  {
+   "id": "liebfrauenkapelle-zug",
+   "n": "Liebfrauenkapelle",
+   "g": "Zug",
+   "c": 1,
+   "E": 2681547,
+   "N": 1224334,
+   "z": 421,
+   "t": "Die Kapelle entstand im 13. Jahrhundert zusammen mit der ersten Stadtmauer und wird 1266 erstmals erwähnt. Innen sind spätgotische Wandmalereien und ein barocker Marienzyklus des Zuger Malers Johannes Brandenberg zu sehen.",
+   "f": [
+    "Erste Erwähnung 1266",
+    "Marienzyklus 1725–1727 von Johannes Brandenberg",
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/religioese-staette/liebfrauenkapelle/",
+   "wd": "Q29931978",
+   "osm": "w751349868",
+   "ph": {
+    "f": "foto/s/liebfrauenkapelle-zug.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Liebfrauenkapelle.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Liebfrauenkapelle"
+   }
+  },
+  {
+   "id": "museum-fuer-urgeschichten",
+   "n": "Museum für Urgeschichte(n)",
+   "g": "Zug",
+   "c": 3,
+   "E": 2681667,
+   "N": 1223761,
+   "z": 442,
+   "t": "Das kantonale Museum zeigt archäologische Funde aus dem Kanton Zug von der Altsteinzeit bis ins Frühmittelalter, darunter Objekte aus Pfahlbausiedlungen des UNESCO-Welterbes. Lebensgrosse Figuren und Modelle stellen den Alltag früherer Epochen dar.",
+   "f": [
+    "Gegründet 1930",
+    "Seit 1997 an der Hofstrasse 15",
+    "Eintritt an Sonn- und Feiertagen frei (Zug Tourismus)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/museum-fuer-urgeschichten/",
+   "web": "https://www.urgeschichte-zug.ch/",
+   "wd": "Q1299354",
+   "osm": "n534768647",
+   "ph": {
+    "f": "foto/s/museum-fuer-urgeschichten.webp",
+    "a": "Stefan Schuler - schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_-_Eingang_Museum_f%C3%BCr_Urgeschichte_und_Archiv_des_Amtes_f%C3%BCr_Denkmalpflege_und_Arch%C3%A4ologie_1_%28cropped%29.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Museum für Urgeschichte(n)"
+   }
+  },
+  {
+   "id": "pulverturm-zug",
+   "n": "Pulverturm",
+   "g": "Zug",
+   "c": 7,
+   "E": 2681725,
+   "N": 1224219,
+   "z": 440,
+   "t": "Der Pulverturm stand in der südöstlichen Ecke der Stadtbefestigung und diente zur Lagerung von Schiesspulver. Er wurde 1522 bis 1532 gebaut, misst 14 Meter im Durchmesser und kann heute für Anlässe gemietet werden.",
+   "f": [
+    "Bauzeit 1522–1532",
+    "Aussendurchmesser 14 m, Mauerdicke unten 2,7 m",
+    "Pulvermagazin 1863 verlegt",
+    "Besichtigung auf Anfrage"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/pulverturm-zug/",
+   "web": "https://www.pulverturm-zug.ch/",
+   "osm": "n4192679189",
+   "ph": {
+    "f": "foto/s/pulverturm-zug.webp",
+    "a": "Schulerst",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Pulverturm_1.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Pulverturm"
+   }
+  },
+  {
+   "id": "rathaus-zug",
+   "n": "Rathaus Zug",
+   "g": "Zug",
+   "c": 0,
+   "E": 2681593,
+   "N": 1224456,
+   "z": 420,
+   "t": "Das viergeschossige Rathaus mit Treppengiebel wurde 1505 bis 1509 von Baumeister Heinrich Sutter erbaut und ist ein bedeutender spätgotischer Profanbau. Der Gotische Saal im obersten Geschoss dient für Ausstellungen und Veranstaltungen.",
+   "f": [
+    "Bauzeit 1505–1509",
+    "Baumeister Heinrich Sutter",
+    "Eigentümerin: Bürgergemeinde Zug",
+    "Schweizer Kulturgut von regionaler Bedeutung (KGS B)"
+   ],
+   "wd": "Q29932263",
+   "osm": "w112732426",
+   "ph": {
+    "f": "foto/s/rathaus-zug.webp",
+    "a": "JoachimKohler-HB",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Rathaus_Zug_%28erbaut_1505_-_1509%29.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Rathaus Zug"
+   }
+  },
+  {
+   "id": "theater-casino-zug",
+   "n": "Theater Casino Zug",
+   "g": "Zug",
+   "c": 3,
+   "E": 2681529,
+   "N": 1224271,
+   "z": 424,
+   "t": "Das Theater Casino wurde 1907 bis 1909 nach Plänen von Dagobert Keiser und Richard Bracher im neobarocken Stil direkt am Seeufer gebaut. Nach einer Restaurierung und Erweiterung 1979–1981 dient es als Kulturhaus mit Theater, Konzerten und Veranstaltungsräumen.",
+   "f": [
+    "Bauzeit 1907–1909",
+    "Architekten Dagobert Keiser und Richard Bracher",
+    "Restaurierung und Erweiterung 1979–1981"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/theater-casino-zug/",
+   "web": "https://www.theatercasino.ch",
+   "wd": "Q1592903",
+   "osm": "w112732252",
+   "ph": {
+    "f": "foto/s/theater-casino-zug.webp",
+    "a": "Elena Ternovaja",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Theater_Casino_Zug%2C_2023.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Theater Casino Zug"
+   }
+  },
+  {
+   "id": "verenakapelle-zugerberg",
+   "n": "Verenakapelle am Zugerberg",
+   "g": "Zug",
+   "c": 1,
+   "E": 2682824,
+   "N": 1224398,
+   "z": 582,
+   "t": "Die barocke Verenakapelle steht am Waldrand des Zugerbergs an der Blasenbergstrasse, am früheren Bergweg nach Ägeri. Sie wurde 1705 bis 1710 als Kreuzkuppelbau errichtet; die Pläne stammen wahrscheinlich vom Einsiedler Klosterarchitekten Caspar Moosbrugger.",
+   "f": [
+    "Bauzeit 1705–1710, Weihe 1710",
+    "Grundriss eines lateinischen Kreuzes mit Kuppel über der Vierung",
+    "Steht unter Kulturgüterschutz"
+   ],
+   "wd": "Q20971000",
+   "osm": "w398280720",
+   "ph": {
+    "f": "foto/s/verenakapelle-zugerberg.webp",
+    "a": "Paul Bissegger",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zoug%2C_chapelle_Sainte-V%C3%A9r%C3%A8ne_%28juillet_2015%29.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Verenakapelle am Zugerberg"
+   }
+  },
+  {
+   "id": "zuger-kirschtorten-museum",
+   "n": "Zuger Kirschtorten Museum",
+   "g": "Zug",
+   "c": 3,
+   "E": 2681635,
+   "N": 1224982,
+   "z": 420,
+   "t": "Das Museum im Lokal von Treichler am Bundesplatz zeigt die Geschichte der Zuger Kirschtorte, die der Konditor Heinrich Höhn 1915 erfand. Zu sehen sind über 200 Exponate, Bilder und Dokumente; der Eintritt ist während der Ladenöffnungszeiten frei.",
+   "f": [
+    "Über 200 Exponate",
+    "Eintritt frei während der Ladenöffnungszeiten",
+    "Zuger Kirschtorte seit 2015 als geschützte geografische Angabe (GGA) geschützt"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/kirschtorten-museum/",
+   "web": "https://www.treichler-zuger-kirschtorte.ch/"
+  },
+  {
+   "id": "zugerbergbahn",
+   "n": "Zugerbergbahn",
+   "g": "Zug",
+   "c": 8,
+   "E": 2682093,
+   "N": 1222832,
+   "z": 559,
+   "t": "Die Standseilbahn verbindet seit 1907 die Talstation Schönegg mit dem Zugerberg; die Fahrt dauert rund acht Minuten. Seit dem Umbau 2009 ist die Bahn rollstuhlgängig. Die Talstation ist mit dem Bus ab Bahnhof Zug erreichbar.",
+   "f": [
+    "Eröffnet am 14. Mai 1907",
+    "Bis 80 Fahrgäste pro Wagen",
+    "Rollstuhlgängig seit 2009",
+    "Bergstation 926 m ü. M."
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/befoerderungsanlage/zugerberg-bahn/",
+   "web": "http://www.zbb.ch/",
+   "wd": "Q228377",
+   "osm": "n252819128",
+   "ph": {
+    "f": "foto/s/zugerbergbahn.webp",
+    "a": "Adrian Michael",
+    "l": "CC BY 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zugerbergbahn.jpeg",
+    "lu": "https://creativecommons.org/licenses/by/4.0",
+    "w": "Zugerbergbahn"
+   }
+  },
+  {
+   "id": "zurlaubenhof",
+   "n": "Zurlaubenhof",
+   "g": "Zug",
+   "c": 2,
+   "E": 2681744,
+   "N": 1224009,
+   "z": 446,
+   "t": "Der Zurlaubenhof ist ein barockes Herrschaftsgut, das zeitweise der Familie Zurlauben gehörte, die vom 15. bis 18. Jahrhundert im Söldnerwesen tätig war. Das Herrenhaus wurde 1597 bis 1621 erbaut; zur Anlage gehören die 1635 geweihte St. Konradskapelle, ein Pächterhaus von 1645 und eine Loggia von 1736.",
+   "f": [
+    "Herrenhaus 1597–1621",
+    "St. Konradskapelle 1635 geweiht",
+    "Pächterhaus 1645",
+    "Loggia 1736"
+   ],
+   "wd": "Q29573988",
+   "ph": {
+    "f": "foto/s/zurlaubenhof.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 3.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Zug_Zurlaubenhof_Hofstr_5.JPG",
+    "lu": "https://creativecommons.org/licenses/by-sa/3.0",
+    "w": "Zurlaubenhof"
+   }
+  },
+  {
+   "id": "letziturm-morgarten",
+   "n": "Letziturm und Schlachtkapelle Morgarten",
+   "g": "ausserhalb",
+   "c": 7,
+   "E": 2690757,
+   "N": 1216278,
+   "town": "",
+   "z": 756,
+   "t": "Bei Schornen in der Gemeinde Sattel steht der rund 11 Meter hohe Letziturm, Teil einer mittelalterlichen Talsperre am Übergang vom Ägerisee in die Innerschweiz. Am Fuss des Turms wurde zum 700-Jahr-Jubiläum der Schlacht am Morgarten ein Informationszentrum eingerichtet; daneben steht die Schlachtkapelle.",
+   "f": [
+    "Letzi erstmals 1322 erwähnt",
+    "Turmhöhe ca. 11 m, Grundriss 6,3 × 6,1 m",
+    "Informationszentrum Morgarten seit 2015"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/morgarten/",
+   "wd": "Q29525558",
+   "osm": "w97958762",
+   "ph": {
+    "f": "foto/s/letziturm-morgarten.webp",
+    "a": "Paebi",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Sattel_Schornen_Letziturm.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Letziturm und Schlachtkapelle Morgarten"
+   }
+  },
+  {
+   "id": "tierpark-goldau",
+   "n": "Natur- und Tierpark Goldau",
+   "g": "ausserhalb",
+   "c": 6,
+   "E": 2684828,
+   "N": 1211872,
+   "town": "",
+   "z": 511,
+   "t": "Der Natur- und Tierpark Goldau liegt im Gelände des Goldauer Bergsturzes von 1806 und zeigt rund 100 einheimische und europäische Wildtierarten. Der 1925 gegründete Park wurde in zwei Etappen auf 40 Hektaren erweitert.",
+   "f": [
+    "Gegründet 1925, eröffnet 1926",
+    "Fläche 40 ha",
+    "Aussichtsturm (29,6 m) seit 2016"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/besichtigung/natur-und-tierpark-goldau/",
+   "web": "https://www.tierpark.ch/",
+   "wd": "Q1320084",
+   "osm": "r2648960",
+   "ph": {
+    "f": "foto/s/tierpark-goldau.webp",
+    "a": "EconAmbiente",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Natur-_und_Tierpark_Goldau.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Natur- und Tierpark Goldau"
+   }
+  },
+  {
+   "id": "park-seleger-moor",
+   "n": "Park Seleger Moor",
+   "g": "ausserhalb",
+   "c": 6,
+   "E": 2680769,
+   "N": 1233180,
+   "town": "",
+   "z": 597,
+   "t": "Der Park Seleger Moor zwischen Rifferswil und Hausen am Albis wurde vom Gärtner Robert Seleger ab 1953 in einem Moorgebiet angelegt. Vom Frühling bis in den Sommer blühen hier zahlreiche Rhododendren und Azaleen; dazu kommen ein Farnwald und Seerosenteiche.",
+   "f": [
+    "Erste Pflanzungen 1953",
+    "Seit 1979 im Besitz einer Stiftung",
+    "Blütezeit Frühling bis Sommer"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/poi/natur/seleger-moor/",
+   "wd": "Q112753060",
+   "ph": {
+    "f": "foto/s/park-seleger-moor.webp",
+    "a": "Adrian Michael",
+    "l": "CC BY-SA 4.0",
+    "u": "https://commons.wikimedia.org/wiki/File:Seleger_Moor_Sommer_-_5_von_12.jpg",
+    "lu": "https://creativecommons.org/licenses/by-sa/4.0",
+    "w": "Park Seleger Moor"
+   }
+  },
+  {
+   "id": "steinhauserwald",
+   "n": "Steinhauserwald mit Waldweiher",
+   "g": "Steinhausen",
+   "c": 6,
+   "E": 2679846,
+   "N": 1229386,
+   "z": 468,
+   "t": "Der Steinhauserwald nördlich des Dorfes ist ein Naherholungsgebiet mit einem Waldweiher, Feuerstellen und Spielplätzen. Zug Tourismus beschreibt eine rund 1 Stunde 40 Minuten lange Rundwanderung ab Steinhausen Zentrum über Bann zum Weiher, die auch mit dem Kinderwagen machbar ist.",
+   "f": [
+    "Rundwanderung ab Steinhausen Zentrum, ca. 1 Std. 40 Min. (Zug Tourismus), 6,5 km (SchweizMobil-Route der Tour)",
+    "Feuerstellen und Spielplätze im Wald (Zug Tourismus)",
+    "Mit dem Kinderwagen machbar (Zug Tourismus)",
+    "Anreise: Bushaltestelle Steinhausen, Zentrum (Zug Tourismus)"
+   ],
+   "zt": "https://www.zug-tourismus.ch/de/tours/rundgang/spaziergang-steinhauserwald/",
+   "osm": "w13030638"
+  }
+ ],
+ "gem": [
+  {
+   "name": "Baar",
+   "pop": 25519,
+   "popDate": "2025-12-31",
+   "area": 24.85,
+   "elev": 444,
+   "ortsteile": [
+    "Baar (Dorf)",
+    "Allenwinden",
+    "Blickensdorf",
+    "Inwil",
+    "Deinikon",
+    "Walterswil"
+   ],
+   "web": "https://www.baar.ch",
+   "text": "Baar liegt in der Lorzenebene nördlich der Stadt Zug, zwischen Zugerberg und Albis, und ist nach Einwohnern die zweitgrösste Gemeinde des Kantons. Zur Gemeinde gehören neben dem Dorf die Ortsteile Allenwinden, Blickensdorf, Inwil, Deinikon und Walterswil. Bekannt sind die Pfarrkirche St. Martin, die Baarburg mit Siedlungsspuren ab der Bronzezeit und die Räbefasnacht.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1701&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Cham",
+   "pop": 18518,
+   "popDate": "2025-12-31",
+   "area": 19.12,
+   "elev": 418,
+   "ortsteile": [
+    "Cham (Dorf)",
+    "Hagendorn",
+    "Lindencham",
+    "Friesencham",
+    "Niederwil",
+    "Rumentikon",
+    "Bibersee",
+    "Frauental"
+   ],
+   "web": "https://www.cham.ch",
+   "text": "Cham liegt am Nordufer des Zugersees, dort wo die Lorze den See verlässt. Neben dem Dorfzentrum gehören Ortsteile wie Hagendorn, Lindencham und Friesencham zur Gemeinde. Bekannt sind der Villettepark am See, das Schloss St. Andreas und das Ziegelei-Museum in Hagendorn; 1991 erhielt Cham den Wakkerpreis.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1702&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Hünenberg",
+   "pop": 8985,
+   "popDate": "2025-12-31",
+   "area": 18.66,
+   "elev": 451,
+   "ortsteile": [
+    "Hünenberg (Dorf)",
+    "Hünenberg See",
+    "St. Wolfgang",
+    "Drälikon"
+   ],
+   "web": "https://www.huenenberg.ch",
+   "text": "Hünenberg liegt zwischen dem Zugersee und der Reuss und grenzt an Gemeinden der Kantone Aargau und Zürich. Zur Gemeinde gehören das Dorf Hünenberg und der Ortsteil Hünenberg See am Zugersee. Zu den historischen Bauten zählen die Ruine der Stammburg der Edlen von Hünenberg und die 1475 geweihte spätgotische Wallfahrtskirche St. Wolfgang.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1703&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Menzingen",
+   "pop": 4824,
+   "popDate": "2025-12-31",
+   "area": 27.51,
+   "elev": 807,
+   "ortsteile": [
+    "Menzingen",
+    "Edlibach",
+    "Finstersee"
+   ],
+   "web": "https://www.menzingen.ch",
+   "text": "Menzingen liegt auf gut 800 m ü. M. in der voralpinen Moränenlandschaft zwischen Zugersee, Ägerisee und Zürichsee, die der Bund als Landschaft von nationaler Bedeutung führt. Die Gemeinde mit den Ortsteilen Menzingen, Edlibach und Finstersee ist nach Landfläche die zweitgrösste des Kantons. Bekannt sind der Gubel mit dem Kapuzinerinnenkloster Maria Hilf, die Höllgrotten im Lorzentobel und die Schultradition der Menzinger Schwestern.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1704&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Neuheim",
+   "pop": 2523,
+   "popDate": "2025-12-31",
+   "area": 7.93,
+   "elev": 666,
+   "ortsteile": [
+    "Neuheim (Dorf)",
+    "Hinterburg",
+    "Sarbach",
+    "Sennweid",
+    "Sihlbrugg (teilweise)"
+   ],
+   "web": "https://www.neuheim.ch",
+   "text": "Neuheim liegt am Nordrand des Kantons zwischen Lorze und Sihl in einer Moränenlandschaft und grenzt an die Zürcher Gemeinden Hausen am Albis und Horgen. Das Dorf löste sich 1848 von Menzingen und ist mit gut 2500 Einwohnern die kleinste Zuger Gemeinde. Die Kirche ist 1173 erstmals urkundlich erwähnt; in Neuheim befindet sich auch das Zuger Depot Technikgeschichte.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1705&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Oberägeri",
+   "pop": 6670,
+   "popDate": "2025-12-31",
+   "area": 36.24,
+   "elev": 737,
+   "ortsteile": [
+    "Oberägeri",
+    "Alosen",
+    "Morgarten",
+    "Raten"
+   ],
+   "web": "https://www.oberaegeri.ch",
+   "text": "Oberägeri liegt am Nordufer des Ägerisees im voralpinen Ägerital und grenzt an mehrere Gemeinden des Kantons Schwyz. Zur Gemeinde gehören die Ortschaften Alosen und Morgarten; bei Morgarten erinnert ein Denkmal an die Schlacht am Morgarten vom 15. November 1315. Nach Fläche ist Oberägeri die grösste Gemeinde des Kantons.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1706&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Risch",
+   "pop": 11830,
+   "popDate": "2025-12-31",
+   "area": 22.97,
+   "elev": 430,
+   "ortsteile": [
+    "Rotkreuz",
+    "Risch",
+    "Buonas",
+    "Holzhäusern"
+   ],
+   "web": "https://www.zg.ch/behoerden/gemeinden/risch-rotkreuz",
+   "text": "Die Gemeinde Risch liegt auf einem Ausläufer des Rooterbergs zwischen dem Zugersee im Osten und der Reuss im Westen. Sie besteht aus Rotkreuz, wo die Gemeindeverwaltung sitzt und über 80 Prozent der Bevölkerung leben, sowie den Dörfern Risch, Buonas und Holzhäusern. Bekannt sind die Pfarrkirche St. Verena in Risch, deren Turm von 1310 stammt, und das Schloss Buonas auf einer Halbinsel im Zugersee.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1707&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gemeinden/risch-rotkreuz/gemeinde/daten-und-fakten"
+    }
+   ]
+  },
+  {
+   "name": "Steinhausen",
+   "pop": 10449,
+   "popDate": "2025-12-31",
+   "area": 5.04,
+   "elev": 424,
+   "ortsteile": [
+    "Steinhausen (Dorf)",
+    "Bann",
+    "Erli"
+   ],
+   "web": "https://www.steinhausen.ch",
+   "text": "Steinhausen liegt nordwestlich der Stadt Zug auf einem nach Süden geneigten Gelände; im Norden schliesst der Steinhauser Wald an. Mit 504 Hektaren ist es die flächenmässig kleinste Zuger Gemeinde; bis Mitte des 20. Jahrhunderts hatte das Bauerndorf weniger als 1000 Einwohner, heute sind es über 10 000. Funde im Gebiet Sennweid belegen eine Besiedlung seit der Steinzeit.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1708&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Unterägeri",
+   "pop": 9527,
+   "popDate": "2025-12-31",
+   "area": 26.69,
+   "elev": 729,
+   "ortsteile": [
+    "Unterägeri",
+    "Neuägeri",
+    "Mittenägeri"
+   ],
+   "web": "https://www.unteraegeri.ch",
+   "text": "Unterägeri liegt am westlichen Ende des Ägerisees, wo die Lorze beim Birkenwäldli den See verlässt. Zur Gemeinde gehören auch Neuägeri und Mittenägeri; im Süden reicht das Gemeindegebiet bis zum Wildspitz, dem höchsten Punkt des Kantons. Im Dorf steht die Pfarrkirche Heilige Familie, 1857–1860 nach Plänen von Ferdinand Stadler erbaut.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1709&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Walchwil",
+   "pop": 4013,
+   "popDate": "2025-12-31",
+   "area": 15.88,
+   "elev": 449,
+   "ortsteile": [
+    "Walchwil (Dorf)",
+    "Hinterberg",
+    "Winterstein",
+    "Oberbossen"
+   ],
+   "web": "https://www.walchwil.ch",
+   "text": "Walchwil liegt am Ostufer des Zugersees am Hang zwischen Zugerberg und Rossberg und grenzt im Süden an den Kanton Schwyz. Wegen des milden Klimas gedeihen hier Edelkastanien, Reben und Feigen; bekannt ist die Gemeinde auch für ihre Kirschbäume. Im Dorfzentrum steht die Pfarrkirche St. Johannes der Täufer.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1710&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  },
+  {
+   "name": "Zug",
+   "pop": 32160,
+   "popDate": "2025-12-31",
+   "area": 33.84,
+   "elev": 425,
+   "ortsteile": [
+    "Zug (Stadt)",
+    "Oberwil b. Zug",
+    "Zugerberg",
+    "Lorzen",
+    "Alpli (Exklave am Rossberg)"
+   ],
+   "web": "https://www.stadtzug.ch",
+   "text": "Zug ist Kantonshauptort und mit gut 32 000 Einwohnern die grösste Gemeinde des Kantons; die Stadt liegt am Nordostufer des Zugersees am Fuss des Zugerbergs. Den historischen Kern bildet die Altstadt mit dem Zytturm, dem spätgotischen Rathaus und der Kirche St. Oswald. Zum Stadtgebiet gehören auch Oberwil, der Zugerberg und die Exklave Alpli am Rossberg.",
+   "sources": [
+    {
+     "t": "Fläche",
+     "u": "https://api3.geo.admin.ch/rest/services/api/MapServer/find?layer=ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill&searchText=1711&searchField=gde_nr&returnGeometry=false&contains=false"
+    },
+    {
+     "t": "Höhe",
+     "u": "https://www.zg.ch/behoerden/gesundheitsdirektion/statistikfachstelle/daten/gemeindeportrait/result-gemeindeportrait-00.csv"
+    }
+   ]
+  }
+ ],
+ "kanton": {
+  "pop": 135018,
+  "popDate": "2025-12-31",
+  "area": 238.74
+ },
+ "famExtra": [
+  {
+   "n": "Spielplatz Kirchbühl",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Cham",
+   "E": 2677088,
+   "N": 1225981,
+   "x": "Kletter- und Balancierpark am Kirchbühl mit Brücken, Holzbalken und Seilen sowie einem Gleichgewichtsgerät für mindestens zwei Personen. Dazu eine Spielwiese mit Sitzbänken und ein alter Brunnen.",
+   "t": [
+    [
+     "Spielplatz Kirchbühl - Cham",
+     "https://www.zug-tourismus.ch/de/spielplatzkirchbuehlcham/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Städtli",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Cham",
+   "E": 2677709,
+   "N": 1226204,
+   "x": "Kleiner Spielplatz zwischen dem Schulhaus Städtli und dem Kunstkubus mit Schaukel, Wippe, Balancierpassarelle und Sandkasten im Baumschatten.",
+   "t": [
+    [
+     "Spielplatz Städtli - Cham",
+     "https://www.zug-tourismus.ch/de/spielplatzstaedtlicham/"
+    ]
+   ]
+  },
+  {
+   "n": "Barfussweg und Pétanqueplatz - Hünenberg",
+   "k": "Barfussweg",
+   "c": 3,
+   "g": "Hünenberg",
+   "E": 2676924,
+   "N": 1224835,
+   "x": "Barfussweg mit Abschnitten aus Kork, Kies, Sägemehl, Sand und weiteren Belägen neben dem Strandbad Hünenberg. Daneben Pétanque-Platz, Hartplatz und Fitnessgeräte.",
+   "t": [
+    [
+     "Barfussweg und Pétanqueplatz - Hünenberg",
+     "https://www.zug-tourismus.ch/de/barfussweghuenenberg/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Sonnhalde",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Menzingen",
+   "E": 2686535,
+   "N": 1226218,
+   "x": "Spielplatz beim Zentrum Sonnhalde der Stiftung Maihof am Dorfeingang von Menzingen: Schaukeln, Wippen und überdachter Sandkasten für Kleinkinder, Baumhaus mit Rutsche und Balancierparcours für Ältere. Grillstelle an einem künstlichen Bach, WC vorhanden.",
+   "t": [
+    [
+     "Spielplatz Sonnhalde - Menzingen",
+     "https://www.zug-tourismus.ch/de/spielplatzsonnhaldemenzingen/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Sportplatz Chrüzegg",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Menzingen",
+   "E": 2688195,
+   "N": 1225224,
+   "x": "Eingezäunter Spielplatz am Sportplatz Chrüzegg mit Rutschbahn, Seilbahn, Schaukelpferd und Sandkasten. WC vorhanden.",
+   "t": [
+    [
+     "Spielplatz Sportplatz Chrüzegg - Menzingen",
+     "https://www.zug-tourismus.ch/de/spielplatzchruezeggmenzingen/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Unterwulfligen",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Menzingen",
+   "E": 2685085,
+   "N": 1226255,
+   "x": "Kleine Grillstelle mit Kletterturm am östlichen Ende der alten Lorzentobelbrücke, an der Wanderroute zwischen Berg und Tal.",
+   "t": [
+    [
+     "Spielplatz Unterwulfligen - Menzingen",
+     "https://www.zug-tourismus.ch/de/spielplatzunterwulflingenmenzingen/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Sonnengrund",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Menzingen",
+   "E": 2687433,
+   "N": 1226022,
+   "x": "Spielplatz mit Spielturm, Rutschbahn, Schaukeln, Kriechtunnel und Sandkasten. Gedeckter Platz mit Feuerstelle; öffentliches WC bei der Sporthalle Schützenmatt.",
+   "t": [
+    [
+     "Spielplatz Sonnengrund - Menzingen",
+     "https://www.zug-tourismus.ch/de/spielplatzsonnengrundmenzingen/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Marianum",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Menzingen",
+   "E": 2687418,
+   "N": 1225735,
+   "x": "Zweiteiliger Spielplatz mit Kletterturm, Rutsche und Schaukel sowie Kletter- und Balanciergeräten, Wikingerschaukel und Sandkasten.",
+   "t": [
+    [
+     "Spielplatz Marianum - Menzingen",
+     "https://www.zug-tourismus.ch/de/spielplatzmarianummenzingen/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Schulhaus",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Menzingen",
+   "E": 2690357,
+   "N": 1224725,
+   "x": "Schulhausspielplatz neben der Kirche Finstersee mit Kletterwand, Netzschaukel und Hartplatz mit Fussballtor. Trinkbrunnen; WC beim Mehrzweckraum.",
+   "t": [
+    [
+     "Spielplatz Schulhaus - Finstersee",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/spielplatz-schulhaus-finstersee/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Dorf Schulhaus",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Menzingen",
+   "E": 2687290,
+   "N": 1225862,
+   "x": "Spielplatz beim Schulhaus Dorf im Zentrum von Menzingen mit Klettergerüst und Schaukeln.",
+   "t": [
+    [
+     "Spielplatz Dorf Schulhaus",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/spielplatz-dorf-schulhaus/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Wassermattli",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Oberägeri",
+   "E": 2688954,
+   "N": 1221241,
+   "x": "Naturnaher Spielplatz von rund 2000 m² mitten im Dorf, gegliedert in Zonen mit Rutschbahn und Schaukeln, Balancier- und Klettergeräten sowie freien Wiesen.",
+   "t": [
+    [
+     "Spielplatz Wassermattli - Oberägeri",
+     "https://www.zug-tourismus.ch/de/spielplatzwassermattlioberaegeri/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Binzmühle Kindergarten - Risch-Rotkreuz",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Risch",
+   "E": 2674822,
+   "N": 1221754,
+   "x": "Spielplatz rund um den Kindergarten Binzmühle mit Schaukeln, Sandkasten, Kletterstämmen und Rutsche. In der Nähe liegt der Binzmühleweiher mit Feuerstelle.",
+   "t": [
+    [
+     "Spielplatz Binzmühle Kindergarten - Risch-Rotkreuz",
+     "https://www.zug-tourismus.ch/de/spielplatzbinzmuehlerotkreuz/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Parkanlage Daheim",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Zug",
+   "E": 2681842,
+   "N": 1224296,
+   "x": "Spielplatz mit Sandkasten und Schaukeln in der Parkanlage Daheim beim Huwilerturm, am Rand der Altstadt.",
+   "t": [
+    [
+     "Spielplatz Parkanlage Daheim - Zug",
+     "https://www.zug-tourismus.ch/de/spielplatzdaheimzug/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Neustadt",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Zug",
+   "E": 2681460,
+   "N": 1225099,
+   "x": "Spielplatz zwischen Musikschule und Alterszentrum Neustadt mit Wasserspiel, Sandkasten und Spielgeräten. Das Restaurant des Alterszentrums grenzt direkt an; WC vorhanden.",
+   "t": [
+    [
+     "Spielplatz Neustadt - Zug",
+     "https://www.zug-tourismus.ch/de/spielplatzneustadtzug/"
+    ]
+   ]
+  },
+  {
+   "n": "Spielplatz Rötel",
+   "k": "Spielplatz",
+   "c": 0,
+   "g": "Zug",
+   "E": 2682374,
+   "N": 1224229,
+   "x": "Spielplatz an der Weinbergstrasse oberhalb der Stadt mit Rutsche, Klettergerät, Sandkasten und Schaukeln, dazu Boccia, Tischtennis und eine Grillstelle. WC vorhanden.",
+   "t": [
+    [
+     "Spielplatz Rötel - Zug",
+     "https://www.zug-tourismus.ch/de/spielplatzroetelzug/"
+    ]
+   ]
+  },
+  {
+   "n": "Zugertor - Hotelzimmer Rätselerlebnis",
+   "k": "Rätselzimmer",
+   "c": 4,
+   "g": "Zug",
+   "E": 2681821,
+   "N": 1225837,
+   "x": "Ein Zimmer im Hotel Zugertor ist als Rätselraum für Kinder eingerichtet; wer die Aufgaben löst, öffnet am Ende einen Safe mit Belohnung. Eintritt CHF 9 pro Kind, eine erwachsene Begleitperson ist nötig.",
+   "t": [
+    [
+     "Zugertor - Hotelzimmer Rätselerlebnis",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/zugertor-hotelzimmer-raetselerlebnis/"
+    ]
+   ]
+  },
+  {
+   "n": "Gschichtli Weg Menzingen - Hörspiel-Spaziergang für die ganze Familie",
+   "k": "Erlebnisweg",
+   "c": 3,
+   "g": "Menzingen",
+   "E": 2687290,
+   "N": 1225862,
+   "x": "Hörspiel-Spaziergang mit rund 10 QR-Code-Stationen, an denen eine Geschichte auf Schweizerdeutsch weitererzählt wird. Start hinter dem Schulhaus Dorf, Dauer etwa 60 bis 90 Minuten; ein Mobiltelefon ist nötig. Hördateien werden zweimal pro Jahr gewechselt",
+   "t": [
+    [
+     "Gschichtli Weg Menzingen - Hörspiel-Spaziergang für die ganze Familie",
+     "https://www.zug-tourismus.ch/de/poi/rundgang/gschichtli-weg-menzingen-hoerspiel-spaziergang-fuer-die-ganze-familie/"
+    ]
+   ]
+  },
+  {
+   "n": "Eisminigolf - Baar",
+   "k": "Minigolf",
+   "c": 5,
+   "g": "Baar",
+   "E": 2683469,
+   "N": 1228397,
+   "x": "Minigolf auf 15 Eisbahnen auf der Terrasse beim Freibad Lättich (Beach House Delfin), gespielt mit Eishockeyschläger und Puck. Ohne Reservation, von November bis März. 7. November 2026 bis Ende März 2027; laut ZT Mo-Mi 11-20, Do-Sa 11-22, So 11-18 Uhr (Vereinsseite Lichterweg Baar: Mo-Sa 11-20, So 11-18 Uhr; 24./25.12. und 31.12./1.1. geschlossen)",
+   "t": [
+    [
+     "Eisminigolf - Baar",
+     "https://www.zug-tourismus.ch/de/poi/poi-und-infrastruktur/eisminigolf-baar/"
+    ]
+   ]
+  },
+  {
+   "n": "SUP-, Pedalo- und Bootsvermietung",
+   "k": "Bootsvermietung",
+   "c": 5,
+   "g": "Oberägeri",
+   "E": 2688740,
+   "N": 1220969,
+   "x": "Vermietung von Stand-up-Paddles, Pedalos und Booten am Ägerisee in Oberägeri, nahe beim Spielplatz am Seeplatz. keine Angabe auf ZT-Seite",
+   "t": [
+    [
+     "SUP-, Pedalo- und Bootsvermietung",
+     "https://www.zug-tourismus.ch/de/poi/verleih/sup-pedalo-und-bootsvermietung/"
+    ]
+   ]
+  },
+  {
+   "n": "Lichterweg Zugerberg",
+   "k": "Lichterweg",
+   "c": 3,
+   "g": "Zug",
+   "E": 2683034,
+   "N": 1222022,
+   "x": "Mit Kerzen beleuchteter Weg von der Bergstation Zugerberg bis zum Zugiblubbi-Haus mit Krippe, vom 6. Dezember bis 6. Januar. Die Zugerbergbahn fährt dann abends im Viertelstundentakt. 6. Dezember 2026 bis 6. Januar 2027; Kerzen ab ca. 16.30 Uhr, Zugerbergbahn 17-20 Uhr im Viertelstundentakt",
+   "t": [
+    [
+     "Lichterweg Zugerberg",
+     "https://www.zug-tourismus.ch/de/poi/natur/lichterweg-zugerberg/"
+    ]
+   ]
+  },
+  {
+   "n": "Lichterweg Baar",
+   "k": "Lichterweg",
+   "c": 3,
+   "g": "Baar",
+   "E": 2683842,
+   "N": 1228034,
+   "x": "Rund 1,5 km langer Weg am Fuss der Baarburg in der Wishalde, vorbei an der Kapelle Heiligkreuz, in der Advents- und Weihnachtszeit mit gegen 2000 LED-Lampen beleuchtet. Laut Verein täglich ab etwa 17 Uhr in Betrieb. 27. November 2026 bis Anfang Januar 2027",
+   "t": [
+    [
+     "Lichterweg Baar",
+     "https://www.zug-tourismus.ch/de/poi/poi-und-infrastruktur/lichterweg-baar/"
+    ]
+   ]
+  },
+  {
+   "n": "Laternenweg Ägeri",
+   "k": "Lichterweg",
+   "c": 3,
+   "g": "Unterägeri",
+   "E": 2685966,
+   "N": 1221091,
+   "x": "Rund 3 km lange Strecke vom Allmigchappeli über Büel und Wissenschwändi zum Buechholz, im Winter mit 310 Laternen beleuchtet. In der Wissenschwändi ist samstags und sonntags von 17 bis 21 Uhr ein Laternenstübli offen. Winter; Daten 2026 laut ZT noch offen; Laternenstübli Sa/So 17-21 Uhr",
+   "t": [
+    [
+     "Laternenweg Ägeri",
+     "https://www.zug-tourismus.ch/de/poi/poi-und-infrastruktur/laternenweg-aegeri/"
+    ]
+   ]
+  },
+  {
+   "n": "Laternenweg Raten",
+   "k": "Lichterweg",
+   "c": 3,
+   "g": "Oberägeri",
+   "E": 2692894,
+   "N": 1221927,
+   "x": "Rund 1 km langer Wegabschnitt vom Raten Richtung Gottschalkenberg, vom Jahresende bis in den Januar mit 35 Laternen und Zitaten beleuchtet. Jahresende bis Januar; Daten 2026 laut ZT noch offen",
+   "t": [
+    [
+     "Laternenweg Raten",
+     "https://www.zug-tourismus.ch/de/poi/touren/laternenweg-raten/"
+    ]
+   ]
+  },
+  {
+   "n": "Lichterweg Hünenberg",
+   "k": "Lichterweg",
+   "c": 3,
+   "g": "Hünenberg",
+   "E": 2675936,
+   "N": 1225128,
+   "x": "Rund 1,5 km langer beleuchteter Weg von der Chamerstrasse über die Obstanlage Hubel nach Hünenberg See, von Dezember bis Anfang Januar jede Nacht. Dezember bis Anfang Januar, jede Nacht; Daten 2026 laut ZT noch offen",
+   "t": [
+    [
+     "Lichterweg Hünenberg",
+     "https://www.zug-tourismus.ch/de/poi/poi-und-infrastruktur/lichterweg-huenenberg/"
+    ]
+   ]
+  },
+  {
+   "n": "Chamer Liechtliweg",
+   "k": "Lichterweg",
+   "c": 3,
+   "g": "Cham",
+   "E": 2677452,
+   "N": 1225725,
+   "x": "Weg durch den Villettepark in Cham, der in der Adventszeit mit über 200 Laternen beleuchtet ist. 28. November 2026 bis 1. Januar 2027",
+   "t": [
+    [
+     "Chamer Liechtliweg",
+     "https://www.zug-tourismus.ch/de/poi/chamer-liechtliweg/"
+    ]
+   ]
+  },
+  {
+   "n": "Bröchli Hofladen",
+   "k": "Bauernhof",
+   "c": 3,
+   "g": "Zug",
+   "E": 2681339,
+   "N": 1222535,
+   "x": "Hofladen auf dem Bröchlihof in Oberwil mit Kirschen, Birnen, Zwetschgen, Äpfeln und Pfirsichen vom eigenen Hof. Auf dem Hof leben Ziegen, Hühner und Hasen, die man beobachten kann.",
+   "t": [
+    [
+     "Bröchli Hofladen",
+     "https://www.zug-tourismus.ch/de/poi/geschaeft/broechli-hofladen/"
+    ]
+   ]
+  },
+  {
+   "n": "Buuregarte Boog Hünenberg",
+   "k": "Bauernhof",
+   "c": 3,
+   "g": "Hünenberg",
+   "E": 2673958,
+   "N": 1225721,
+   "x": "Hofladen der Familie Boog in der Reussebene mit Beeren, Salaten, Kartoffeln, Gemüse und Blumen vom eigenen Feld. Kinder können während des Einkaufs draussen spielen.",
+   "t": [
+    [
+     "Buuregarte Boog Hünenberg",
+     "https://www.zug-tourismus.ch/de/poi/geschaeft/buuregarte-boog-huenenberg/"
+    ]
+   ]
+  },
+  {
+   "n": "Ägeri on Ice",
+   "k": "Eisfeld",
+   "c": 5,
+   "g": "Unterägeri",
+   "E": 2686788,
+   "N": 1221533,
+   "x": "Überdachtes Eisfeld auf der Schulanlage Acher in Unterägeri mit Eisstockschiessen und Eis-Minigolf. Schlittschuhe und Helme können vor Ort gemietet werden. nur im Winter; Daten auf der ZT-Seite nicht angegeben",
+   "t": [
+    [
+     "Schlittschuhlaufen in Zug",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/schlittschuhlaufen-zug/"
+    ]
+   ]
+  },
+  {
+   "n": "Ludothek Baar",
+   "k": "Ludothek",
+   "c": 4,
+   "g": "Baar",
+   "E": 2682455,
+   "N": 1227661,
+   "x": "Ludothek an der Rathausstrasse 4 in Baar mit Verleih von Spielzeug und Spielen; Informationen auf der Website der Bibliothek Baar."
+  }
+ ],
+ "famLinks": [
+  {
+   "i": 386,
+   "t": [
+    [
+     "Höllgrotten Baar",
+     "https://www.zug-tourismus.ch/de/poi/besichtigung/hoellgrotten-baar/"
+    ]
+   ]
+  },
+  {
+   "i": 59,
+   "t": [
+    [
+     "Spiilruum im Freiruum",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/spiilruum-im-freiruum/"
+    ]
+   ]
+  },
+  {
+   "i": 516,
+   "t": [
+    [
+     "Zugiblubbi Erlebnisweg",
+     "https://www.zug-tourismus.ch/de/tours/wanderung/zugiblubbi-erlebnisweg/"
+    ]
+   ]
+  },
+  {
+   "i": 517,
+   "t": [
+    [
+     "Abenteuerschiff auf dem Zugersee",
+     "https://www.zug-tourismus.ch/de/poi/abenteuerschiff-auf-dem-zugersee/"
+    ]
+   ]
+  },
+  {
+   "i": 518,
+   "t": [
+    [
+     "Mission Rudolf Rätsel-Trail in Zug",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/mission-rudolf-raetsel-trail-zug/"
+    ],
+    [
+     "Detektiv-Trail Zug",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/detektiv-trail-zug/"
+    ],
+    [
+     "Foxtrail GO",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/foxtrail-go/"
+    ],
+    [
+     "Finding Daniel",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/finding-daniel/"
+    ],
+    [
+     "Krimi-Trail",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/krimi-trail/"
+    ],
+    [
+     "Sato Code",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/sato-code/"
+    ]
+   ]
+  },
+  {
+   "i": 519,
+   "t": [
+    [
+     "Volg NATURENA Erlebnishof Zugerland",
+     "https://www.zug-tourismus.ch/de/poi/besichtigung/volg-naturena-erlebnishof-zugerland/"
+    ]
+   ]
+  },
+  {
+   "i": 520,
+   "t": [
+    [
+     "Volg NATURENA Sinnespfad im Zugerland",
+     "https://www.zug-tourismus.ch/de/tours/rundgang/volg-naturena-sinnespfad-im-zugerland/"
+    ]
+   ]
+  },
+  {
+   "i": 471,
+   "t": [
+    [
+     "Museum für Urgeschichte(n)",
+     "https://www.zug-tourismus.ch/de/museum-fuer-urgeschichten/"
+    ]
+   ]
+  },
+  {
+   "i": 479,
+   "t": [
+    [
+     "Museum Burg Zug",
+     "https://www.zug-tourismus.ch/de/museum-burg-zug/"
+    ]
+   ]
+  },
+  {
+   "i": 482,
+   "t": [
+    [
+     "Ziegelei-Museum",
+     "https://www.zug-tourismus.ch/de/ziegelei-museum/"
+    ]
+   ]
+  },
+  {
+   "i": 515,
+   "t": [
+    [
+     "Minigolfanlage auf der Schanz",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/minigolfanlage-auf-der-schanz/"
+    ]
+   ]
+  },
+  {
+   "i": 512,
+   "t": [
+    [
+     "Minigolf Cham",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/minigolf-cham/"
+    ]
+   ]
+  },
+  {
+   "i": 508,
+   "t": [
+    [
+     "Minigolf Birkenwäldli Unterägeri",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/minigolf-birkenwaeldli-unteraegeri/"
+    ]
+   ]
+  },
+  {
+   "i": 521,
+   "t": [
+    [
+     "Zug Bootsvermietung",
+     "https://www.zug-tourismus.ch/de/poi/verleih/zug-bootsvermietung/"
+    ]
+   ]
+  },
+  {
+   "i": 511,
+   "t": [
+    [
+     "Pumptrack Cham",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/pumptrack-cham/"
+    ]
+   ]
+  },
+  {
+   "i": 77,
+   "t": [
+    [
+     "Abenteuerspielplatz Schattwäldli",
+     "https://www.zug-tourismus.ch/de/spielplatzschattwaeldlizugerberg/"
+    ]
+   ]
+  },
+  {
+   "i": 76,
+   "t": [
+    [
+     "Spielplatz Villette-Park",
+     "https://www.zug-tourismus.ch/de/spielplatzvillettecham/"
+    ]
+   ]
+  },
+  {
+   "i": 195,
+   "t": [
+    [
+     "Spielplatz Birkenwäldli",
+     "https://www.zug-tourismus.ch/de/spielplatzbirkenwaeldliunteraegeri/"
+    ]
+   ]
+  },
+  {
+   "i": 12,
+   "t": [
+    [
+     "Spielplatz Rigiplatz",
+     "https://www.zug-tourismus.ch/de/spielplatzrigiplatzzug/"
+    ]
+   ]
+  },
+  {
+   "i": 522,
+   "t": [
+    [
+     "Cham - Hünenberg See",
+     "https://www.zug-tourismus.ch/de/tours/radtouren/cham-huenenberg-see-maschwanden/"
+    ]
+   ]
+  },
+  {
+   "i": 523,
+   "t": [
+    [
+     "Zugerberg-Rundweg für Familien",
+     "https://www.zug-tourismus.ch/de/tours/radtouren/zugerberg-rundweg-fuer-familien/"
+    ]
+   ]
+  },
+  {
+   "i": 524,
+   "t": [
+    [
+     "Zugersee",
+     "https://www.zug-tourismus.ch/de/tours/radtouren/zugersee-steinhauserwald-fuer-familien/"
+    ]
+   ]
+  },
+  {
+   "i": 525,
+   "t": [
+    [
+     "Ägerisee",
+     "https://www.zug-tourismus.ch/de/tours/radtouren/aegerisee-moorgarten-fuer-familien/"
+    ]
+   ]
+  },
+  {
+   "i": 526,
+   "t": [
+    [
+     "Verkehrshaus der Schweiz",
+     "https://www.zug-tourismus.ch/de/poi/besichtigung/verkehrshaus-der-schweiz/"
+    ]
+   ]
+  },
+  {
+   "i": 527,
+   "t": [
+    [
+     "Natur- und Tierpark Goldau",
+     "https://www.zug-tourismus.ch/de/poi/besichtigung/natur-und-tierpark-goldau/"
+    ]
+   ]
+  },
+  {
+   "i": 181,
+   "t": [
+    [
+     "Abenteuerspielplatz Robi",
+     "https://www.zug-tourismus.ch/de/spielplatzrobibaar/"
+    ]
+   ]
+  },
+  {
+   "i": 123,
+   "t": [
+    [
+     "Spielplatz HOPP-LA",
+     "https://www.zug-tourismus.ch/de/spielplatzhopplabaar/"
+    ]
+   ]
+  },
+  {
+   "i": 104,
+   "t": [
+    [
+     "Spielplatz Martinspark",
+     "https://www.zug-tourismus.ch/de/spielplatzmartinsparkbaar/"
+    ]
+   ]
+  },
+  {
+   "i": 43,
+   "t": [
+    [
+     "Spielplatz Oberau",
+     "https://www.zug-tourismus.ch/de/spielplatzoberaubaar/"
+    ]
+   ],
+   "n": "Spielplatz Oberau"
+  },
+  {
+   "i": 84,
+   "t": [
+    [
+     "Spielplatz Schutzengel",
+     "https://www.zug-tourismus.ch/de/spielplatzschutzengelbaar/"
+    ]
+   ],
+   "n": "Spielplatz Schutzengel"
+  },
+  {
+   "i": 144,
+   "t": [
+    [
+     "Spielplatz Sonnacker",
+     "https://www.zug-tourismus.ch/de/spielplatzsonnackerbaar/"
+    ]
+   ]
+  },
+  {
+   "i": 30,
+   "t": [
+    [
+     "Spielplatz Schulhaus",
+     "https://www.zug-tourismus.ch/de/spielplatzschulhausallenwinden/"
+    ]
+   ],
+   "n": "Spielplatz Schulhaus"
+  },
+  {
+   "i": 112,
+   "t": [
+    [
+     "Spielplatz Abenteuerland Zuki-am-Teuflibach",
+     "https://www.zug-tourismus.ch/de/spielplatzteuflibachcham/"
+    ]
+   ]
+  },
+  {
+   "i": 109,
+   "t": [
+    [
+     "Erlebnisspielplatz Schluechthof",
+     "https://www.zug-tourismus.ch/de/spielplatzschluechthofcham/"
+    ]
+   ],
+   "n": "Erlebnisspielplatz Schluechthof"
+  },
+  {
+   "i": 29,
+   "t": [
+    [
+     "Spielplatz Duggeli",
+     "https://www.zug-tourismus.ch/de/spielplatzduggelicham/"
+    ]
+   ],
+   "n": "Spielplatz Duggeli"
+  },
+  {
+   "i": 102,
+   "t": [
+    [
+     "Spielplatz Löbern",
+     "https://www.zug-tourismus.ch/de/spielplatzloeberncham/"
+    ]
+   ],
+   "n": "Spielplatz Löbern"
+  },
+  {
+   "i": 81,
+   "t": [
+    [
+     "Spielplatz Rigiplatz",
+     "https://www.zug-tourismus.ch/de/spielplatzrigiplatzcham/"
+    ]
+   ]
+  },
+  {
+   "i": 33,
+   "t": [
+    [
+     "Erlebnisspielplatz Ziegelei Museum",
+     "https://www.zug-tourismus.ch/de/spielplatzziegeleihagendorn/"
+    ]
+   ],
+   "n": "Erlebnisspielplatz Ziegelei Museum"
+  },
+  {
+   "i": 20,
+   "t": [
+    [
+     "Spielplatz Lorzenparadies",
+     "https://www.zug-tourismus.ch/de/spielplatzlorzenparadieshagendorn/"
+    ]
+   ]
+  },
+  {
+   "i": 86,
+   "t": [
+    [
+     "Spielplatz Brunnmatt",
+     "https://www.zug-tourismus.ch/de/spielplatzbrunnmattlindencham/"
+    ]
+   ],
+   "n": "Spielplatz Brunnmatt"
+  },
+  {
+   "i": 23,
+   "t": [
+    [
+     "Spielplatz Untermüli",
+     "https://www.zug-tourismus.ch/de/spielplatzuntermuelifriesencham/"
+    ]
+   ],
+   "n": "Spielplatz Untermüli"
+  },
+  {
+   "i": 125,
+   "t": [
+    [
+     "Spielplatz Generationenplatz Büel",
+     "https://www.zug-tourismus.ch/de/spielplatzbueelcham/"
+    ]
+   ]
+  },
+  {
+   "i": 80,
+   "t": [
+    [
+     "Rastplatz Weinrebenkapelle",
+     "https://www.zug-tourismus.ch/de/spielplatzweinrebenkapellehuenenberg/"
+    ]
+   ]
+  },
+  {
+   "i": 113,
+   "t": [
+    [
+     "Spielplatz Burg",
+     "https://www.zug-tourismus.ch/de/spielplatzburghuenenberg/"
+    ]
+   ],
+   "n": "Spielplatz Burg"
+  },
+  {
+   "i": 69,
+   "t": [
+    [
+     "Erlebnis- und Spielpfad Hü-Pfad",
+     "https://www.zug-tourismus.ch/de/spielplatzhuepfadhuenenberg/"
+    ]
+   ],
+   "n": "Erlebnis- und Spielpfad Hü-Pfad"
+  },
+  {
+   "i": 188,
+   "t": [
+    [
+     "Spielplatz Seeplatz",
+     "https://www.zug-tourismus.ch/de/spielplatzseeplatzhuenenberg/"
+    ]
+   ],
+   "n": "Spielplatz Seeplatz"
+  },
+  {
+   "i": 513,
+   "t": [
+    [
+     "Skatepark Hü-Pa",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/skatepark-hue-pa/"
+    ]
+   ]
+  },
+  {
+   "i": 187,
+   "t": [
+    [
+     "Spielplatz Gottschalkenberg",
+     "https://www.zug-tourismus.ch/de/spielplatzgottschalkenberg/"
+    ]
+   ],
+   "n": "Spielplatz Gottschalkenberg"
+  },
+  {
+   "i": 72,
+   "t": [
+    [
+     "Spielplatz Chilematt",
+     "https://www.zug-tourismus.ch/de/spielplatzchilemattneuheim/"
+    ]
+   ],
+   "n": "Spielplatz Chilematt"
+  },
+  {
+   "i": 159,
+   "t": [
+    [
+     "Spielplatz Schulhaus Dorf",
+     "https://www.zug-tourismus.ch/de/spielplatzdorfneuheim/"
+    ]
+   ],
+   "n": "Spielplatz Schulhaus Dorf"
+  },
+  {
+   "i": 32,
+   "t": [
+    [
+     "Spielplatz am Seeplatz",
+     "https://www.zug-tourismus.ch/de/spielplatzseeplatzoberaegeri/"
+    ]
+   ],
+   "n": "Spielplatz am Seeplatz"
+  },
+  {
+   "i": 79,
+   "t": [
+    [
+     "Spielplatz Raten",
+     "https://www.zug-tourismus.ch/de/spielplatzratenoberaegeri/"
+    ]
+   ]
+  },
+  {
+   "i": 149,
+   "t": [
+    [
+     "Spielplatz St. Jost",
+     "https://www.zug-tourismus.ch/de/spielplatzstjostoberaegeri/"
+    ]
+   ],
+   "n": "Spielplatz St. Jost"
+  },
+  {
+   "i": 203,
+   "t": [
+    [
+     "Spielplatz",
+     "https://www.zug-tourismus.ch/de/spielplatzalosen/"
+    ]
+   ],
+   "n": "Spielplatz"
+  },
+  {
+   "i": 111,
+   "t": [
+    [
+     "Erlebnisspielplatz Langmatt - Risch-Rotkreuz",
+     "https://www.zug-tourismus.ch/de/spielplatzlangmattrischrotkreuz/"
+    ]
+   ],
+   "n": "Erlebnisspielplatz Langmatt - Risch-Rotkreuz"
+  },
+  {
+   "i": 78,
+   "t": [
+    [
+     "Spielplatz Waldetenstrasse - Risch-Rotkreuz",
+     "https://www.zug-tourismus.ch/de/playgroundwaldetenstrasserotkreuz/"
+    ]
+   ],
+   "n": "Spielplatz Waldetenstrasse - Risch-Rotkreuz"
+  },
+  {
+   "i": 163,
+   "t": [
+    [
+     "Spielplatz See",
+     "https://www.zug-tourismus.ch/de/spielplatzseebuonas/"
+    ]
+   ],
+   "n": "Spielplatz See"
+  },
+  {
+   "i": 194,
+   "t": [
+    [
+     "Spielplatz Schulhaus - Risch-Rotkreuz",
+     "https://www.zug-tourismus.ch/de/spielplatzschulhausrisch/"
+    ]
+   ],
+   "n": "Spielplatz Schulhaus - Risch-Rotkreuz"
+  },
+  {
+   "i": 130,
+   "t": [
+    [
+     "Spielplatz Suurstoffi - Risch-Rotkreuz",
+     "https://www.zug-tourismus.ch/de/spielplatzsuurstoffirotkreuz/"
+    ]
+   ]
+  },
+  {
+   "i": 139,
+   "t": [
+    [
+     "Spielplatz Dorfplatz",
+     "https://www.zug-tourismus.ch/de/spielplatzdorfplatzsteinhausen/"
+    ]
+   ],
+   "n": "Spielplatz Dorfplatz"
+  },
+  {
+   "i": 118,
+   "t": [
+    [
+     "Spielplatz Familiengärten Eschfeld",
+     "https://www.zug-tourismus.ch/de/spielplatzeschfeldsteinhausen/"
+    ]
+   ],
+   "n": "Spielplatz Familiengärten Eschfeld"
+  },
+  {
+   "i": 235,
+   "t": [
+    [
+     "Spielplatz Waldsee",
+     "https://www.zug-tourismus.ch/de/spielplatzwaldseesteinhausen/"
+    ]
+   ],
+   "n": "Spielplatz Waldsee"
+  },
+  {
+   "i": 120,
+   "t": [
+    [
+     "Dorfspielplatz Türmli",
+     "https://www.zug-tourismus.ch/de/spielplatztuermlisteinhausen/"
+    ]
+   ]
+  },
+  {
+   "i": 119,
+   "t": [
+    [
+     "Spielplatz Sunnegrund 1",
+     "https://www.zug-tourismus.ch/de/spielplatzsunnegrund1steinhausen/"
+    ]
+   ],
+   "n": "Spielplatz Sunnegrund 1"
+  },
+  {
+   "i": 143,
+   "t": [
+    [
+     "Spielplatz Sunnegrund 4",
+     "https://www.zug-tourismus.ch/de/spielplatzsunnegrund4steinhausen/"
+    ]
+   ],
+   "n": "Spielplatz Sunnegrund 4"
+  },
+  {
+   "i": 31,
+   "t": [
+    [
+     "Spielplatz Öli",
+     "https://www.zug-tourismus.ch/de/spielplatzoeliunteraegeri/"
+    ]
+   ],
+   "n": "Spielplatz Öli"
+  },
+  {
+   "i": 98,
+   "t": [
+    [
+     "Spielplatz Freizeitanlage Usseregg",
+     "https://www.zug-tourismus.ch/de/spielplatzussereggwalchwil/"
+    ]
+   ]
+  },
+  {
+   "i": 51,
+   "t": [
+    [
+     "Spielplatz Kirchgasse",
+     "https://www.zug-tourismus.ch/de/spielplatzkirchgassewalchwil/"
+    ]
+   ],
+   "n": "Spielplatz Kirchgasse"
+  },
+  {
+   "i": 14,
+   "t": [
+    [
+     "Abenteuerspielplatz Fröschenmatt",
+     "https://www.zug-tourismus.ch/de/spielplatzfroeschenmattzug/"
+    ]
+   ]
+  },
+  {
+   "i": 108,
+   "t": [
+    [
+     "Erlebnisspielplatz Siehbach",
+     "https://www.zug-tourismus.ch/de/spielplatzsiehbachzug/"
+    ]
+   ]
+  },
+  {
+   "i": 5,
+   "t": [
+    [
+     "Spielplatz Guggiwald",
+     "https://www.zug-tourismus.ch/de/spielplatzguggiwaldzug/"
+    ]
+   ],
+   "n": "Spielplatz Guggiwald"
+  },
+  {
+   "i": 75,
+   "t": [
+    [
+     "Spielplatz Ibelweg",
+     "https://www.zug-tourismus.ch/de/spielplatzibelwegzug/"
+    ]
+   ],
+   "n": "Spielplatz Ibelweg"
+  },
+  {
+   "i": 114,
+   "t": [
+    [
+     "Wasserspielplatz am Arbach",
+     "https://www.zug-tourismus.ch/de/spielplatzarbachzug/"
+    ]
+   ]
+  },
+  {
+   "i": 115,
+   "t": [
+    [
+     "Spielplatz Riedmatt",
+     "https://www.zug-tourismus.ch/de/spielplatzriedmattzug/"
+    ]
+   ],
+   "n": "Spielplatz Riedmatt"
+  },
+  {
+   "i": 45,
+   "t": [
+    [
+     "Spielplatz Schleifibach",
+     "https://www.zug-tourismus.ch/de/spielplatzschleifibachzug/"
+    ]
+   ],
+   "n": "Spielplatz Schleifibach"
+  },
+  {
+   "i": 71,
+   "t": [
+    [
+     "Spielplatz Schnäggeloch",
+     "https://www.zug-tourismus.ch/de/spielplatzschnaeggelochzug/"
+    ]
+   ]
+  },
+  {
+   "i": 60,
+   "t": [
+    [
+     "Spielplatz Stampfi",
+     "https://www.zug-tourismus.ch/de/spielplatzstampfizug/"
+    ]
+   ],
+   "n": "Spielplatz Stampfi"
+  },
+  {
+   "i": 97,
+   "t": [
+    [
+     "Spielplatz bei der Kirche",
+     "https://www.zug-tourismus.ch/de/spielplatzkircheoberwil/"
+    ]
+   ],
+   "n": "Spielplatz bei der Kirche"
+  },
+  {
+   "i": 331,
+   "t": [
+    [
+     "Spielplatz Oberboden",
+     "https://www.zug-tourismus.ch/de/spielplatzoberbodenzugerberg/"
+    ],
+    [
+     "Oberwil",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/oberwil-grillplatz-oberboden/"
+    ]
+   ],
+   "n": "Spielplatz Oberboden"
+  },
+  {
+   "i": 221,
+   "t": [
+    [
+     "Strandbad Zug",
+     "https://www.zug-tourismus.ch/de/poi/bad/strandbad-zug/"
+    ]
+   ]
+  },
+  {
+   "i": 219,
+   "t": [
+    [
+     "Seebad Brüggli Zug",
+     "https://www.zug-tourismus.ch/de/poi/natur/seebad-brueggli-zug/"
+    ]
+   ]
+  },
+  {
+   "i": 205,
+   "t": [
+    [
+     "Seebad Seeliken",
+     "https://www.zug-tourismus.ch/de/seebad-seeliken/"
+    ]
+   ]
+  },
+  {
+   "i": 208,
+   "t": [
+    [
+     "Siehbach Badi Zug",
+     "https://www.zug-tourismus.ch/de/poi/natur/siehbach-badi-zug/"
+    ]
+   ]
+  },
+  {
+   "i": 216,
+   "t": [
+    [
+     "Strandbad Hünenberg und Badi Beiz",
+     "https://www.zug-tourismus.ch/de/strandbad-huenenberg/"
+    ]
+   ]
+  },
+  {
+   "i": 231,
+   "t": [
+    [
+     "Badi Trubikon Oberwil",
+     "https://www.zug-tourismus.ch/de/badi-trubikon/"
+    ]
+   ]
+  },
+  {
+   "i": 227,
+   "t": [
+    [
+     "Seebad Walchwil",
+     "https://www.zug-tourismus.ch/de/poi/bad/seebad-walchwil/"
+    ]
+   ]
+  },
+  {
+   "i": 218,
+   "t": [
+    [
+     "Strandbad Cham",
+     "https://www.zug-tourismus.ch/de/poi/natur/strandbad-cham/"
+    ]
+   ]
+  },
+  {
+   "i": 220,
+   "t": [
+    [
+     "Tellenörtli Oberwil",
+     "https://www.zug-tourismus.ch/de/tellenoertli-oberwil/"
+    ]
+   ]
+  },
+  {
+   "i": 224,
+   "t": [
+    [
+     "Hirsgartenbadi Cham",
+     "https://www.zug-tourismus.ch/de/hirsgartenbadi/"
+    ]
+   ]
+  },
+  {
+   "i": 215,
+   "t": [
+    [
+     "Hallenbad und Freibad Lättich",
+     "https://www.zug-tourismus.ch/de/poi/bad/hallenbad-und-freibad-laettich/"
+    ]
+   ]
+  },
+  {
+   "i": 210,
+   "t": [
+    [
+     "Ägeribad",
+     "https://www.zug-tourismus.ch/de/aegeribad/"
+    ]
+   ]
+  },
+  {
+   "i": 497,
+   "t": [
+    [
+     "Schlitteln auf dem Zugerberg",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/schlitteln-auf-dem-zugerberg/"
+    ]
+   ]
+  },
+  {
+   "i": 510,
+   "t": [
+    [
+     "Schlittschuhlaufen in Zug",
+     "https://www.zug-tourismus.ch/de/poi/sport-und-freizeitanlage/schlittschuhlaufen-zug/"
+    ]
+   ]
+  },
+  {
+   "i": 316,
+   "t": [
+    [
+     "Baar",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/baar-grillplatz-spielplatz-oberau/"
+    ]
+   ]
+  },
+  {
+   "i": 269,
+   "t": [
+    [
+     "Cham",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/cham-grillplatz-eizmoos-stdaedtlerwald/"
+    ]
+   ]
+  },
+  {
+   "i": 265,
+   "t": [
+    [
+     "Cham",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/cham-grillplatz-lorzenpark/"
+    ]
+   ]
+  },
+  {
+   "i": 302,
+   "t": [
+    [
+     "Cham",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/cham-grillplatz-spielplatz-untermuelli/"
+    ]
+   ]
+  },
+  {
+   "i": 304,
+   "t": [
+    [
+     "Hünenberg - Grillplatz Burg-Wald",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/huenenberg-grillplatz-burg-wald/"
+    ]
+   ]
+  },
+  {
+   "i": 305,
+   "t": [
+    [
+     "Zug",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/zug-grillplatz-badi-brueggli/"
+    ]
+   ]
+  },
+  {
+   "i": 345,
+   "t": [
+    [
+     "Zug",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/zug-grillplatz-choller-sumpfwegdelta/"
+    ]
+   ]
+  },
+  {
+   "i": 296,
+   "t": [
+    [
+     "Oberägeri",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/oberaegeri-grillplatz-morgartenberg/"
+    ]
+   ]
+  },
+  {
+   "i": 318,
+   "t": [
+    [
+     "Oberägeri",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/oberaegeri-grillplatz-st-jost/"
+    ]
+   ]
+  },
+  {
+   "i": 252,
+   "t": [
+    [
+     "Unterägeri - Grillplatz Brand-Rossallmig",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/unteraegeri-grillplatz-brand-rossallmig/"
+    ]
+   ]
+  },
+  {
+   "i": 354,
+   "t": [
+    [
+     "Rotkreuz",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/rotkreuz-grillplatz-sijentalwald/"
+    ]
+   ]
+  },
+  {
+   "i": 251,
+   "t": [
+    [
+     "Zugerberg",
+     "https://www.zug-tourismus.ch/de/poi/oeffentlicher-raum/zugerberg-grillplatz-blasenbergweid/"
+    ]
+   ]
+  },
+  {
+   "i": 226,
+   "t": [
+    [
+     "Hallenbad Loreto",
+     "https://www.zug-tourismus.ch/de/poi/bad/hallenbad-loreto/"
+    ]
+   ]
+  },
+  {
+   "i": 225,
+   "t": [
+    [
+     "Hallenbad Herti",
+     "https://www.zug-tourismus.ch/de/poi/bad/hallenbad-herti/"
+    ]
+   ]
+  },
+  {
+   "i": 504,
+   "t": [
+    [
+     "Freiruum",
+     "https://www.zug-tourismus.ch/de/poi/freiruum-zug/"
+    ]
+   ]
+  }
+ ]
+}

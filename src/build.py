@@ -17,6 +17,7 @@ if os.path.exists(pp):
             if x['id'] not in ids:
                 P.setdefault('sights', []).append({k: v for k, v in x.items() if k != 'src'})
         P['famLinks'] = P.get('famLinks', []) + [{k: v for k, v in x.items() if k != 'src'} for x in CU.get('famNotes', [])]
+        P['famHide'] = [x['i'] for x in CU.get('famHide', [])]
     portal = json.dumps(P, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     data = data.rstrip() + '\nwindow.ZG.portal=' + portal + ';\n'
 guidle = open(os.path.join(HERE, 'guidle.js'), encoding='utf-8').read()
