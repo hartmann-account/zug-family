@@ -108,17 +108,28 @@ function json(data, ttl, status = 200) {
   });
 }
 
+const inflight = new Map(), MEM_MAX = 400;
+function remember(key, data, t) {
+  mem.delete(key); mem.set(key, { t, data });
+  while (mem.size > MEM_MAX) mem.delete(mem.keys().next().value);
+}
+// Zwischenspeicher: Speicher der Instanz, dann Cache der Edge, dann Quelle. Gleichzeitige Anfragen teilen sich einen Abruf.
+// Ein lückenhaftes Ergebnis (partial) ersetzt keinen älteren vollständigen Stand und wird nur kurz gehalten.
 async function cached(request, ctx, key, ttl, produce) {
   const now = Date.now(), m = mem.get(key);
-  if (m && now - m.t < ttl * 1000) return json(m.data, ttl);
+  if (m && now - m.t < m.ttl * 1000) return json(m.data, m.ttl);
   const cache = caches.default, ck = new Request(new URL('/__cache/' + encodeURIComponent(key), request.url).toString());
   const hit = await cache.match(ck);
   if (hit) return hit;
+  let job = inflight.get(key);
+  if (!job) { job = produce(); inflight.set(key, job); job.then(() => inflight.delete(key), () => inflight.delete(key)); }
   try {
-    const data = await produce();
-    mem.set(key, { t: now, data });
-    const res = json(data, ttl);
-    ctx.waitUntil(cache.put(ck, res.clone()));
+    const data = await job;
+    if (data && data.partial && m) return json(m.data, 300);
+    const t = data && data.partial ? 120 : ttl;
+    remember(key, data, now); mem.get(key).ttl = t;
+    const res = json(data, t);
+    if (t === ttl) ctx.waitUntil(cache.put(ck, res.clone()));
     return res;
   } catch (err) {
     if (m) return json(m.data, 300);
@@ -154,8 +165,8 @@ export default {
       return cached(request, ctx, 'lake', LAKE_TTL, lakeTemps);
     }
     if (url.pathname === '/api/event') {
-      const id = (url.searchParams.get('id') || '').replace(/\D/g, '');
-      if (!id) return json({ error: 'id fehlt' }, 60, 400);
+      const id = url.searchParams.get('id') || '';
+      if (!/^\d{5,12}$/.test(id)) return json({ error: 'ungültige id' }, 3600, 400);
       return cached(request, ctx, 'event:' + id, DETAIL_TTL, async () => {
         const r = await fetch(G.icalURL(id), { headers: { 'User-Agent': ua.headers['User-Agent'], Accept: 'text/calendar' } });
         if (!r.ok) throw new Error('iCal ' + r.status);

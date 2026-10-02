@@ -136,7 +136,7 @@ function zMs(iso, endOfDay) {
 }
 function normEvent(e) {
   var occ = (e.dates && e.dates.length ? e.dates : [{ s: e.start, e: e.end }]).filter(function (o) { return o && o.s && !isNaN(zMs(o.s)); })
-    .map(function (o) { var t0 = zMs(o.s); return { s: o.s, e: o.e || null, t0: t0, t1: o.e ? zMs(o.e, true) : t0 + (hasTime(o.s) ? 3 * 3600e3 : 86400e3 - 1) }; })
+    .map(function (o) { var t0 = zMs(o.s), t1 = o.e ? zMs(o.e, true) : t0 + (hasTime(o.s) ? 3 * 3600e3 : 86400e3 - 1); return { s: o.s, e: o.e || null, t0: t0, t1: Math.max(t1, t0 + 3600e3) }; })
     .sort(function (a, b) { return a.t0 - b.t0; });
   var gem = e.gem && GEMBY[e.gem] ? GEMBY[e.gem].name : (e.gem || '');
   return { type: 'event', id: String(e.id), mk: MK_EVENT, title: e.title || '', name: e.title || '', kind: e.cat || 'Veranstaltung', gem: gem, town: e.town || '',
@@ -267,6 +267,7 @@ function setSunT(t, src) {
   var now = performance.now();
   if (src !== 'play' || now - lastUIupd > 60) { lastUIupd = now; updateSunUI(); }
   listDirty = true; markerShadeDirty = true;
+  if (!GL) { updateDetailLive(); if (MODE === 'familie') renderList(); }
 }
 function setSunDay(k, dt) {
   sunDay = resolveDay(k, dt);
@@ -322,7 +323,9 @@ var showWater = false, showWC = false;
 var MODEPATH = { home: '', gemeinden: 'gemeinden', sights: 'sehenswuerdigkeiten', familie: 'familien', events: 'events', info: 'info' };
 var PATHMODE = {}; Object.keys(MODEPATH).forEach(function (k) { PATHMODE[MODEPATH[k]] = k; });
 function parseHash() {
-  var h = decodeURI(location.hash || '').replace(/^#\/?/, ''), q = {}, qi = h.indexOf('?');
+  var h = location.hash || '', q = {}, qi;
+  try { h = decodeURI(h); } catch (e) {}
+  h = h.replace(/^#\/?/, ''); qi = h.indexOf('?');
   if (qi >= 0) { h.slice(qi + 1).split('&').forEach(function (kv) { var a = kv.split('='); if (a[0]) q[a[0]] = a[1] || ''; }); h = h.slice(0, qi); }
   var parts = h.split('/').filter(Boolean);
   return { mode: PATHMODE[parts[0] || ''] || 'home', id: parts[1] || null, q: q };
@@ -384,15 +387,17 @@ function applyRoute() {
   lastRoute = location.hash;
   updTabs();
 }
+function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k) ? o[k] : null; }
 function findItem(mode, id) {
-  if (mode === 'gemeinden') return GEMBY[id] || null;
-  if (mode === 'sights') return SIGHTBY[id] || null;
-  if (mode === 'familie') return PL[+id] || null;
-  if (mode === 'events') return EVENTBY[id] || null;
+  if (mode === 'gemeinden') return own(GEMBY, id);
+  if (mode === 'sights') return own(SIGHTBY, id);
+  if (mode === 'familie') return /^\d+$/.test(id) && PL[+id] && !PL[+id].hide ? PL[+id] : null;
+  if (mode === 'events') return own(EVENTBY, id);
   return null;
 }
 function setMode(m, changed) {
   MODE = m;
+  panel.inert = m === 'home' || touring;
   ['home', 'gemeinden', 'sights', 'familie', 'events'].forEach(function (k) { document.body.classList.toggle('m-' + k, k === m); });
   Array.prototype.forEach.call(document.querySelectorAll('#tabs a'), function (a) { if (a.dataset.mode === m) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   if (changed) {
@@ -428,7 +433,7 @@ function renderHead() {
       '<div class="flt scroll" id="chipsS" role="group" aria-label="Kategorien">' + allChip(f.cats) + SCATS.map(function (c, k) {
         var n = SIGHTS.filter(function (s) { return s.cat === k; }).length; if (!n) return '';
         return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + f.cats[k] + '">' + svgIcon(c.k) + esc(c.t) + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
-      '<div class="count"><span id="count"></span><span id="countHint">Sortiert nach Gemeinde</span></div>';
+      '<div class="count"><span id="count" role="status"></span><span id="countHint">Sortiert nach Gemeinde</span></div>';
   } else if (m === 'familie') {
     var ff = filt.familie, cf = countBy(PL.filter(function (p) { return !p.hide; })), summer = sunDay.k === 'sommer', nMore = (ff.sunMax < 100 && summer ? 1 : 0) + (ff.zt ? 1 : 0) + (showWater ? 1 : 0) + (showWC ? 1 : 0);
     h = '<p class="kicker">' + svgIcon('spiel') + 'Für Familien</p><h2>Spielplätze und Ausflüge</h2>' +
@@ -444,14 +449,14 @@ function renderHead() {
         '<p class="fhint" id="fSunH">' + (summer ? 'Anteil der Fläche in der Sonne, berechnet für den 21. Juli. Nach links schieben zeigt schattigere Orte; Orte ohne Schattenberechnung werden dann ausgeblendet.' : 'Sonnen- und Schattenwerte gibt es für den 21. Juli. Wählen Sie dieses Datum, um den Filter zu nutzen.') + '</p>' +
         '<div class="fdate"><span>Datum</span><div class="seg" role="group" aria-label="Datum für Sonnenstand">' + ['sommer', 'heute', 'winter'].map(function (k) { return '<button type="button" data-day="' + k + '" aria-pressed="' + (sunDay.k === k) + '">' + (k === 'sommer' ? '21. Juli' : k === 'heute' ? 'Heute' : '21. Dez.') + '</button>'; }).join('') + '</div></div></div>' +
         '<div class="flt">' +
-        '<button type="button" class="chip" id="fZT" aria-pressed="' + ff.zt + '">Tipps Zug Tourismus</button>' +
+        '<button type="button" class="chip" id="fZT" aria-pressed="' + ff.zt + '">Tipps von Zug Tourismus</button>' +
         '<button type="button" class="chip" id="tWater" aria-pressed="' + showWater + '">' + svgIcon('wasser') + 'Trinkbrunnen</button>' +
         '<button type="button" class="chip" id="tWC" aria-pressed="' + showWC + '">' + svgIcon('wc') + 'WC</button></div>' +
         '<details class="more-info"><summary>Schatten im Tagesverlauf</summary><figure class="mini" id="miniChart"></figure>' +
         '<p class="note" style="font-size:13px;color:var(--ink-2);margin:6px 0 0">Für jeden Spielplatz ist berechnet, welcher Teil der Fläche am 21. Juli im Schatten von Bäumen, Gebäuden und Gelände liegt. Grundlage ist das Oberflächenmodell swissSURFACE3D.</p></details>' +
       '</div>' +
       '<div class="sun compact" id="sunFam"></div>' +
-      '<div class="count"><span id="count"></span><span id="countHint"></span></div>';
+      '<div class="count"><span id="count" role="status"></span><span id="countHint"></span></div>';
   } else if (m === 'events') {
     var fe = filt.events, live = liveEvents(), ce = countBy(live), cats = {};
     live.forEach(function (e) { e.cats.forEach(function (c) { cats[c] = (cats[c] || 0) + 1; }); });
@@ -461,10 +466,15 @@ function renderHead() {
       '<div class="flt">' + '<div class="srch"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg><input type="search" id="fQ" placeholder="Suchen" value="' + esc(fe.q || '') + '" aria-label="Veranstaltung suchen" autocomplete="off" enterkeyhint="search"></div>' + gemSelect('fGemE', fe.gem, ce, 'Kantonsweit oder ausserhalb') +
       (Object.keys(cats).length > 1 ? '<label class="sr" for="fCatE">Kategorie</label><select id="fCatE"><option value="">Alle Kategorien</option>' + Object.keys(cats).sort(function (a, b) { return a.localeCompare(b, 'de'); }).map(function (k) {
         return '<option value="' + esc(k) + '"' + (fe.cat === k ? ' selected' : '') + '>' + esc(k) + ' (' + cats[k] + ')</option>'; }).join('') + '</select>' : '') + '</div>' +
-      '<div class="count"><span id="count"></span><span id="countHint"></span></div>';
+      '<div class="count"><span id="count" role="status"></span><span id="countHint"></span></div>';
+  }
+  var ae = document.activeElement, fsel = null;
+  if (ae && phEl.contains(ae)) {
+    fsel = ae.id ? '#' + ae.id : ae.dataset.day ? '#fBox [data-day="' + ae.dataset.day + '"]' : ae.dataset.scope ? '#fBox [data-scope="' + ae.dataset.scope + '"]' : ae.dataset.cat ? '[data-cat="' + ae.dataset.cat + '"]' : ae.dataset.win ? '[data-win="' + ae.dataset.win + '"]' : null;
   }
   phEl.innerHTML = h;
   wireHead();
+  if (fsel) { var nf = phEl.querySelector(fsel); if (nf) nf.focus({ preventScroll: true }); }
   $('#pfootL').textContent = m === 'events' && EVMETA.updated ? 'Stand ' + new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ }).format(new Date(EVMETA.updated)) : '';
 }
 function wireHead() {
@@ -632,7 +642,7 @@ function renderList() {
       ve.slice(0, evShown).forEach(function (e) {
         var o = occIn(e), more = e.occ.filter(function (x) { return x.t1 >= now; }).length - 1;
         html += '<button type="button" class="it ev" data-k="e' + esc(e.id) + '">' + (e.thumb ? '<img class="thumb" src="' + esc(e.thumb) + '" alt="" loading="lazy" decoding="async">' : '<span class="thumb"></span>') +
-          '<span class="tx"><span class="when">' + esc(occText(o)) + (more > 0 ? ' · +' + more + ' Termine' : '') + '</span><b>' + esc(e.title) + '</b><span>' + esc(itemSub(e)) + '</span></span></button>';
+          '<span class="tx"><span class="when">' + esc(occText(o)) + (more > 0 ? ' · +' + more + (more === 1 ? ' Termin' : ' Termine') : '') + '</span><b>' + esc(e.title) + '</b><span>' + esc(itemSub(e)) + '</span></span></button>';
       });
       if (ve.length > evShown) html += '<button type="button" class="more" id="moreEv">Weitere ' + (ve.length - evShown) + ' Veranstaltungen</button>';
       if (!ve.length) html = '<p class="empty">Keine Veranstaltungen für diese Auswahl.</p>';
@@ -641,7 +651,7 @@ function renderList() {
     }
   }
   listEl.innerHTML = html;
-  var mb = $('#moreEv'); if (mb) mb.addEventListener('click', function () { evShown += 60; renderList(); });
+  var mb = $('#moreEv'); if (mb) mb.addEventListener('click', function () { var k = evShown; evShown += 60; renderList(); var nx = listEl.querySelectorAll('.it')[k]; if (nx) nx.focus(); });
 }
 // Bildserver nicht erreichbar: Platzhalter statt kaputtem Bild
 listEl.addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'IMG' && t.classList.contains('thumb')) { var sp = document.createElement('span'); sp.className = 'thumb'; t.replaceWith(sp); } }, true);
@@ -652,9 +662,10 @@ listEl.addEventListener('click', function (e) {
   var it = t === 'f' ? PL[+id] : t === 's' ? SIGHTBY[id] : t === 'e' ? EVENTBY[id] : t === 'g' ? GEMBY[id] : null;
   if (it) pick(it);
 });
+var backTo = '';
 function pick(it) {
   var mode = it.type === 'fam' ? 'familie' : it.type === 'sight' ? 'sights' : it.type === 'event' ? 'events' : 'gemeinden';
-  pushedDetail = true;
+  if (location.hash !== hashFor(mode, it.id)) { backTo = location.hash; pushedDetail = true; }
   go(mode, it.id);
 }
 
@@ -749,7 +760,7 @@ function eventMoreHTML(e) {
   if (e.teaser) h += '<p class="txt">' + esc(e.teaser) + '</p>';
   if (up.length > 1) h += '<p class="note" style="margin:0">Termine</p><ul class="dates">' + up.slice(0, 12).map(function (o) { return '<li>' + esc(occText(o, true)) + '</li>'; }).join('') + (up.length > 12 ? '<li>und ' + (up.length - 12) + ' weitere</li>' : '') + '</ul>';
   var dl = '';
-  if (e.address || e.venue) dl += '<div><dt>Ort</dt><dd class="t">' + esc([e.venue, e.address].filter(Boolean).join(', ')) + '</dd></div>';
+  if (e.address || e.venue) dl += '<div><dt>Ort</dt><dd class="t">' + esc(e.venue && e.address && e.address.indexOf(e.venue) === 0 ? e.address : [e.venue, e.address].filter(Boolean).join(', ')) + '</dd></div>';
   if (e.price) dl += '<div><dt>Preis</dt><dd class="t">' + esc(e.price) + '</dd></div>';
   if (e.org) dl += '<div><dt>Veranstalter</dt><dd class="t">' + esc(e.org) + '</dd></div>';
   if (dl) h += '<dl class="facts one">' + dl + '</dl>';
@@ -799,21 +810,38 @@ detailEl.addEventListener('click', function (e) {
   var k = b.dataset.k; if (k[0] === 's' && SIGHTBY[k.slice(1)]) pick(SIGHTBY[k.slice(1)]);
 });
 function backFromDetail() {
-  if (pushedDetail && history.length > 1) { pushedDetail = false; history.back(); }
-  else go(MODE, null, true);
+  // nur zurückblättern, wenn der vorige Eintrag die Liste dieses Bereichs war (nicht die Startseite oder ein anderer Bereich)
+  var prev = null; try { prev = parseHashOf(backTo); } catch (e) {}
+  if (pushedDetail && history.length > 1 && prev && prev.mode === MODE && !prev.id) { pushedDetail = false; history.back(); }
+  else { pushedDetail = false; go(MODE, null, true); }
 }
+function parseHashOf(h) { var keep = location.hash; return (function () { var hh = h || '', q = {}, qi; try { hh = decodeURI(hh); } catch (e) {} hh = hh.replace(/^#\/?/, ''); qi = hh.indexOf('?'); if (qi >= 0) hh = hh.slice(0, qi); var parts = hh.split('/').filter(Boolean); return { mode: PATHMODE[parts[0] || ''] || 'home', id: parts[1] || null, q: q, keep: keep }; })(); }
+function itemKey(it) { return !it ? '' : it.type === 'fam' ? 'f' + it.i : it.type === 'sight' ? 's' + it.id : it.type === 'event' ? 'e' + it.id : it.type === 'gem' ? 'g' + it.id : ''; }
 function closeDetail(silent) {
+  var was = SEL || selGem, ae = document.activeElement, refocus = !ae || ae === document.body || panel.contains(ae);
   SEL = null; selGem = null; pushedDetail = false;
   if (sunDay.k === 'termin') setSunDay('sommer');
   if (GL) { clearOutline(); calloutEl.classList.remove('on'); }
   detailEl.hidden = true; detailEl.innerHTML = ''; listEl.hidden = false; panel.classList.remove('has-detail');
   markerVisDirty = true; listDirty = true;
-  var ls = listScroll; requestAnimationFrame(function () { if (!SEL && !selGem) pscroll.scrollTop = ls; });
+  var ls = listScroll; requestAnimationFrame(function () {
+    if (SEL || selGem) return;
+    if (listDirty) renderList();
+    pscroll.scrollTop = ls;
+    if (refocus && was) { var b = listEl.querySelector('.it[data-k="' + itemKey(was) + '"]'); if (b) b.focus({ preventScroll: true }); else { var q = $('#fQ'); if (q) q.focus({ preventScroll: true }); } }
+  });
   if (!silent) syncHash();
 }
 function updateDetailLive(full) {
   if (!SEL || detailEl.hidden) return;
-  if (full && SEL.type === 'fam') { var keep = pscroll.scrollTop; detailEl.innerHTML = detailHTML(SEL); fillWx(SEL); $('#back').addEventListener('click', backFromDetail); var sd = $('#sunDet'); if (sd) buildSunUI(sd, { z: SEL.z || 425 }); pscroll.scrollTop = keep; return; }
+  if (full && SEL.type === 'fam') {
+    var keep = pscroll.scrollTop, it0 = SEL, fk = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.day : null;
+    detailEl.innerHTML = detailHTML(SEL); fillWx(SEL); $('#back').addEventListener('click', backFromDetail);
+    var sd = $('#sunDet'); if (sd) buildSunUI(sd, { z: SEL.z || 425 });
+    if (GL) { var cv = detailEl.querySelector('figure canvas'); if (cv) { var redraw = function () { if (!cv.isConnected) { var ix = OR.listeners.indexOf(redraw); if (ix >= 0) OR.listeners.splice(ix, 1); return; } drawCrop(cv, it0); }; OR.listeners.push(redraw); redraw(); } }
+    if (fk) { var fb = detailEl.querySelector('.sun-date button[data-day="' + fk + '"]'); if (fb) fb.focus({ preventScroll: true }); }
+    pscroll.scrollTop = keep; return;
+  }
   var p = SEL, s = shadeAt(p, sunT), u = uvi(sun.alt, p.z), uc = uvCat(u);
   var d1 = $('#dShade'), d2 = $('#dUV'), sn = $('#sparkNow');
   if (d1 && s != null) { d1.textContent = Math.round(s * 100) + ' %'; d1.previousElementSibling.textContent = 'Schatten ' + fmtTime(sunT); }
@@ -864,7 +892,13 @@ function loadEventDetail(e) {
   window.ZGEvents.detail(e).then(function (d) {
     if (!d) return;
     e.detailLoaded = true;
-    if (d.dates && d.dates.length) { var n = normEvent({ id: e.id, title: e.title, dates: d.dates }); if (n.occ.length) e.occ = n.occ; }
+    // Termine aus dem iCal-Export nur ergänzen (einzelne, noch kommende Termine), nie die Liste ersetzen
+    if (d.dates && d.dates.length) {
+      var n = normEvent({ id: e.id, title: e.title, dates: d.dates }), now = Date.now(), have = {};
+      e.occ.forEach(function (o) { have[o.s.slice(0, 16)] = 1; });
+      var add = n.occ.filter(function (o) { return o.t1 >= now && o.t1 - o.t0 < 2 * 86400e3 && !have[o.s.slice(0, 16)]; });
+      if (add.length) e.occ = e.occ.concat(add).sort(function (a, b) { return a.t0 - b.t0; });
+    }
     ['teaser', 'address', 'venue', 'price', 'org', 'credit'].forEach(function (k) { if (d[k]) e[k] = d[k]; });
     if (d.tickets) e.tickets = safeURL(d.tickets);
     if (SEL === e) {
@@ -2040,13 +2074,13 @@ function markerVisible(it) {
   if (it.type === 'fam') return MODE === 'familie' && matchFam(it);
   if (it.type === 'sight') return (MODE === 'sights' && matchSight(it)) || (MODE === 'gemeinden' && !!selGem && it.gem === selGem.name);
   if (it.type === 'event') return MODE === 'events' && matchEvent(it);
-  if (it.type === 'park') return parkOn && cam.d < 16000;
+  if (it.type === 'park') return parkOn && MODE !== 'home' && cam.d < 16000;
   return false;
 }
 function updateMarkers(alpha) {
   if (!MK.geo) return;
   var vis = MK.geo.attributes.aVis, info = MK.geo.attributes.aInfo, sel = MK.geo.attributes.aSel;
-  var key = MODE + (cam.d < 4000 ? 'n' : 'f') + (touring ? 't' : '') + (selGem ? selGem.id : '');
+  var key = MODE + (cam.d < 4000 ? 'n' : 'f') + (cam.d < 16000 ? 'p' : '') + (touring ? 't' : '') + (selGem ? selGem.id : '');
   if (markerShadeDirty) {
     markerShadeDirty = false;
     var summer = sunDay.k === 'sommer';
@@ -2093,20 +2127,24 @@ function makeOutline(p) {
 }
 
 /* ---------------- labels ---------------- */
-var labelsEl = $('#labels'), LBL = [], LBL_ORDER = [], PRIO = { park: -1, tempst: -0.5, muni: 0, lake: 1, peak: 2, river: 3, poi: 4, place: 5, temp: 6 };
+var labelsEl = $('#labels');
+labelsEl.addEventListener('keydown', function (e) { var t = e.target; if ((e.key === 'Enter' || e.key === ' ') && t.getAttribute('role') === 'button') { e.preventDefault(); t.click(); } });
+var LBL = [], LBL_ORDER = [], PRIO = { park: -1, tempst: -0.5, muni: 0, lake: 1, peak: 2, river: 3, poi: 4, place: 5, temp: 6 };
 function addLabel(text, kind, E, N, sections, sub, elev) {
   var el = document.createElement('div');
   el.className = 'lbl ' + kind;
   if (kind === 'muni') el.innerHTML = esc(text) + (sub ? '<small>' + esc(sub) + '</small>' : '');
   else if (kind === 'peak') el.innerHTML = '<span>' + esc(text) + '</span><em>' + elev + '</em>';
   else el.textContent = text;
+  if (kind === 'park' || kind === 'temp' || kind === 'tempst') { el.setAttribute('role', 'button'); el.tabIndex = -1; el.style.pointerEvents = 'none'; }
+  else el.setAttribute('aria-hidden', 'true');
   labelsEl.appendChild(el);
   var lift = kind === 'peak' ? 40 : kind === 'poi' ? 30 : 60;
   LBL.push({ el: el, kind: kind, name: text, E: E, N: N, h: hAt(E, N), lift: lift, p: new THREE.Vector3(), s: sections || [], k: (sections || []).indexOf('kanton') >= 0, o: 0, occ: false, n: LBL.length, w: 0 });
 }
 function labelWant(L) {
   var d = cam.d;
-  if (L.kind === 'park') return parkOn && !touring && d < 7000 ? 1 : 0;
+  if (L.kind === 'park') return parkOn && !touring && MODE !== 'home' && d < 7000 ? 1 : 0;
   if (L.kind === 'temp') return tempOn && !touring && d < 3400 ? 1 : 0;
   if (L.kind === 'tempst') return tempOn && !touring && d < 60000 ? 1 : 0;
   if (touring) { var key = TOUR[tourI].key; return (L.s.indexOf(key) >= 0 || (L.kind === 'muni' && key === 'kanton')) ? 1 : 0; }
@@ -2147,7 +2185,7 @@ function fitFactor() {
 }
 function fit(c) { var f = fitFactor(); return { E: c.E, N: c.N, d: c.d * (c.d < 3000 ? Math.min(f, 1.4) : f), hd: c.hd, p: c.p }; }
 function clampEx() { ex.E = clamp(ex.E, G.E0 + 500, G.E1 - 500); ex.N = clamp(ex.N, G.N0 + 500, G.N1 - 500); ex.d = clamp(ex.d, 200, 80000); ex.p = clamp(ex.p, 10, 86); }
-function angLerp(a, b, t) { var d = ((b - a + 540) % 360) - 180; return a + d * t; }
+function angLerp(a, b, t) { var d = ((((b - a) % 360) + 540) % 360) - 180; return a + d * t; }
 function flyTo(to) {
   if (!cam) { ex.E = to.E; ex.N = to.N; ex.d = to.d; ex.hd = to.hd == null ? ex.hd : to.hd; ex.p = to.p == null ? ex.p : to.p; flight = null; return; }
   var from = { E: ex.E, N: ex.N, d: ex.d, hd: ex.hd, p: ex.p };
@@ -2289,7 +2327,7 @@ function endPointer(e) {
   var n = nPts();
   if (n === 1 && drag.mode === 'pinch') { var k = Object.keys(PTS)[0]; drag.lx = PTS[k].x; drag.ly = PTS[k].y; beginPan(PTS[k].x, PTS[k].y); drag.moved = 99; return; }
   if (n > 0) return;
-  var wasClick = drag.moved < 6 && performance.now() - drag.t0 < 500 && e.type === 'pointerup';
+  var wasClick = drag.moved < 6 && performance.now() - drag.t0 < 500 && e.type === 'pointerup' && drag.mode !== 'rot';
   drag.mode = null; drag.g = null; document.body.style.cursor = '';
   if (wasClick) mapClick(e.clientX, e.clientY, e.pointerType);
 }
@@ -2327,6 +2365,7 @@ function mapClick(x, y, type) {
   var mk = pickMarker(x, y, W, H);
   if (mk && mk.type === 'park') { showPark(mk); return; }
   if (mk && (mk.type === 'fam' || mk.type === 'sight' || mk.type === 'event')) { hidePark(); pick(mk); return; }
+  if (mk) return; // Trinkbrunnen und WC: nur Hinweis beim Darüberfahren
   if (POP.it) { hidePark(); return; }
   var g = groundAt(x, y), id = g ? idAt(g.E, g.N) : 0;
   if (!id) return;
@@ -2362,7 +2401,7 @@ function setParking(d) {
   });
   parkState = 'ok'; parkUpdated = d.updated || '';
   if (ready) { if (first) buildMarkers(); ensureParkLabels(); }
-  PARK.forEach(function (g) { if (g.lbl) { g.lbl.el.textContent = freeText(g); g.lbl.el.className = 'lbl park ' + freeClass(g); g.lbl.bw = 0; } });
+  PARK.forEach(function (g) { if (g.lbl) { g.lbl.el.textContent = freeText(g); g.lbl.el.className = 'lbl park ' + freeClass(g); g.lbl.el.setAttribute('aria-label', 'Parkhaus ' + g.title + ', ' + freeText(g)); g.lbl.bw = 0; } });
   markerVisDirty = true;
   if (POP.it && POP.it.type === 'park') showPark(POP.it, true);
 }
@@ -2371,8 +2410,8 @@ function ensureParkLabels() {
   var added = false;
   PARK.forEach(function (g) {
     if (g.lbl) return;
-    addLabel('', 'park', g.E, g.N, []); g.lbl = LBL[LBL.length - 1]; g.lbl.lift = 0; added = true;
-    g.lbl.el.setAttribute('role', 'button'); g.lbl.el.title = 'Parkhaus ' + g.title;
+    addLabel(freeText(g), 'park', g.E, g.N, []); g.lbl = LBL[LBL.length - 1]; g.lbl.lift = 0; added = true; g.lbl.el.className = 'lbl park ' + freeClass(g);
+    g.lbl.el.title = 'Parkhaus ' + g.title; g.lbl.el.setAttribute('aria-label', 'Parkhaus ' + g.title + ', ' + freeText(g));
     g.lbl.el.addEventListener('click', function (e) { e.stopPropagation(); showPark(g); });
   });
   if (added) LBL_ORDER = LBL.slice().sort(function (a, b) { return PRIO[a.kind] - PRIO[b.kind] || a.n - b.n; });
@@ -2407,6 +2446,7 @@ function placePop(W, H) {
   POP.el.style.left = x.toFixed(0) + 'px'; POP.el.style.top = y.toFixed(0) + 'px';
 }
 $('#tPark').addEventListener('click', function () {
+  lastInteract = performance.now(); if (MODE === 'home' && !parkOn) go('gemeinden');
   parkOn = !parkOn; this.setAttribute('aria-pressed', String(parkOn)); markerVisDirty = true;
   if (parkOn) {
     loadParking(); clearInterval(parkTimer); parkTimer = setInterval(loadParking, 60000);
@@ -2492,10 +2532,10 @@ function ensureTempLabels() {
   function lab(c, kind, text) {
     if (!c.lbl) {
       addLabel('', kind, c.E, c.N, []); c.lbl = LBL[LBL.length - 1]; c.lbl.lift = kind === 'temp' ? 12 : 40; added = true;
-      c.lbl.el.setAttribute('role', 'button');
       c.lbl.el.addEventListener('click', function (e) { e.stopPropagation(); showTempPop(c, kind); });
     }
     c.lbl.el.innerHTML = '<i style="background:' + tempCSS(c.t) + '"></i>' + esc(text); c.lbl.el.title = (kind === 'temp' ? 'Sensor ' : 'Station ') + c.n; c.lbl.bw = 0;
+    c.lbl.el.setAttribute('aria-label', (kind === 'temp' ? 'Sensor ' : 'Station ') + c.n + ', ' + dec(c.t) + ' Grad');
   }
   // bestehende Labels bleiben, neue Objekte übernehmen sie über den Namen
   var old = TEMP.byName || {}; TEMP.byName = {};
@@ -2555,6 +2595,7 @@ function fillWx(it) {
   });
 }
 $('#tTemp').addEventListener('click', function () {
+  lastInteract = performance.now(); if (MODE === 'home' && !tempOn) go('gemeinden');
   tempOn = !tempOn; this.setAttribute('aria-pressed', String(tempOn));
   clearInterval(tempTimer);
   if (tempOn) {
@@ -2574,7 +2615,8 @@ var TOUR = [
 ];
 var tourI = 0, tourT0 = 0, TOUR_DUR = 10000, lorzeStart = 0, lorzeDrawn = 0, tourPaused = false;
 function startTour() {
-  touring = true; document.body.classList.add('touring'); capEl.hidden = false; markerVisDirty = true;
+  lorzeDrawn = 0; lorzeStart = 0; tourLast = 0;
+  touring = true; panel.inert = true; document.body.classList.add('touring'); capEl.hidden = false; markerVisDirty = true;
   tourGo(0);
 }
 function tourGo(i) {
@@ -2586,15 +2628,18 @@ function tourGo(i) {
   tourT0 = performance.now();
   if (s.key === 'lorze') { lorzeStart = performance.now(); lorzeDrawn = 0; }
 }
+var tourLast = 0;
 function stepTour(now) {
   if (!touring) return;
+  if (tourPaused && tourLast) tourT0 += now - tourLast;
+  tourLast = now;
   var u = clamp((now - tourT0) / TOUR_DUR, 0, 1);
   $('#capBar').style.width = (u * 100).toFixed(1) + '%';
   if (u >= 1 && !tourPaused) { if (tourI < TOUR.length - 1) tourGo(tourI + 1); else stopTour(); }
 }
 function stopTour(silent) {
   if (!touring) return;
-  touring = false; document.body.classList.remove('touring'); capEl.hidden = true; markerVisDirty = true;
+  touring = false; document.body.classList.remove('touring'); capEl.hidden = true; markerVisDirty = true; panel.inert = MODE === 'home';
   if (!silent) flyContext();
 }
 $('#tourBtn').addEventListener('click', startTour);
@@ -2602,7 +2647,7 @@ $('#capPrev').addEventListener('click', function () { tourGo(tourI - 1); });
 $('#capNext').addEventListener('click', function () { if (tourI < TOUR.length - 1) tourGo(tourI + 1); else stopTour(); });
 $('#capStop').addEventListener('click', function () { stopTour(); });
 capEl.addEventListener('pointerenter', function () { tourPaused = true; });
-capEl.addEventListener('pointerleave', function () { tourPaused = false; tourT0 = Math.max(tourT0, performance.now() - TOUR_DUR * 0.6); });
+capEl.addEventListener('pointerleave', function () { tourPaused = false; });
 
 /* ---------------- frame loop ---------------- */
 var skyEl = $('#sky'), HUDtick = 0, tReady = 0, last = performance.now(), north = $('#north'), ready = false, hiCur = new Array(12).fill(0), cur = { focus: 0.6, cont: 0.45, muni: 0.35 };
@@ -2761,10 +2806,11 @@ function frame(now) {
       if (!ok) L.want = 0;
     }
     L.o = TEST ? L.want : lerp(L.o, L.want, 1 - Math.exp(-dt * 6));
-    if (L.o < 0.01) { if (L.w !== 0) { L.el.style.opacity = '0'; L.w = 0; } continue; }
+    if (L.o < 0.01) { if (L.w !== 0) { L.el.style.opacity = '0'; L.w = 0; if (L.act) { L.act = false; L.el.style.pointerEvents = 'none'; L.el.tabIndex = -1; } } continue; }
     var offs = L.kind === 'park' ? 'translate(0,-50%)' : (L.kind === 'peak' || L.kind === 'poi') ? 'translate(-5px,-50%)' : 'translate(-50%,-50%)';
     L.el.style.transform = 'translate3d(' + L.sx.toFixed(1) + 'px,' + (L.sy + (L.dy || 0)).toFixed(1) + 'px,0) ' + offs;
     L.el.style.opacity = L.o.toFixed(3); L.w = 1;
+    if (L.kind === 'park' || L.kind === 'temp' || L.kind === 'tempst') { var act = L.o > 0.5; if (L.act !== act) { L.act = act; L.el.style.pointerEvents = act ? '' : 'none'; L.el.tabIndex = act ? 0 : -1; } }
   }
 
   // HUD

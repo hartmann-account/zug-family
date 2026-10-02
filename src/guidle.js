@@ -44,6 +44,13 @@
     var o = offset(y, m, d, hh);
     return y + '-' + p2(m + 1) + '-' + p2(d) + 'T' + p2(hh) + ':' + p2(mm) + ':00+0' + o + ':00';
   }
+  // Ende einer Zeitspanne: liegt die Endzeit vor oder auf der Startzeit, endet der Anlass am Folgetag
+  function isoEnd(y, m, d, h0, m0, h1, m1) {
+    if (h1 == null) return null;
+    if (h0 != null && h1 * 60 + m1 === h0 * 60 + m0) return null;
+    if (h0 != null && h1 * 60 + m1 < h0 * 60 + m0) { var n = new Date(Date.UTC(y, m, d + 1)); y = n.getUTCFullYear(); m = n.getUTCMonth(); d = n.getUTCDate(); }
+    return iso(y, m, d, h1, m1);
+  }
   function ymd(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? [+m[1], +m[2] - 1, +m[3]] : null; }
   var WD = { mo: 1, di: 2, mi: 3, do: 4, fr: 5, sa: 6, so: 0 };
 
@@ -58,13 +65,19 @@
       var rg = /(\d{1,2})\.(\d{1,2})\.(\d{4})\s*-\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/.exec(part);
       var jw = /jeweils\s+([A-Za-z]{2}(?:\s*[,\/und]+\s*[A-Za-z]{2})*)/i.exec(part);
       var bis = /bis\s+(\d{1,2})\.(\d{1,2})\.(\d{4})/i.exec(part);
-      if (jw && f) {
+      var ab = /ab\s+(\d{1,2})\.(\d{1,2})\.(\d{4})/i.exec(part);
+      if (jw) {
+        // Startdatum: erster Termin aus der Liste, sonst Beginn des Zeitraums oder «ab …»; ohne Datum keine Termine erfinden
+        var st = f ? Date.UTC(f[0], f[1], f[2]) : null;
+        if (rg) st = Math.max(st || 0, Date.UTC(+rg[3], +rg[2] - 1, +rg[1]));
+        else if (ab) st = Math.max(st || 0, Date.UTC(+ab[3], +ab[2] - 1, +ab[1]));
+        if (st == null) return;
         var days = jw[1].toLowerCase().match(/[a-z]{2}/g).map(function (x) { return WD[x]; }).filter(function (x) { return x != null; });
-        var end = bis ? Date.UTC(+bis[3], +bis[2] - 1, +bis[1]) : Date.UTC(f[0], f[1], f[2]) + 84 * 864e5;
-        for (var t0 = Date.UTC(f[0], f[1], f[2]), k = 0; t0 <= end && k < 120; t0 += 864e5) {
+        var end = rg ? Date.UTC(+rg[6], +rg[5] - 1, +rg[4]) : bis ? Date.UTC(+bis[3], +bis[2] - 1, +bis[1]) : st + 84 * 864e5;
+        for (var t0 = st, k = 0; t0 <= end && k < 120; t0 += 864e5) {
           var dt = new Date(t0); if (days.indexOf(dt.getUTCDay()) < 0) continue; k++;
           var Y = dt.getUTCFullYear(), M = dt.getUTCMonth(), Dd = dt.getUTCDate();
-          out.push({ s: iso(Y, M, Dd, h0, m0), e: h1 != null ? iso(Y, M, Dd, h1, m1) : null });
+          out.push({ s: iso(Y, M, Dd, h0, m0), e: isoEnd(Y, M, Dd, h0, m0, h1, m1) });
         }
         return;
       }
@@ -73,8 +86,8 @@
         return;
       }
       var dm = /(\d{1,2})\.(\d{1,2})\.(\d{4})/.exec(part);
-      if (dm) { out.push({ s: iso(+dm[3], +dm[2] - 1, +dm[1], h0, m0), e: h1 != null ? iso(+dm[3], +dm[2] - 1, +dm[1], h1, m1) : null }); return; }
-      if (f) out.push({ s: iso(f[0], f[1], f[2], h0, m0), e: h1 != null ? iso(f[0], f[1], f[2], h1, m1) : null });
+      if (dm) { out.push({ s: iso(+dm[3], +dm[2] - 1, +dm[1], h0, m0), e: isoEnd(+dm[3], +dm[2] - 1, +dm[1], h0, m0, h1, m1) }); return; }
+      if (f) out.push({ s: iso(f[0], f[1], f[2], h0, m0), e: isoEnd(f[0], f[1], f[2], h0, m0, h1, m1) });
     });
     if (!out.length && f) out.push({ s: iso(f[0], f[1], f[2]), e: null });
     return out;
@@ -85,14 +98,18 @@
     var mo = MON[m[2].toLowerCase()]; return mo == null ? null : [+m[3], mo, +m[1]];
   }
 
+  function decodeEnt(t) {
+    return String(t || '').replace(/&nbsp;|&#160;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#0*39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+      .replace(/&#(\d+);/g, function (m, n) { return String.fromCharCode(+n); }).replace(/\s+/g, ' ').trim();
+  }
   function img(uri, tr) { return uri ? IMG + 'tr:' + tr + uri : ''; }
   function firstTown(o) { return o.city || String(o.textLine2 || '').split(' - ')[0]; }
-  function venueOf(o) { var t = String(o.textLine2 || ''), i = t.indexOf(' - '); return i >= 0 ? t.slice(i + 3).trim() : ''; }
+  function venueOf(o) { var t = decodeEnt(o.textLine2), i = t.indexOf(' - '); return i >= 0 ? t.slice(i + 3).trim() : ''; }
   function baseEvent(o) {
     var town = firstTown(o), lat = parseFloat(o.lat), lng = parseFloat(o.lng), en = isFinite(lat) && isFinite(lng) && lat > 45 && lat < 48.5 ? toLV95(lat, lng) : null;
     var cats = String(o.category || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
     return {
-      id: String(o.id), gid: o.generatedId || '', title: String(o.title || '').trim(), cat: cats[0] || '', cats: cats,
+      id: String(o.id), gid: o.generatedId || '', title: decodeEnt(o.title), cat: cats[0] || '', cats: cats,
       town: town, gem: gemeinde(town), venue: venueOf(o), E: en ? en[0] : null, N: en ? en[1] : null,
       img: img(o.imageUri, 'w-800'), thumb: img(o.imageUri, 'w-160,h-120,fo-auto'),
       url: o.generatedId ? ZT_LINK + encodeURIComponent(o.generatedId) : (o.url || ''), guidle: o.url || '',
@@ -120,7 +137,7 @@
       var tasks = []; for (var p = 1; p <= pages; p++) (function (p) { tasks.push(function () { return getJSON(fetchFn, BASE + '/search-offers/' + PORTAL + '?' + Q + '&group=city&currentPageNumber=' + p); }); })(p);
       return pool(tasks, 4);
     }).then(function (cityPages) {
-      var byId = {}, order = [];
+      var byId = {}, order = [], failed = cityPages.filter(function (pg) { return !pg; }).length;
       cityPages.forEach(function (pg) { if (pg) offersOf(pg).forEach(function (o) { if (o.advertisementOffer) return; var id = String(o.id); if (!byId[id]) { byId[id] = baseEvent(o); order.push(id); } }); });
       /* date listing: sequential pages until the horizon */
       var extra = {};
@@ -134,7 +151,7 @@
             var id = String(o.id);
             if (!byId[id]) { byId[id] = baseEvent(o); byId[id].dates = []; order.push(id); }
             var tm = /(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/.exec(String(o.schedule || '').replace(/\d{1,2}\.\d{1,2}\.\d{4}/g, ''));
-            (extra[id] = extra[id] || []).push({ s: iso(d[0], d[1], d[2], tm ? +tm[1] : null, tm ? +tm[2] : 0), e: tm && tm[3] ? iso(d[0], d[1], d[2], +tm[3], +tm[4]) : null });
+            (extra[id] = extra[id] || []).push({ s: iso(d[0], d[1], d[2], tm ? +tm[1] : null, tm ? +tm[2] : 0), e: tm && tm[3] ? isoEnd(d[0], d[1], d[2], +tm[1], +tm[2], +tm[3], +tm[4]) : null });
           });
           if (pg.moreExists && lastT < horizon) return datePage(p + 1);
         });
@@ -147,7 +164,8 @@
           e.dates = all;
           return e;
         }).filter(function (e) { return e.title && e.dates.length; });
-        return { updated: new Date(now).toISOString(), source: 'Zug Tourismus, Veranstaltungskalender (Guidle)', events: events };
+        if (!events.length) throw new Error('Guidle: keine Veranstaltungen');
+        return { updated: new Date(now).toISOString(), source: 'Zug Tourismus, Veranstaltungskalender (Guidle)', partial: failed > 0, events: events };
       });
     });
   }
