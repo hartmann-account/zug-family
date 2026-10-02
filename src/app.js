@@ -210,6 +210,7 @@ function buildSunUI(el, opts) {
   if (!el) return null;
   opts = opts || {};
   var ap = arcPaths();
+  el.classList.toggle('compact', !!opts.compact);
   el.innerHTML = '<div class="sun-top"><button class="sun-play" type="button" aria-label="Tagesverlauf abspielen">' + playIcon(false) + '</button>' +
     '<div class="sun-read"><b class="sun-time">15:00</b><span class="sun-pos"></span></div><span class="uv" data-c="3"><i></i><span class="uv-t"></span></span></div>' +
     (opts.noDate ? '' : '<div class="sun-date" role="group" aria-label="Datum">' + ['sommer', 'heute', 'winter'].map(function (k) {
@@ -298,9 +299,9 @@ function updateChart() {
 
 /* ---------------- app state, routing ---------------- */
 var MODE = 'home', SEL = null, selGem = null, touring = false, pushedDetail = false;
-var panel = $('#panel'), phEl = $('#ph'), listEl = $('#list'), detailEl = $('#detail'), pscroll = $('#pscroll'), homeEl = $('#home');
+var panel = $('#panel'), phEl = $('#ph'), listEl = $('#list'), detailEl = $('#detail'), pscroll = $('#panel'), homeEl = $('#home');
 var filt = {
-  familie: { cats: [true, true, true, true, true, true], gem: '', shade: false, zt: false },
+  familie: { cats: [true, true, true, true, true, true], gem: '', sunMax: 100, sunScope: 'now', zt: false, more: false },
   sights: { cats: SCATS.map(function () { return true; }), gem: '' },
   events: { win: 'alle', gem: '', cat: '' }
 };
@@ -385,24 +386,32 @@ function renderHead() {
     var cs = countBy(SIGHTS), f = filt.sights;
     h = '<p class="kicker">' + svgIcon('stadt') + 'Sehenswürdigkeiten</p><h2>' + SIGHTS.length + ' Orte in elf Gemeinden</h2>' +
       '<div class="flt">' + gemSelect('fGemS', f.gem, cs) + '</div>' +
-      '<div class="flt" id="chipsS" role="group" aria-label="Kategorien">' + SCATS.map(function (c, k) {
+      '<div class="flt scroll" id="chipsS" role="group" aria-label="Kategorien">' + SCATS.map(function (c, k) {
         var n = SIGHTS.filter(function (s) { return s.cat === k; }).length; if (!n) return '';
         return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + f.cats[k] + '">' + svgIcon(c.k) + esc(c.t) + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
       '<div class="count"><span id="count"></span><span id="countHint">Sortiert nach Gemeinde</span></div>';
   } else if (m === 'familie') {
-    var ff = filt.familie, cf = countBy(PL);
-    h = '<p class="kicker">' + svgIcon('spiel') + 'Für Familien</p><h2>Spielplätze, Badis, Feuerstellen, Ausflugsziele</h2>' +
-      '<div class="flt" id="chipsF" role="group" aria-label="Kategorien">' + CATS.map(function (c, k) {
+    var ff = filt.familie, cf = countBy(PL), summer = sunDay.k === 'sommer', nMore = (ff.sunMax < 100 && summer ? 1 : 0) + (ff.zt ? 1 : 0) + (showWater ? 1 : 0) + (showWC ? 1 : 0);
+    h = '<p class="kicker">' + svgIcon('spiel') + 'Für Familien</p><h2>Spielplätze und Ausflüge</h2>' +
+      '<div class="flt scroll" id="chipsF" role="group" aria-label="Kategorien">' + CATS.map(function (c, k) {
         var n = PL.filter(function (p) { return p.cat === k; }).length;
         return '<button type="button" class="chip" data-cat="' + k + '" aria-pressed="' + ff.cats[k] + '">' + svgIcon(c.k) + c.t + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
       '<div class="flt">' + gemSelect('fGemF', ff.gem, cf) +
-      '<button type="button" class="chip" id="fShade" aria-pressed="' + ff.shade + '"' + (sunDay.k !== 'sommer' ? ' disabled title="Schattenwerte gibt es für den 21. Juli"' : '') + '>Schattig ab 50&nbsp;%</button>' +
-      '<button type="button" class="chip" id="fZT" aria-pressed="' + ff.zt + '">Tipps Zug Tourismus</button>' +
-      '<button type="button" class="chip" id="tWater" aria-pressed="' + showWater + '">' + svgIcon('wasser') + 'Trinkbrunnen</button>' +
-      '<button type="button" class="chip" id="tWC" aria-pressed="' + showWC + '">' + svgIcon('wc') + 'WC</button></div>' +
-      '<div class="sun" id="sunFam"></div>' +
-      '<details class="more-info"><summary>Schatten im Tagesverlauf</summary><figure class="mini" id="miniChart"></figure>' +
-      '<p class="note" style="font-size:13px;color:var(--ink-2);margin:6px 0 0">Für jeden Spielplatz ist berechnet, welcher Teil der Fläche am 21. Juli im Schatten von Bäumen, Gebäuden und Gelände liegt. Grundlage ist das Oberflächenmodell swissSURFACE3D.</p></details>' +
+      '<button type="button" class="chip morebtn" id="fMore" aria-expanded="' + ff.more + '" aria-controls="fBox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3zm4 6h10v2H7zm3 6h4v2h-4z"/></svg>Filter' + (nMore ? ' <small class="badge">' + nMore + '</small>' : '') + '</button></div>' +
+      '<div class="fbox" id="fBox"' + (ff.more ? '' : ' hidden') + '>' +
+        '<div class="sunflt"><div class="sf-top"><label for="fSun">Sonne höchstens</label><b id="fSunV">' + (ff.sunMax >= 100 ? 'alle Orte' : ff.sunMax + '&nbsp;%') + '</b></div>' +
+        '<input type="range" id="fSun" min="0" max="100" step="10" value="' + ff.sunMax + '"' + (summer ? '' : ' disabled') + ' aria-describedby="fSunH">' +
+        '<div class="seg" role="group" aria-label="Zeitraum für den Sonnenanteil"><button type="button" data-scope="now" aria-pressed="' + (ff.sunScope === 'now') + '"' + (summer ? '' : ' disabled') + '>Zur Uhrzeit</button><button type="button" data-scope="day" aria-pressed="' + (ff.sunScope === 'day') + '"' + (summer ? '' : ' disabled') + '>Tagesmittel 10–17 Uhr</button></div>' +
+        '<p class="fhint" id="fSunH">' + (summer ? 'Anteil der Fläche in der Sonne, berechnet für den 21. Juli. Nach links schieben zeigt schattigere Orte; Orte ohne Schattenberechnung werden dann ausgeblendet.' : 'Sonnen- und Schattenwerte gibt es für den 21. Juli. Wählen Sie dieses Datum, um den Filter zu nutzen.') + '</p>' +
+        '<div class="fdate"><span>Datum</span><div class="seg" role="group" aria-label="Datum für Sonnenstand">' + ['sommer', 'heute', 'winter'].map(function (k) { return '<button type="button" data-day="' + k + '" aria-pressed="' + (sunDay.k === k) + '">' + (k === 'sommer' ? '21. Juli' : k === 'heute' ? 'Heute' : '21. Dez.') + '</button>'; }).join('') + '</div></div></div>' +
+        '<div class="flt">' +
+        '<button type="button" class="chip" id="fZT" aria-pressed="' + ff.zt + '">Tipps Zug Tourismus</button>' +
+        '<button type="button" class="chip" id="tWater" aria-pressed="' + showWater + '">' + svgIcon('wasser') + 'Trinkbrunnen</button>' +
+        '<button type="button" class="chip" id="tWC" aria-pressed="' + showWC + '">' + svgIcon('wc') + 'WC</button></div>' +
+        '<details class="more-info"><summary>Schatten im Tagesverlauf</summary><figure class="mini" id="miniChart"></figure>' +
+        '<p class="note" style="font-size:13px;color:var(--ink-2);margin:6px 0 0">Für jeden Spielplatz ist berechnet, welcher Teil der Fläche am 21. Juli im Schatten von Bäumen, Gebäuden und Gelände liegt. Grundlage ist das Oberflächenmodell swissSURFACE3D.</p></details>' +
+      '</div>' +
+      '<div class="sun compact" id="sunFam"></div>' +
       '<div class="count"><span id="count"></span><span id="countHint"></span></div>';
   } else if (m === 'events') {
     var fe = filt.events, live = liveEvents(), ce = countBy(live), cats = {};
@@ -434,11 +443,18 @@ function wireHead() {
   } else if (m === 'familie') {
     onGem($('#fGemF'), filt.familie);
     $('#chipsF').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; toggleCat(filt.familie.cats, +b.dataset.cat, this); });
-    $('#fShade').addEventListener('click', function () { filt.familie.shade = !filt.familie.shade; this.setAttribute('aria-pressed', String(filt.familie.shade)); listDirty = true; markerVisDirty = true; renderList(); });
-    $('#fZT').addEventListener('click', function () { filt.familie.zt = !filt.familie.zt; this.setAttribute('aria-pressed', String(filt.familie.zt)); listDirty = true; markerVisDirty = true; renderList(); });
-    $('#tWater').addEventListener('click', function () { showWater = !showWater; this.setAttribute('aria-pressed', String(showWater)); markerVisDirty = true; });
-    $('#tWC').addEventListener('click', function () { showWC = !showWC; this.setAttribute('aria-pressed', String(showWC)); markerVisDirty = true; });
-    buildSunUI($('#sunFam'), { hint: sunDay.k === 'sommer' ? '' : 'Die Prozentwerte für Schatten gelten für den 21. Juli. Für andere Tage zeigt die Karte die Schatten in der Nahansicht.' });
+    var ff = filt.familie;
+    $('#fMore').addEventListener('click', function () { ff.more = !ff.more; this.setAttribute('aria-expanded', String(ff.more)); $('#fBox').hidden = !ff.more; });
+    var fs = $('#fSun');
+    fs.addEventListener('input', function () { ff.sunMax = +fs.value; $('#fSunV').innerHTML = ff.sunMax >= 100 ? 'alle Orte' : ff.sunMax + '&nbsp;%'; updMoreBadge(); listDirty = true; markerVisDirty = true; renderList(); });
+    Array.prototype.forEach.call(document.querySelectorAll('#fBox .fdate button'), function (b) { b.addEventListener('click', function () { setSunDay(b.dataset.day); }); });
+    Array.prototype.forEach.call(document.querySelectorAll('#fBox .sunflt > .seg button'), function (b) {
+      b.addEventListener('click', function () { ff.sunScope = b.dataset.scope; Array.prototype.forEach.call(b.parentNode.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); listDirty = true; markerVisDirty = true; renderList(); });
+    });
+    $('#fZT').addEventListener('click', function () { ff.zt = !ff.zt; this.setAttribute('aria-pressed', String(ff.zt)); updMoreBadge(); listDirty = true; markerVisDirty = true; renderList(); });
+    $('#tWater').addEventListener('click', function () { showWater = !showWater; this.setAttribute('aria-pressed', String(showWater)); updMoreBadge(); markerVisDirty = true; });
+    $('#tWC').addEventListener('click', function () { showWC = !showWC; this.setAttribute('aria-pressed', String(showWC)); updMoreBadge(); markerVisDirty = true; });
+    buildSunUI($('#sunFam'), { compact: true });
     buildChart($('#miniChart'));
   } else if (m === 'events') {
     onGem($('#fGemE'), filt.events);
@@ -446,6 +462,11 @@ function wireHead() {
       Array.prototype.forEach.call(this.querySelectorAll('.chip'), function (c) { c.setAttribute('aria-pressed', String(c === b)); }); listDirty = true; markerVisDirty = true; renderList(); syncHash(); });
     var fc = $('#fCatE'); if (fc) fc.addEventListener('change', function () { filt.events.cat = fc.value; listDirty = true; markerVisDirty = true; renderList(); });
   }
+}
+function updMoreBadge() {
+  var ff = filt.familie, b = $('#fMore'); if (!b) return;
+  var n = (ff.sunMax < 100 && sunDay.k === 'sommer' ? 1 : 0) + (ff.zt ? 1 : 0) + (showWater ? 1 : 0) + (showWC ? 1 : 0), sm = b.querySelector('.badge');
+  if (n && !sm) { b.insertAdjacentHTML('beforeend', ' <small class="badge">' + n + '</small>'); } else if (sm) { if (n) sm.textContent = n; else sm.remove(); }
 }
 function toggleCat(arr, k, wrap) {
   var allOn = arr.every(Boolean);
@@ -462,8 +483,17 @@ function matchFam(p) {
   if (!f.cats[p.cat]) return false;
   if (!gemMatch(f.gem, p.gem)) return false;
   if (f.zt && !p.zt) return false;
-  if (f.shade && sunDay.k === 'sommer') { var s = shadeAt(p, sunT); if (s == null || s < 0.5) return false; }
+  if (f.sunMax < 100 && sunDay.k === 'sommer') { var e = sunExposure(p); if (e == null || e > f.sunMax / 100 + 1e-6) return false; }
   return true;
+}
+/* share of the playground area in the sun: at the chosen time, or the mean between 10 and 17 h (21 July) */
+function sunExposure(p) {
+  if (!p.s || sunDay.k !== 'sommer') return null;
+  if (filt.familie.sunScope === 'day') {
+    var sum = 0, n = 0; for (var k = 0; k < STEPS.length; k++) if (STEPS[k] >= 10 && STEPS[k] <= 17) { sum += 1 - p.s[k] / 100; n++; }
+    return n ? sum / n : null;
+  }
+  var sh = shadeAt(p, sunT); return sh == null ? null : 1 - sh;
 }
 function matchSight(s) { var f = filt.sights; return f.cats[s.cat] && gemMatch(f.gem, s.gem); }
 function winRange(w) {
@@ -515,18 +545,20 @@ function renderList() {
   if (m === 'home') { listEl.textContent = ''; return; }
   if (m === 'familie') {
     var vis = PL.filter(matchFam), summer = sunDay.k === 'sommer';
-    if (filt.familie.shade && summer) vis.sort(function (a, b) { return shadeAt(b, sunT) - shadeAt(a, sunT); });
+    var sunF = filt.familie.sunMax < 100 && summer;
+    if (sunF) vis.sort(function (a, b) { return sunExposure(a) - sunExposure(b) || a.title.localeCompare(b.title, 'de'); });
     else vis.sort(function (a, b) { return (b.zt ? 1 : 0) - (a.zt ? 1 : 0) || a.cat - b.cat || a.title.localeCompare(b.title, 'de') || a.gem.localeCompare(b.gem, 'de'); });
     var rows = famRows(), frag = document.createDocumentFragment();
     vis.forEach(function (p) {
       var r = rows[p.i], s = shadeAt(p, sunT);
-      if (s != null) { var pc = Math.round(s * 100); r._sh.innerHTML = pc + ' %<i style="--p:' + pc + '%"></i>'; r._sh.title = 'Schatten am 21. Juli um ' + fmtTime(sunT) + ' Uhr'; }
+      if (sunF) { var ex = sunExposure(p), pe = Math.round(ex * 100); r._sh.innerHTML = '☀ ' + pe + ' %<i style="--p:' + (100 - pe) + '%"></i>'; r._sh.title = filt.familie.sunScope === 'day' ? 'Sonne im Mittel 10–17 Uhr, 21. Juli' : 'Sonne am 21. Juli um ' + fmtTime(sunT) + ' Uhr'; }
+      else if (s != null) { var pc = Math.round(s * 100); r._sh.innerHTML = pc + ' %<i style="--p:' + pc + '%"></i>'; r._sh.title = 'Schatten am 21. Juli um ' + fmtTime(sunT) + ' Uhr'; }
       else { r._sh.textContent = ''; r._sh.removeAttribute('title'); }
       frag.appendChild(r);
     });
     listEl.textContent = ''; listEl.appendChild(frag);
     if (cnt) cnt.textContent = plural(vis.length, 'Ort', 'Orte');
-    if (hint) hint.textContent = summer ? 'Schatten um ' + fmtTime(sunT) + ' Uhr' : '';
+    if (hint) hint.textContent = !summer ? '' : sunF ? (filt.familie.sunScope === 'day' ? 'Sonne im Tagesmittel, schattigste zuerst' : 'Sonne um ' + fmtTime(sunT) + ' Uhr, schattigste zuerst') : 'Schatten um ' + fmtTime(sunT) + ' Uhr';
     return;
   }
   var html = '';
@@ -777,9 +809,17 @@ var sheet = 'half';
 function setSheet(s) {
   sheet = s;
   var top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top')) || 50;
-  panel.style.setProperty('--sheet', s === 'peek' ? '26svh' : s === 'full' ? 'calc(100svh - ' + (top + 14) + 'px)' : '46svh');
+  panel.style.setProperty('--sheet', s === 'peek' ? '26svh' : s === 'full' ? 'calc(100svh - ' + (top + 14) + 'px - var(--tabbar))' : '52svh');
 }
 $('#handle').addEventListener('click', function () { setSheet(sheet === 'half' ? 'full' : sheet === 'full' ? 'peek' : 'half'); });
+// Wer im Blatt mit dem Finger nach unten scrollt, will die Liste sehen: Blatt dann auf volle Höhe ziehen.
+var sheetTouch = false;
+panel.addEventListener('touchstart', function () { sheetTouch = true; }, { passive: true });
+panel.addEventListener('touchend', function () { setTimeout(function () { sheetTouch = false; }, 400); }, { passive: true });
+panel.addEventListener('scroll', function () {
+  if (sheetTouch && sheet !== 'full' && panel.scrollTop > 40 && innerWidth <= 760) setSheet('full');
+  panel.classList.toggle('scrolled', panel.scrollTop > 4);
+}, { passive: true });
 
 /* ---------------- info dialog ---------------- */
 var infoDlg = $('#infoDlg'), infoFrom = null;
@@ -1678,7 +1718,7 @@ function updateMarkers(alpha) {
     var summer = sunDay.k === 'sommer';
     MK.items.forEach(function (it, i) { if (it.type === 'fam' && it.s) { info.array[i * 4 + 2] = summer ? shadeAt(it, sunT) : 0; info.array[i * 4 + 3] = summer ? 1 : 0; } });
     info.needsUpdate = true;
-    if (filt.familie.shade) markerVisDirty = true;
+    if (filt.familie.sunMax < 100) markerVisDirty = true;
   }
   if (markerVisDirty || key !== markerKey) {
     markerVisDirty = false; markerKey = key;
