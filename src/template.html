@@ -33,6 +33,7 @@
   --m-tree:#DCE5EF; --m-trunk:#8F9BB0; --m-sun:#FFF6E6; --m-sky:#B9CBE6; --m-pin:#0068B3; --m-pin-ink:#FFFFFF;
   --m-pin-sight:#C2452D; --m-pin-event:#7A3E9D; --m-pin-park:#2F3D55;
   --m-ring-shade:#0E3460; --m-ring-sun:#F2B33D; --m-sel:#FFFFFF;
+  --sky-top:#8DB7E2; --sky-mid:#C6DCF1; --sky-hor:#EAF1F8; --m-haze:#E2EBF4;
   --m-dark:0;
 }
 @media (prefers-color-scheme: dark){
@@ -53,6 +54,7 @@
     --m-tree:#2C4466; --m-trunk:#22324E; --m-sun:#B8C6E0; --m-sky:#3C5480; --m-pin:#2E8FD6; --m-pin-ink:#FFFFFF;
     --m-pin-sight:#D9654B; --m-pin-event:#A46BC6; --m-pin-park:#5B6D8C;
     --m-ring-shade:#9CCBF5; --m-ring-sun:#F2B33D; --m-sel:#FFFFFF;
+    --sky-top:#08111F; --sky-mid:#122036; --sky-hor:#1D2C44; --m-haze:#1B2840;
     --m-dark:1; color-scheme:dark;
   }
 }
@@ -73,6 +75,7 @@
   --m-tree:#2C4466; --m-trunk:#22324E; --m-sun:#B8C6E0; --m-sky:#3C5480; --m-pin:#2E8FD6; --m-pin-ink:#FFFFFF;
   --m-pin-sight:#D9654B; --m-pin-event:#A46BC6; --m-pin-park:#5B6D8C;
   --m-ring-shade:#9CCBF5; --m-ring-sun:#F2B33D; --m-sel:#FFFFFF;
+  --sky-top:#08111F; --sky-mid:#122036; --sky-hor:#1D2C44; --m-haze:#1B2840;
   --m-dark:1; color-scheme:dark;
 }
 [hidden]{display:none!important}
@@ -80,6 +83,7 @@
 html,body{height:100%}
 body{margin:0;background:var(--paper);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow:hidden;overscroll-behavior:none}
+#sky{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;background:linear-gradient(to bottom,var(--sky-top) 0%,var(--sky-mid) 42%,var(--sky-hor) 100%)}
 #scene{position:fixed;left:0;top:0;width:100%;height:100%;display:block;z-index:0;outline:none;touch-action:none}
 #labels{position:fixed;left:0;top:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:hidden}
 svg.ic{width:18px;height:18px;flex:none;fill:currentColor}
@@ -444,6 +448,7 @@ body.m-home .hud{display:none}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs><clipPath id="markClip"><rect width="32" height="32" rx="8"/></clipPath></defs>
 </svg>
+<div id="sky" aria-hidden="true"></div>
 <canvas id="scene" aria-label="3D-Karte des Kantons Zug. Ziehen verschiebt, rechte Maustaste oder zwei Finger drehen, Mausrad oder zwei Finger zoomen." tabindex="0"></canvas>
 <div id="labels" aria-hidden="true"></div>
 <div class="callout" id="callout" aria-hidden="true"></div>

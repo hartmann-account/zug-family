@@ -146,18 +146,29 @@ if k.get('area_km2'):
 # ---------------- zusätzliche Familienorte (noch nicht in der OSM-Liste)
 fam_extra = []
 FAM = load('family.json', 'family2.json') or {}
+KIDS = re.compile(r'kind|famil|spiel|tier|ziege|hühner|kaninchen|esel|pony|streichel', re.I)
 for f in FAM.get('new_candidates', []):
     name = (f.get('name') or '').strip()
-    c = cat_index(f.get('category'), FAM_CATS)
+    c = cat_index(f.get('category') or f.get('cat'), FAM_CATS)
+    # Hofläden nur, wenn die Beschreibung etwas für Kinder nennt (Tiere, Spielplatz)
+    if re.search(r'hofl', name + ' ' + (f.get('kind') or ''), re.I) and not KIDS.search(f.get('description') or ''):
+        problems.append('Hofladen ohne Angebot für Kinder ausgelassen: ' + name)
+        continue
     E, N = f.get('E'), f.get('N')
     if not name or c is None or E is None or N is None or not in_box(E, N):
         problems.append('Familienort unvollständig: %r' % name)
         continue
-    x = dict(n=name, k=f.get('type') or f.get('kind') or FAM_CATS[c], c=c, g=f.get('gemeinde') or '', E=int(round(E)), N=int(round(N)))
+    x = dict(n=re.sub(r'\s+-\s+[^-]+$', '', name) if re.match(r'(?i)spielplatz', name) else name,
+             k=f.get('kind') or f.get('type') or FAM_CATS[c], c=c, g=f.get('gemeinde') or '', E=int(round(E)), N=int(round(N)))
     if f.get('description'):
         x['x'] = f['description'].strip()
-    if url(f.get('zt_url')):
-        x['t'] = [[name, f['zt_url']]]
+    links = [l for l in (f.get('zt') or []) if isinstance(l, list) and len(l) == 2 and url(l[1])]
+    if not links and url(f.get('zt_url')):
+        links = [[name, f['zt_url']]]
+    if links:
+        x['t'] = links
+    if f.get('season'):
+        x['x'] = (x.get('x', '') + ' ' + f['season'].strip()).strip()
     if osm_ref(f.get('osm')):
         x['osm'] = osm_ref(f.get('osm'))
     fam_extra.append(x)
@@ -182,7 +193,7 @@ def add_link(i, title, link, name):
         e['n'] = name
 
 
-for z in ZTP:
+for z in ([] if FAM.get('zt_offers') else ZTP):
     if 'spielplatz' not in z.get('url', '') and 'Spielplatz' not in (z.get('zt_category') or []):
         continue
     if not z.get('E') or not url(z.get('url')):
@@ -202,9 +213,11 @@ for z in ZTP:
     elif z.get('gemeinde') in GEMS:
         fam_extra.append(dict(n=short, k='Spielplatz', c=0, g=z['gemeinde'], E=int(z['E']), N=int(z['N']), t=[[short, z['url']]]))
 for o in FAM.get('zt_offers', []):
-    i = o.get('match_index')
+    i = o.get('match_index', o.get('i'))
     if isinstance(i, int) and 0 <= i < len(PLACES) and url(o.get('zt_url')):
-        add_link(i, o.get('name') or PLACES[i]['name'], o['zt_url'], None)
+        nm = (o.get('name') or '').strip()
+        short = re.sub(r'\s+-\s+[^-]+$', '', nm)
+        add_link(i, short or PLACES[i]['name'], o['zt_url'], short if re.match(r'(?i)(spielplatz|abenteuer|erlebnis)', short) else None)
 
 portal = dict(sightCats=SIGHT_CATS, sights=sights, gem=gem_out, kanton=kanton, famExtra=fam_extra, famLinks=list(fam_links.values()))
 json.dump(portal, open(os.path.join(ROOT, 'data', 'portal.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

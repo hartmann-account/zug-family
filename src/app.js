@@ -856,7 +856,7 @@ sunVector(sun, U.uSunDir.value);
 var C = {};
 ['--paper', '--m-land', '--m-lit', '--m-shade', '--m-forest', '--m-out', '--m-water', '--m-water-deep', '--m-contour', '--m-hi',
  '--m-side', '--m-side-2', '--m-roof', '--m-wall', '--m-window', '--m-line', '--m-muni', '--m-river', '--m-shore', '--m-lorze', '--ink',
- '--m-tree', '--m-trunk', '--m-sun', '--m-sky', '--m-pin', '--m-pin-ink', '--m-ring-shade', '--m-ring-sun', '--m-sel', '--m-pin-sight', '--m-pin-event', '--m-pin-park'
+ '--m-tree', '--m-trunk', '--m-sun', '--m-sky', '--m-pin', '--m-pin-ink', '--m-ring-shade', '--m-ring-sun', '--m-sel', '--m-pin-sight', '--m-pin-event', '--m-pin-park', '--m-haze'
 ].forEach(function (k) { C[k] = new THREE.Color(); });
 
 var COMMON = [
@@ -990,8 +990,9 @@ var dropMat = new THREE.ShaderMaterial({
 /* buildings */
 var BLD_VS = [
   'attribute vec4 aB; uniform float uGrow, uVZ, uBZ;',
-  'varying vec3 vW; varying float vRel; varying float vDist;',
+  'varying vec3 vW; varying float vRel; varying float vDist; varying float vSeed;',
   'void main(){',
+  '  vSeed = fract(sin(dot(vec2(aB.x + aB.z*3.1, aB.y*7.3 + aB.w*91.0), vec2(12.9898, 78.233)))*43758.5453);',
   '  float g = smoothstep(aB.w, aB.w + 0.16, uGrow);',
   '  float base = aB.x*uVZ - 2.5;',
   '  float top = aB.x*uVZ + aB.y*uVZ + aB.z*uBZ;',
@@ -1007,10 +1008,11 @@ var bldMat = new THREE.ShaderMaterial({
   fragmentShader: [
     'uniform vec3 uRoof, uWall, uWin, uFog; uniform float uDark, uFogNear, uFogFar, uBZ;',
     LIGHT, SHADOW, ORTHO, COMMON,
-    'varying vec3 vW; varying float vRel; varying float vDist;',
+    'varying vec3 vW; varying float vRel; varying float vDist; varying float vSeed;',
     'void main(){',
     '  vec3 n = normalize(cross(dFdx(vW), dFdy(vW)));',
     '  float roof = step(0.6, abs(n.y));',
+    '  float wall = 1.0 - roof;',
     '  vec3 fixedL = normalize(vec3(-0.55, 0.62, -0.56));',
     '  float lam0 = 0.66 + 0.34*max(dot(n, fixedL), 0.0);',
     '  vec3 col = mix(uWall*lam0, uRoof*(0.92+0.08*lam0), roof);',
@@ -1018,10 +1020,23 @@ var bldMat = new THREE.ShaderMaterial({
     '  if(uSunMix > 0.001){',
     '    float lamb = max(dot(n, uSunDir), 0.0);',
     '    float vis = lamb > 0.0 ? shadowVis(vW, n, lamb) : 0.0;',
-    '    vec3 alb = mix(uWall, uRoof, roof);',
+    '    vec3 wallc = uWall;',
+    '    if(uDark < 0.5){',
+    // facades: slightly different plaster tones per building, window rows when close
+    '      wallc = mix(vec3(0.95,0.92,0.86), vec3(0.86,0.89,0.93), vSeed) * (0.9 + 0.12*fract(vSeed*7.13));',
+    '      float fl = (vRel - 1.0)/3.0;',
+    '      float u = abs(n.x) > abs(n.z) ? vW.z : vW.x; float cu = u/2.8 + vSeed*3.0;',
+    '      vec2 f = vec2(fract(cu), fract(fl));',
+    '      float far = smoothstep(0.25, 0.7, max(fwidth(fl), fwidth(cu)));',
+    '      float win = step(0.34,f.x)*step(f.x,0.66)*step(0.32,f.y)*step(f.y,0.78)*step(0.0,fl)*step(1.6, vRel)*step(0.25, fract(vSeed*13.7 + floor(cu)*0.618));',
+    '      wallc = mix(wallc, vec3(0.42,0.47,0.53), win*(1.0-far)*0.55);',
+    '      wallc *= mix(0.97, 1.0, far) * mix(0.8, 1.0, smoothstep(0.0, 5.0, vRel));',
+    '    }',
+    '    vec3 alb = mix(wallc, uRoof, roof);',
     '    vec4 oc = orthoAt(vW.xz);',
     '    alb = mix(alb, oc.rgb*1.12, roof*oc.a*uOrthoMix);',
-    '    vec3 lit = alb*(uAmb*uSkyCol + uDif*lamb*vis*uSunCol);',
+    '    vec3 sky = uDark < 0.5 ? mix(uSkyCol, vec3(1.0, 0.97, 0.92), 0.55*wall) : uSkyCol;',
+    '    vec3 lit = alb*(uAmb*sky + uDif*lamb*vis*uSunCol);',
     '    col = mix(col, lit, uSunMix);',
     '  }',
     '  if(uDark > 0.5){',
@@ -1032,7 +1047,6 @@ var bldMat = new THREE.ShaderMaterial({
     '    float win = step(0.22,f.x)*step(f.x,0.78)*step(0.3,f.y)*step(f.y,0.78)*step(0.0,fl);',
     '    float lit2 = step(0.58, hash(vec2(floor(cu), floor(fl)) + floor(vW.xz/37.0)));',
     '    float glow = hash(floor(vW.xz/23.0));',
-    '    float wall = 1.0 - roof;',
     '    col = mix(col, uWin, wall*mix(win*lit2, (0.03+0.13*glow*glow)*step(0.35, glow), far));',
     '  }',
     '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
@@ -1433,7 +1447,28 @@ var OR = (function () {
   (D.ortho.lb || []).forEach(function (t) { lb[t[0] + '_' + t[1]] = 1; });
   return { F: level(S), C: level(S), la: la, lb: lb, cache: {}, queue: [], inflight: 0, dirty: false, lastCompose: 0, listeners: [] };
 })();
-function oURL(lv, x0, y0) { return lv === 'la' ? 'o/la/' + (x0 / 1000) + '_' + (y0 / 1000) + '.webp' : 'o/lb/' + (x0 / 10) + '_' + (y0 / 10) + '.webp'; }
+/* SWISSIMAGE live from the geo.admin.ch WMTS (LV95 tile matrix, 256 px tiles, CORS open) for the close-up;
+   the pre-cut 2 m tiles in o/la stay as the fast base layer underneath. */
+var WMTS = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/2056/', WE0 = 2420000, WN1 = 1350000;
+var WRES = [[21, 5], [22, 2.5], [23, 2], [24, 1.5], [25, 1], [26, 0.5], [27, 0.25], [28, 0.1]];
+function wZoom(mpp) { for (var i = 0; i < WRES.length; i++) if (WRES[i][1] <= mpp * 1.5) return WRES[i]; return WRES[WRES.length - 1]; }
+function oURL(lv, x0, y0) {
+  if (lv.charAt(0) === 'w') return WMTS + lv.slice(1) + '/' + x0 + '/' + y0 + '.jpeg';
+  return lv === 'la' ? 'o/la/' + (x0 / 1000) + '_' + (y0 / 1000) + '.webp' : 'o/lb/' + (x0 / 10) + '_' + (y0 / 10) + '.webp';
+}
+function drawWMTS(ctx, zr, Emin, Emax, Nmin, Nmax, scale, cE, cN, prioDiv) {
+  var z = zr[0], span = 256 * zr[1], any = false;
+  var tx0 = Math.floor((Emin - WE0) / span), tx1 = Math.floor((Emax - WE0) / span);
+  var ty0 = Math.floor((WN1 - Nmax) / span), ty1 = Math.floor((WN1 - Nmin) / span);
+  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > 324) return false;
+  for (var tx = tx0; tx <= tx1; tx++) for (var ty = ty0; ty <= ty1; ty++) {
+    var e0 = WE0 + tx * span, n1 = WN1 - ty * span;
+    var img = oTile('w' + z, tx, ty, Math.hypot(e0 + span / 2 - cE, n1 - span / 2 - cN) / prioDiv);
+    if (!img) continue;
+    ctx.drawImage(img, Math.floor((e0 - Emin) * scale), Math.floor((Nmax - n1) * scale), Math.ceil(span * scale) + 1, Math.ceil(span * scale) + 1); any = true;
+  }
+  return any;
+}
 function oTile(lv, x0, y0, prio) {
   var key = lv + x0 + '_' + y0, c = OR.cache[key];
   if (c) { if (c.img) { c.used = performance.now(); return c.img; } if (!c.failed && c.queued) c.prio = Math.min(c.prio, prio); return null; }
@@ -1441,13 +1476,22 @@ function oTile(lv, x0, y0, prio) {
   OR.queue.push(c);
   return null;
 }
+var oEvictAt = 0;
+function oEvict() {
+  var keys = Object.keys(OR.cache); if (keys.length < 1400) return;
+  keys.map(function (k) { return [k, OR.cache[k]]; }).filter(function (e) { return e[1].img && !e[1].queued; })
+    .sort(function (a, b) { return a[1].used - b[1].used; }).slice(0, keys.length - 1000).forEach(function (e) { delete OR.cache[e[0]]; });
+}
 function oPump() {
+  var nowp = performance.now(); if (nowp - oEvictAt > 5000) { oEvictAt = nowp; oEvict(); }
   if (!OR.queue.length) return;
+  if (OR.queue.length > 600) { OR.queue.sort(function (a, b) { return a.prio - b.prio; }); OR.queue.splice(600).forEach(function (c) { delete OR.cache[c.lv + c.x0 + '_' + c.y0]; }); }
   OR.queue.sort(function (a, b) { return a.prio - b.prio; });
-  while (OR.inflight < 6 && OR.queue.length) {
+  while (OR.inflight < 8 && OR.queue.length) {
     var c = OR.queue.shift(); c.queued = false; OR.inflight++;
     (function (c) {
       var im = new Image(); im.decoding = 'async';
+      if (c.lv.charAt(0) === 'w') im.crossOrigin = 'anonymous';
       im.onload = function () { c.img = im; OR.inflight--; OR.dirty = true; OR.listeners.slice().forEach(function (f) { f(); }); oPump(); };
       im.onerror = function () { c.failed = true; OR.inflight--; oPump(); };
       im.src = oURL(c.lv, c.x0, c.y0);
@@ -1470,6 +1514,8 @@ function oCompose(L, cx, cz, size, useLB) {
   }
   draw('la', 2000);
   if (useLB) draw('lb', 500);
+  var zr = wZoom(size / S);
+  if (zr[1] < 2 && drawWMTS(ctx, zr, Emin, Emax, Nmin, Nmax, scale, cx + EC, NC - cz, useLB ? 4 : 2)) any = true;
   L.x0 = x0; L.z0 = z0; L.size = size; L.ok = any;
   L.tex.needsUpdate = true;
   oPump();
@@ -1480,7 +1526,7 @@ function updateOrtho(now) {
   var Fs = clamp(cam.d * 1.35, 420, 2800), Cs = clamp(cam.d * 4.6, 2600, 16000);
   var tx = X(cam.E), tz = Z(cam.N);
   function needs(L, s) { return !L.ok || Math.hypot(tx - (L.x0 + L.size / 2), tz - (L.z0 + L.size / 2)) > L.size * 0.16 || Math.abs(s / L.size - 1) > 0.25; }
-  var dirtyOK = OR.dirty && now - OR.lastCompose > 140;
+  var dirtyOK = OR.dirty && now - OR.lastCompose > 220;
   if (needs(OR.F, Fs) || dirtyOK) { var sn = Fs / 16; oCompose(OR.F, Math.round(tx / sn) * sn, Math.round(tz / sn) * sn, Fs, true); }
   if (needs(OR.C, Cs) || dirtyOK) { var sc = Cs / 16; oCompose(OR.C, Math.round(tx / sc) * sc, Math.round(tz / sc) * sc, Cs, false); }
   if (dirtyOK) { OR.dirty = false; OR.lastCompose = now; }
@@ -1502,6 +1548,7 @@ function drawCrop(cv, p) {
       ctx.drawImage(img, (x - Emin) * scale, (Nmax - (y + step)) * scale, step * scale + 1, step * scale + 1); any = true;
     }
   });
+  if (drawWMTS(ctx, wZoom(size / W), Emin, Emax, Nmin, Nmax, scale, p.E, p.N, 100)) any = true;
   oPump();
   if (p.poly) {
     ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 5]);
@@ -2035,7 +2082,7 @@ capEl.addEventListener('pointerenter', function () { tourPaused = true; });
 capEl.addEventListener('pointerleave', function () { tourPaused = false; tourT0 = Math.max(tourT0, performance.now() - TOUR_DUR * 0.6); });
 
 /* ---------------- frame loop ---------------- */
-var HUDtick = 0, tReady = 0, last = performance.now(), north = $('#north'), ready = false, hiCur = new Array(12).fill(0), cur = { focus: 0.6, cont: 0.45, muni: 0.35 };
+var skyEl = $('#sky'), HUDtick = 0, tReady = 0, last = performance.now(), north = $('#north'), ready = false, hiCur = new Array(12).fill(0), cur = { focus: 0.6, cont: 0.45, muni: 0.35 };
 var tmpV = new THREE.Vector3(), markerAlpha = 0, lastListUpd = 0, lastDetailUpd = 0;
 var prCap = dpr0, frameTimes = [], prLowered = false;
 function applyPR(W, H) { renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, prCap, Math.sqrt(3.4e6 / (W * H)))); }
@@ -2071,6 +2118,10 @@ function frame(now) {
   placeCamera(cam, W, H);
   U.uSunMix.value = sstep(9500, 4300, cam.d);
   treeMat.uniforms.uTreeGrow.value = sstep(3300, 1900, cam.d);
+  // close-up: sky above the horizon and haze in the distance instead of the paper colour
+  var hz = U.uSunMix.value;
+  U.uFog.value.copy(C['--paper']).lerp(C['--m-haze'], hz * 0.9);
+  var so = (hz * (0.35 + 0.65 * sstep(64, 26, cam.p))).toFixed(3); if (skyEl._o !== so) { skyEl._o = so; skyEl.style.opacity = so; }
 
   var home = MODE === 'home' && !touring;
   var tg = home ? { focus: 0.6, cont: 0.45, muni: 0.35 } : touring ? { focus: 1, cont: 0.85, muni: 0.9 } : { focus: 1, cont: 0.7, muni: MODE === 'gemeinden' ? 1 : 0.75 };
@@ -2204,6 +2255,7 @@ function frame(now) {
   renderer.render(scene, camera);
   if (!TEST) requestAnimationFrame(frame);
 }
+if (/[?&]debug\b/.test(location.search)) window.__zgFly = function (o) { flyTo(o); };
 if (/[?&]debug\b/.test(location.search)) window.__zgState = function () { return { ex: Object.assign({}, ex), cam: cam && Object.assign({}, cam), flight: flight && flight.to, mode: MODE, sel: SEL && [SEL.id, SEL.E, SEL.N] }; };
 if (TEST) {
   window.__frame = function () { frame(performance.now()); return true; }; window.__R = R;
