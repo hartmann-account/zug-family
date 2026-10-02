@@ -6,5 +6,10 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
+  },
+  "vars": {
+    // Öffentlicher Lese-Schlüssel, den die Stadt Zug beim Datensatz «Lufttemperaturen Stadt Zug» auf opendata.swiss
+    // veröffentlicht (Ressource «API Sensordaten Lufttemperatur»). Ändert die Stadt ihn, hier ersetzen.
+    "AKENZA_KEY": "fd20e878e32028a8.58b7140b-b36b-4538-8f3a-f75f5745ceb7"
   }
 }

@@ -643,7 +643,7 @@ function detailHTML(it) {
     if (p.z) h += '<div><dt>Höhe</dt><dd>' + swiss(p.z) + ' m ü. M.</dd></div>';
     if (p.dw != null && p.dw < 2000) h += '<div><dt>Trinkbrunnen</dt><dd>' + swiss(p.dw) + ' m</dd></div>';
     if (p.dc != null && p.dc < 2000) h += '<div><dt>WC</dt><dd>' + swiss(p.dc) + ' m</dd></div>';
-    h += '</dl>' + sparkSVG(p);
+    h += '</dl><dl class="facts wx" id="wxBox" hidden></dl>' + sparkSVG(p);
     h += '<div class="sun" id="sunDet"></div>';
     if (p.flags && p.flags.length) h += '<p class="note">Vor Ort: ' + p.flags.map(esc).join(', ') + '</p>';
     if (p.note) h += '<p class="note">' + esc(p.note) + '</p>';
@@ -655,6 +655,7 @@ function detailHTML(it) {
     h += '<h3>' + esc(g.title) + '</h3><p class="sub">' + esc(g.kind) + ' · ' + esc(MUNI[g.gem] ? g.gem : (g.town || g.gem)) + '</p>';
     if (g.text) h += '<p class="txt">' + esc(g.text) + '</p>';
     if (g.facts && g.facts.length) h += '<ul class="flist">' + g.facts.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>';
+    h += '<dl class="facts wx" id="wxBox" hidden></dl>';
     h += '<div class="sun" id="sunDet"></div>';
     var LS = []; if (g.zt) LS.push(['Bei Zug Tourismus', g.zt]); if (g.web) LS.push(['Website', g.web]);
     if (g.wd) LS.push(['Wikidata', 'https://www.wikidata.org/wiki/' + g.wd]); var o2 = osmLink(g.osm); if (o2) LS.push(o2);
@@ -709,6 +710,7 @@ function eventMoreHTML(e) {
 function openItem(it) {
   if (it.type === 'gem') { selGem = it; SEL = null; } else { SEL = it; selGem = null; }
   detailEl.innerHTML = detailHTML(it);
+  fillWx(it);
   detailEl.hidden = false; listEl.hidden = true; pscroll.scrollTop = 0; panel.classList.add('has-detail');
   $('#back').addEventListener('click', backFromDetail);
   var sd = $('#sunDet');
@@ -891,6 +893,7 @@ var U = {
   uShadowMap: { value: blank }, uShadowMat: { value: new THREE.Matrix4() }, uShadowOn: { value: 0 }, uShadowTexel: { value: 1 }, uShadowRange: { value: 50000 }, uSMSize: { value: SM },
   uOrthoF: { value: blank }, uOrthoC: { value: blank }, uOrthoFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uOrthoCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uOrthoMix: { value: 0 }, uOrthoDim: { value: 1 },
+  uHeat: { value: blank }, uHeatRect: { value: new THREE.Vector4(0, 0, 1, 1) }, uHeatOn: { value: 0 },
   uWaterF: { value: blank }, uWaterC: { value: blank }, uWaterFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uWaterCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uHgt: { value: blank }, uHgtSize: { value: new THREE.Vector2(nx, ny) }
 };
@@ -980,6 +983,7 @@ var terrainMat = new THREE.ShaderMaterial({
     'uniform vec3 uLand, uLit, uShade, uForest, uOut, uWater, uWaterDeep, uContour, uHi, uFog;',
     'uniform float uFocus, uContourA, uHover, uTime, uFogNear, uFogFar, uDark, uHiAny, uVZ; uniform float uHiv[12];',
     LIGHT, SHADOW, ORTHO, COMMON, WATER,
+    'uniform sampler2D uHeat; uniform vec4 uHeatRect; uniform float uHeatOn;',
     'varying vec2 vUv; varying vec3 vW; varying float vDist;',
     'vec3 tNormal(vec2 uv){',
     '  vec2 t = 1.0/uHgtSize; vec2 q = (uv*(uHgtSize-1.0)+0.5)/uHgtSize;',
@@ -1049,6 +1053,8 @@ var terrainMat = new THREE.ShaderMaterial({
     '  col = mix(col, uContour, cont*uContourA*(0.2+0.8*inside)*(1.0-water));',
     '  col = mix(col, uOut, clamp(uHiAny-hv, 0.0, 1.0)*0.38*inside*(1.0-water));',
     '  col = mix(col, uHi, clamp(hv*0.08+hov*0.12, 0.0, 0.3)*(1.0-water));',
+    '  if(uHeatOn > 0.001){ vec2 uh = (vW.xz - uHeatRect.xy)/uHeatRect.zw;',
+    '    if(uh.x > 0.0 && uh.x < 1.0 && uh.y > 0.0 && uh.y < 1.0){ vec4 hc = texture2D(uHeat, uh); col = mix(col, hc.rgb, hc.a*uHeatOn*mix(0.78, 0.42, uOrthoMix)); } }',
     '  col = mix(col, wc, water);',
     '  col = mix(col, uOut, uFocus*(1.0-inside)*0.52);',
     '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
@@ -2012,7 +2018,7 @@ function makeOutline(p) {
 }
 
 /* ---------------- labels ---------------- */
-var labelsEl = $('#labels'), LBL = [], LBL_ORDER = [], PRIO = { park: -1, muni: 0, lake: 1, peak: 2, river: 3, poi: 4, place: 5 };
+var labelsEl = $('#labels'), LBL = [], LBL_ORDER = [], PRIO = { park: -1, tempst: -0.5, muni: 0, lake: 1, peak: 2, river: 3, poi: 4, place: 5, temp: 6 };
 function addLabel(text, kind, E, N, sections, sub, elev) {
   var el = document.createElement('div');
   el.className = 'lbl ' + kind;
@@ -2026,6 +2032,8 @@ function addLabel(text, kind, E, N, sections, sub, elev) {
 function labelWant(L) {
   var d = cam.d;
   if (L.kind === 'park') return parkOn && !touring && d < 7000 ? 1 : 0;
+  if (L.kind === 'temp') return tempOn && !touring && d < 3400 ? 1 : 0;
+  if (L.kind === 'tempst') return tempOn && !touring && d < 60000 ? 1 : 0;
   if (touring) { var key = TOUR[tourI].key; return (L.s.indexOf(key) >= 0 || (L.kind === 'muni' && key === 'kanton')) ? 1 : 0; }
   if (L.kind === 'muni') return d > 5200 ? 1 : 0;
   if (L.kind === 'lake') return L.k ? (d > 3200 ? 1 : 0) : (d > 6000 && d < 24000 ? 1 : 0);
@@ -2281,7 +2289,7 @@ function setParking(d) {
   if (ready) { if (first) buildMarkers(); ensureParkLabels(); }
   PARK.forEach(function (g) { if (g.lbl) { g.lbl.el.textContent = freeText(g); g.lbl.el.className = 'lbl park ' + freeClass(g); g.lbl.bw = 0; } });
   markerVisDirty = true;
-  if (POP.it) showPark(POP.it, true);
+  if (POP.it && POP.it.type === 'park') showPark(POP.it, true);
 }
 var parkUpdated = '';
 function ensureParkLabels() {
@@ -2332,6 +2340,153 @@ $('#tPark').addEventListener('click', function () {
 });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && POP.el.classList.contains('on')) { hidePark(); POP.el.classList.remove('on'); } });
 
+
+/* ---------------- Temperaturen: Sensoren Stadt Zug, MeteoSchweiz, Seemodell ---------------- */
+var TEMP = { city: [], st: [], lakes: [], updated: '', at: 0, lakeAt: 0, lo: 10, hi: 25, state: '', lbl: false }, tempOn = false, tempTimer = null, tempReq = null, lakeReq = null;
+var RAMP = [[44, 123, 182], [118, 180, 210], [171, 217, 233], [255, 255, 191], [253, 174, 97], [215, 25, 28]];
+function rampRGB(x) {
+  x = clamp(x, 0, 1) * (RAMP.length - 1); var i = Math.min(RAMP.length - 2, Math.floor(x)), f = x - i, a = RAMP[i], b = RAMP[i + 1];
+  return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+}
+function tempCSS(t) { var c = rampRGB((t - TEMP.lo) / (TEMP.hi - TEMP.lo)); return 'rgb(' + c.map(Math.round).join(',') + ')'; }
+function degC(t) { return dec(t) + ' °C'; }
+function loadTemp(force) {
+  if (!force && TEMP.at && Date.now() - TEMP.at < 9 * 60e3) return Promise.resolve(TEMP);
+  if (tempReq) return tempReq;
+  tempReq = fetch('api/temp', { headers: { Accept: 'application/json' } })
+    .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    .then(function (d) { tempReq = null; setTemp(d); return TEMP; })
+    .catch(function () { tempReq = null; TEMP.state = 'error'; if (tempOn) updLegend(); return TEMP; });
+  return tempReq;
+}
+function loadLake() {
+  if (TEMP.lakeAt && Date.now() - TEMP.lakeAt < 3 * 3600e3) return Promise.resolve(TEMP);
+  if (lakeReq) return lakeReq;
+  lakeReq = fetch('api/lake', { headers: { Accept: 'application/json' } })
+    .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    .then(function (d) { lakeReq = null; TEMP.lakes = d.lakes || []; TEMP.lakeAt = Date.now(); return TEMP; })
+    .catch(function () { lakeReq = null; return TEMP; });
+  return lakeReq;
+}
+function setTemp(d) {
+  TEMP.city = d.city || []; TEMP.st = d.stations || []; TEMP.updated = d.updated || ''; TEMP.at = Date.now(); TEMP.state = 'ok';
+  var ts = TEMP.city.map(function (c) { return c.t; }).concat(TEMP.st.filter(function (s) { return Math.hypot(s.E - 2682000, s.N - 1224000) < 12000; }).map(function (s) { return s.t; }))
+    .sort(function (a, b) { return a - b; });
+  if (ts.length) {
+    var lo = ts[Math.floor(ts.length * 0.04)], hi = ts[Math.min(ts.length - 1, Math.floor(ts.length * 0.96))], mid = (lo + hi) / 2;
+    if (hi - lo < 4) { lo = mid - 2; hi = mid + 2; }
+    TEMP.lo = Math.floor(lo); TEMP.hi = Math.ceil(hi);
+  }
+  if (GL) buildHeat();
+  if (ready) ensureTempLabels();
+  updLegend();
+  if (SEL || selGem) fillWx(SEL || selGem);
+  if (POP.it && POP.it.type === 'temp') hidePark();
+}
+/* Wärmefläche: Messwerte der Sensoren, gewichtet nach Entfernung (IDW), nur bis rund 350 m um einen Sensor */
+var heatCv = null, heatTex = null;
+function buildHeat() {
+  var P = TEMP.city; if (!P.length) return;
+  var RES = 10, M = 420, e0 = 1e9, e1 = -1e9, n0 = 1e9, n1 = -1e9;
+  P.forEach(function (c) { e0 = Math.min(e0, c.E); e1 = Math.max(e1, c.E); n0 = Math.min(n0, c.N); n1 = Math.max(n1, c.N); });
+  e0 -= M; e1 += M; n0 -= M; n1 += M;
+  var W = Math.ceil((e1 - e0) / RES), H = Math.ceil((n1 - n0) / RES);
+  if (!heatCv) { heatCv = document.createElement('canvas'); heatTex = new THREE.CanvasTexture(heatCv); heatTex.flipY = false; heatTex.minFilter = THREE.LinearFilter; heatTex.generateMipmaps = false; }
+  heatCv.width = W; heatCv.height = H;
+  var cx = heatCv.getContext('2d'), img = cx.createImageData(W, H), d = img.data, CS = 400, grid = {};
+  P.forEach(function (c) { var k = Math.floor((c.E - e0) / CS) + '_' + Math.floor((c.N - n0) / CS); (grid[k] || (grid[k] = [])).push(c); });
+  for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+    var E = e0 + (x + 0.5) * RES, N = n1 - (y + 0.5) * RES, gx = Math.floor((E - e0) / CS), gy = Math.floor((N - n0) / CS), ws = 0, vs = 0, dmin = 1e9;
+    for (var ix = gx - 1; ix <= gx + 1; ix++) for (var iy = gy - 1; iy <= gy + 1; iy++) {
+      var cell = grid[ix + '_' + iy]; if (!cell) continue;
+      for (var j = 0; j < cell.length; j++) {
+        var c = cell[j], dd = Math.hypot(c.E - E, c.N - N); if (dd > 600) continue;
+        dmin = Math.min(dmin, dd); var w = 1 / Math.max(dd * dd, 400); ws += w; vs += w * c.t;
+      }
+    }
+    if (!ws) continue;
+    var a = 1 - sstep(140, 360, dmin), col = rampRGB((vs / ws - TEMP.lo) / (TEMP.hi - TEMP.lo)), k = (y * W + x) * 4;
+    d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = Math.round(a * 255);
+  }
+  cx.putImageData(img, 0, 0);
+  heatTex.needsUpdate = true;
+  U.uHeat.value = heatTex; U.uHeatRect.value.set(X(e0), Z(n1), e1 - e0, n1 - n0);
+}
+function ensureTempLabels() {
+  var added = false;
+  function lab(c, kind, text) {
+    if (!c.lbl) {
+      addLabel('', kind, c.E, c.N, []); c.lbl = LBL[LBL.length - 1]; c.lbl.lift = kind === 'temp' ? 12 : 40; added = true;
+      c.lbl.el.setAttribute('role', 'button');
+      c.lbl.el.addEventListener('click', function (e) { e.stopPropagation(); showTempPop(c, kind); });
+    }
+    c.lbl.el.innerHTML = '<i style="background:' + tempCSS(c.t) + '"></i>' + esc(text); c.lbl.el.title = (kind === 'temp' ? 'Sensor ' : 'Station ') + c.n; c.lbl.bw = 0;
+  }
+  // bestehende Labels bleiben, neue Objekte übernehmen sie über den Namen
+  var old = TEMP.byName || {}; TEMP.byName = {};
+  TEMP.city.forEach(function (c) { var k = 'c' + c.n + c.E; if (old[k]) c.lbl = old[k].lbl; TEMP.byName[k] = c; lab(c, 'temp', dec(c.t) + '°'); });
+  TEMP.st.forEach(function (c) { var k = 's' + c.id; if (old[k]) c.lbl = old[k].lbl; TEMP.byName[k] = c; lab(c, 'tempst', c.n.replace(/,.*$/, '') + ' ' + dec(c.t) + '°'); });
+  Object.keys(old).forEach(function (k) { if (!TEMP.byName[k] && old[k].lbl) { old[k].lbl.el.remove(); LBL.splice(LBL.indexOf(old[k].lbl), 1); added = true; } });
+  if (added) LBL_ORDER = LBL.slice().sort(function (a, b) { return PRIO[a.kind] - PRIO[b.kind] || a.n - b.n; });
+}
+function showTempPop(c, kind) {
+  var it = { type: 'temp', E: c.E, N: c.N }, h = '<button class="x" type="button" aria-label="Schliessen">×</button>';
+  h += '<h4 id="popTitle">' + esc(kind === 'temp' ? c.n : 'Station ' + c.n) + '</h4><p class="sub">' + (kind === 'temp' ? 'Lufttemperatur, Sensor der Stadt Zug' : 'Lufttemperatur 2 m über Boden, MeteoSchweiz' + (c.z ? ', ' + swiss(c.z) + ' m ü. M.' : '')) + '</p>';
+  h += '<div class="big"><b style="color:' + tempCSS(c.t) + ';text-shadow:0 0 1px rgba(0,0,0,.25)">' + dec(c.t) + '</b><span>°C</span></div>';
+  var t = kind === 'temp' ? TEMP.updated : c.ts;
+  if (t) h += '<p class="note">' + (kind === 'temp' ? 'Abgerufen ' : 'Messung ') + esc(fmtHM.format(new Date(t))) + ' Uhr. ' + (kind === 'temp' ? 'Die Sensoren senden etwa alle 20 Minuten.' : 'Zehnminutenwert.') + '</p>';
+  h += '<p class="note">Quelle: ' + (kind === 'temp' ? '<a href="https://opendata.swiss/de/dataset/lufttemperaturen-stadt-zug" target="_blank" rel="noopener">Stadt Zug, Lufttemperaturen</a>' : '<a href="https://www.meteoschweiz.admin.ch/" target="_blank" rel="noopener">MeteoSchweiz</a>') + '</p>';
+  POP.it = it; POP.el.innerHTML = h; POP.el.classList.add('on'); POP.placed = false;
+  POP.el.querySelector('.x').addEventListener('click', hidePark);
+}
+var legEl = $('#tLegend');
+function updLegend() {
+  if (!legEl) return;
+  legEl.hidden = !tempOn;
+  if (!tempOn) return;
+  if (TEMP.state === 'error' && !TEMP.city.length && !TEMP.st.length) { legEl.innerHTML = '<b>Lufttemperatur</b><span class="src">Die Messwerte konnten nicht geladen werden.</span>'; return; }
+  if (!TEMP.at) { legEl.innerHTML = '<b>Lufttemperatur</b><span class="src">Messwerte werden geladen …</span>'; return; }
+  var grad = 'linear-gradient(90deg,' + RAMP.map(function (c, i) { return 'rgb(' + c.join(',') + ') ' + Math.round(i / (RAMP.length - 1) * 100) + '%'; }).join(',') + ')';
+  legEl.innerHTML = '<b>Lufttemperatur jetzt</b><span class="bar" style="background:' + grad + '"></span><span class="sc"><span>' + TEMP.lo + ' °C</span><span>' + TEMP.hi + ' °C</span></span>' +
+    '<span class="src">Stand ' + esc(fmtHM.format(new Date(TEMP.updated || Date.now()))) + ' · ' + TEMP.city.length + ' Sensoren Stadt Zug, MeteoSchweiz</span>';
+}
+/* Temperaturen in der Detailansicht: nächster Sensor (bis 450 m), sonst nächste MeteoSchweiz-Station; Wasser an Badestellen am See */
+function lakeOf(p) {
+  if (!(p.type === 'fam' && p.cat === 1) || /hallen/i.test(p.kind || '')) return null;
+  var sh = D.lines.shore || [], best = 1e9, bi = -1;
+  for (var r = 0; r < sh.length; r++) for (var i = 0; i < sh[r].length; i += 2) {
+    var dd = Math.hypot(sh[r][i] + G.E0 - p.E, sh[r][i + 1] + G.N0 - p.N); if (dd < best) { best = dd; bi = r; }
+  }
+  if (best > 250 || bi < 0) return null;
+  var e = sh[bi][0] + G.E0;
+  return e > 2685500 && sh[bi][1] + G.N0 < 1223500 ? 'aegerisee' : 'zugersee';
+}
+function fillWx(it) {
+  var box = $('#wxBox'); if (!box || !it || !it.E || it.type === 'event' || it.type === 'gem') return;
+  var lk = lakeOf(it);
+  Promise.all([loadTemp(), lk ? loadLake() : null]).then(function () {
+    box = $('#wxBox'); if (!box || (SEL !== it && selGem !== it)) return;
+    var h = '', bc = null, bd = 1e9;
+    TEMP.city.forEach(function (c) { var dd = Math.hypot(c.E - it.E, c.N - it.N); if (dd < bd) { bd = dd; bc = c; } });
+    if (bc && bd <= 450) h += '<div><dt>Luft jetzt</dt><dd>' + degC(bc.t) + '</dd><small>Sensor ' + esc(bc.n) + ', ' + swiss(Math.round(bd / 10) * 10) + ' m · Stadt Zug</small></div>';
+    else {
+      var bs = null, bsd = 1e9, z = it.z || hAt(it.E, it.N);
+      TEMP.st.forEach(function (s) { var dd = Math.hypot(s.E - it.E, s.N - it.N); if (dd < bsd && (!s.z || Math.abs(s.z - z) < 250)) { bsd = dd; bs = s; } });
+      if (bs && bsd < 9000) h += '<div><dt>Luft jetzt</dt><dd>' + degC(bs.t) + '</dd><small>Station ' + esc(bs.n) + ', ' + dec(bsd / 1000) + ' km · MeteoSchweiz</small></div>';
+    }
+    var L = lk && TEMP.lakes.filter(function (x) { return x.id === lk; })[0];
+    if (L) h += '<div><dt>Wasser, Modellwert</dt><dd>ca. ' + Math.round(L.t) + ' °C</dd><small>' + esc(L.n) + ' an der Oberfläche · Alplakes, Eawag</small></div>';
+    box.innerHTML = h; box.hidden = !h;
+  });
+}
+$('#tTemp').addEventListener('click', function () {
+  tempOn = !tempOn; this.setAttribute('aria-pressed', String(tempOn));
+  clearInterval(tempTimer);
+  if (tempOn) {
+    updLegend(); loadTemp(); tempTimer = setInterval(function () { loadTemp(true); }, 10 * 60e3);
+    if (cam && cam.d > 9000) flyTo({ E: 2681900, N: 1224600, d: 5200, hd: ex.hd, p: 46 });
+  } else { updLegend(); if (POP.it && POP.it.type === 'temp') hidePark(); }
+});
 
 /* ---------------- tour over the canton ---------------- */
 var TOUR = [
@@ -2444,6 +2599,7 @@ function frame(now) {
 
   updateTrees();
   updateOrtho(now);
+  U.uHeatOn.value += ((tempOn && TEMP.city.length ? 1 : 0) - U.uHeatOn.value) * Math.min(1, dt * 4);
   updateShadow(now);
 
   if (listDirty && now - lastListUpd > 150) { if (MODE === 'familie') { lastListUpd = now; renderList(); } else listDirty = false; }
@@ -2499,7 +2655,7 @@ function frame(now) {
   var placed = [], labelFade = 1 - sstep(2600, 1500, cam.d) * 0.85;
   for (i = 0; i < LBL.length; i++) {
     var L = LBL[i], want_o = ready ? labelWant(L) : 0;
-    if (L.kind !== 'muni' && L.kind !== 'park') want_o *= labelFade;
+    if (L.kind !== 'muni' && L.kind !== 'park' && L.kind !== 'temp' && L.kind !== 'tempst') want_o *= labelFade;
     L.p.set(X(L.E), Y(L.h) + L.lift, Z(L.N));
     tmpV.copy(L.p).project(camera);
     var vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.08 && Math.abs(tmpV.y) < 1.08;

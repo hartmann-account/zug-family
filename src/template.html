@@ -472,6 +472,19 @@ body.m-home .hud{display:none}
 .lbl.place{font-size:12.5px;color:var(--text-2)}
 .lbl.park{pointer-events:auto;cursor:pointer;font:700 11.5px/1 var(--font);color:var(--text);background:var(--glass-2);border:1px solid var(--line);border-radius:999px;padding:3px 7px;text-shadow:none;box-shadow:var(--shadow)}
 .lbl.park.low{color:var(--low)} .lbl.park.full{color:var(--full)}
+.lbl.temp,.lbl.tempst{pointer-events:auto;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font:700 11px/1 var(--font);color:var(--text);background:var(--glass-2);border:1px solid var(--line);border-radius:999px;padding:3px 7px 3px 4px;text-shadow:none;box-shadow:var(--shadow);font-variant-numeric:tabular-nums}
+.lbl.temp i,.lbl.tempst i{width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.lbl.tempst{font-size:12px;padding:4px 9px 4px 5px}
+.tleg{position:fixed;z-index:5;right:76px;bottom:44px;width:min(15rem,calc(100vw - 24px));display:grid;gap:5px;padding:10px 12px;background:var(--glass-2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);font-size:12px;color:var(--text-2)}
+.tleg b{font:700 13px/1.2 var(--font);color:var(--text)}
+.tleg .bar{display:block;height:8px;border-radius:4px}
+.tleg .sc{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums;color:var(--text)}
+.tleg .src{font-size:11.5px;line-height:1.35}
+.tleg[hidden]{display:none}
+body.m-home .tleg,body.touring .tleg{display:none}
+@media (max-width:760px){ .tleg{right:auto;left:10px;bottom:auto;top:calc(var(--top) + env(safe-area-inset-top,0px) + 8px);width:min(13.5rem,calc(100vw - 80px));padding:8px 10px} }
+.facts.wx{margin-top:8px}
+.facts small{display:block;margin-top:3px;font-size:11.5px;line-height:1.3;color:var(--text-2)}
 .callout{position:fixed;left:0;top:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;
   background:var(--glass-2);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;padding:7px 12px 8px;
   font:700 14px/1.25 var(--font);box-shadow:var(--shadow)}
@@ -563,10 +576,12 @@ body.m-home .hud{display:none}
     <button type="button" id="northBtn" aria-label="Nach Norden ausrichten"><svg class="ic" viewBox="0 0 34 34" id="north" aria-hidden="true"><path d="M17 3 L22.5 18 L17 15.2 L11.5 18 Z" fill="var(--brand)"/><path d="M17 31 L11.5 18 L17 20.8 L22.5 18 Z" fill="currentColor" fill-opacity=".4"/></svg></button>
     <button type="button" id="tPhoto" aria-pressed="true" aria-label="Luftbild beim Heranzoomen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 12h14l-4.5-6-3.5 4.5-2.5-3z"/></svg></button>
     <button type="button" id="tPark" aria-pressed="false" aria-label="Parkhäuser mit freien Plätzen">P</button>
+    <button type="button" id="tTemp" aria-pressed="false" aria-label="Lufttemperatur jetzt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v9.1a5 5 0 1 0 6 0V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v10.2l.45.3a3 3 0 1 1-2.9 0l.45-.3V5a1 1 0 0 1 1-1zm-1 6v5.3a2 2 0 1 0 2 0V10z"/></svg></button>
   </div>
 </div>
 
 <div class="pop" id="pop" role="dialog" aria-modal="false" aria-labelledby="popTitle"></div>
+<div class="tleg" id="tLegend" hidden aria-live="polite"></div>
 <div class="hud" aria-hidden="true"><span class="st" id="hudA">Höhenmodell wird geladen …</span><span class="st" id="hudB">swissALTI3D · LV95</span></div>
 <div class="hint" id="hint" aria-hidden="true">Ziehen verschiebt · rechte Maustaste dreht · Mausrad zoomt</div>
 <div class="tip" id="tip" role="status" aria-live="polite"><b id="tipT"></b><span id="tipA"></span><span id="tipB"></span></div>
@@ -579,7 +594,7 @@ body.m-home .hud{display:none}
       <div>
         <h3>Impressum</h3>
         <address>Hartmann Association<br>6300 Zug</address>
-        <p style="margin-top:10px">Ein Portal für den Kanton Zug: Relief, Gemeinden, Sehenswürdigkeiten, Familienorte, Veranstaltungen und Parkhäuser auf einer Karte.</p>
+        <p style="margin-top:10px">Ein Portal für den Kanton Zug: Relief, Gemeinden, Sehenswürdigkeiten, Familienorte, Veranstaltungen, Parkhäuser und aktuelle Temperaturen auf einer Karte.</p>
       </div>
       <div>
         <h3>Geodaten</h3>
@@ -589,6 +604,8 @@ body.m-home .hud{display:none}
       <div>
         <h3>Inhalte und Bilder</h3>
         <p id="infoSources">Fotos der Sehenswürdigkeiten und Familienorte: Wikimedia Commons, Urheber und Lizenz jeweils beim Bild. Veranstaltungen: <a href="https://www.zug-tourismus.ch/de/event-calendar/" rel="noopener" target="_blank">Veranstaltungskalender von Zug Tourismus</a> (Guidle), Bilder der Veranstalter. Freie Parkplätze: <a href="https://www.pls-zug.ch/" rel="noopener" target="_blank">Parkleitsystem Zug</a>. Angebote von Zug Tourismus sind verlinkt.</p>
+        <p>Lufttemperaturen: <a href="https://opendata.swiss/de/dataset/lufttemperaturen-stadt-zug" rel="noopener" target="_blank">Stadt Zug, Sensornetz Lufttemperatur</a> (opendata.swiss) und Messwerte von <a href="https://www.meteoschweiz.admin.ch" rel="noopener" target="_blank">MeteoSchweiz</a>. Die Wärmefläche verbindet die Messpunkte nach Entfernung und ist keine flächendeckende Messung. Wassertemperatur an Badestellen: Modellwert von <a href="https://www.alplakes.eawag.ch" rel="noopener" target="_blank">Alplakes, Eawag</a>, keine Messung vor Ort.</p>
+        <p>Strandbad Zug: Die 2026 eröffneten Neubauten, Liegewiese und Sandbucht sind nach Plänen und öffentlichen Angaben nachgebildet (Grundrisse OpenStreetMap, Gebäuderegister), weil das Luftbild noch die Baustelle von 2025 zeigt.</p>
         <p id="infoGem">Einwohnerzahlen: Bundesamt für Statistik und Statistik Kanton Zug, Stichtag jeweils angegeben.</p>
       </div>
       <div>
