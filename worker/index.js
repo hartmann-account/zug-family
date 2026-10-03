@@ -97,9 +97,13 @@ async function lakeTemps() {
 }
 // Züge und Schiffe: Abfahrtstafeln von search.ch (ohne Schlüssel; Limit 10'080 Tafeln pro Tag), ab 20 Minuten in der
 // Vergangenheit, damit auch Züge zwischen zwei Halten erfasst sind. Positionen rechnet die Seite aus Fahrplan und Verspätung.
-const TRAIN_TTL = 180, SB = 'https://search.ch/timetable/api/stationboard.json';
+// search.ch erlaubt 10'080 Abfahrtstafeln pro Tag: 12 Tafeln Bahn/Schiff + 12 Tafeln Bus alle 4 Minuten = 8'640
+const TRAIN_TTL = 240, BUS_TTL = 240, SB = 'https://search.ch/timetable/api/stationboard.json';
 const TRAIN_STOPS = [8502204, 8502206, 8515993, 8502203, 8502202, 8502227, 8502205, 8505004, 8503202, 8505003];
 const SHIP_STOPS = [8502251, 8505060]; // Zug Bahnhofsteg, Arth am See (Rückfahrten)
+// Bus-Knoten mit Tafel-Limit (Abfahrten in 53 Minuten zur Stosszeit plus Reserve); zusammen rund 96 % der Fahrtabschnitte
+const BUS_STOPS = [[8502781, 56], [8577530, 56], [8502798, 40], [8502281, 34], [8577581, 24], [8502287, 18], [8573081, 16],
+  [8588626, 14], [8595086, 14], [8502761, 10], [8593416, 8], [8502988, 6]];
 function zhOffset(ms) { // Minuten Abstand der Zürcher Zeit zu UTC (Sommerzeit: letzter Sonntag März bis letzter Sonntag Oktober, 01:00 UTC)
   const d = new Date(ms), y = d.getUTCFullYear();
   const lastSun = (m) => { const t = new Date(Date.UTC(y, m + 1, 0)); return Date.UTC(y, m, t.getUTCDate() - t.getUTCDay(), 1); };
@@ -151,6 +155,18 @@ async function trains() {
   const keep = (j) => j.stops.length > 1 && j.stops[j.stops.length - 1].a > now - 60000 && j.stops[0].d < now + 40 * 60000;
   return { updated: new Date(now).toISOString(), source: 'Fahrplan und Verspätungen: search.ch (SBB-Fahrplandaten)', partial: ok < res.length,
     trains: [...tr.values()].filter(keep), ships: [...sh.values()].filter((j) => j.stops.length > 1) };
+}
+async function buses() {
+  const now = Date.now(), from = now - 45 * 60000, bs = new Map();
+  const res = await Promise.allSettled(BUS_STOPS.map(([id, lim]) => board(id, from, lim, 'bus')));
+  let ok = 0;
+  res.forEach((r) => { if (r.status !== 'fulfilled') return; ok++; journeysOf(r.value, bs); });
+  if (!ok) throw new Error('Fahrplan nicht erreichbar');
+  const t0 = Math.floor(now / 1000);
+  // kompakt: Halte als [E, N, Ankunft, Abfahrt] in Sekunden relativ zu t0
+  const out = [...bs.values()].filter((j) => j.stops.length > 1 && j.stops[j.stops.length - 1].a > now - 60000 && j.stops[0].d < now + 30 * 60000)
+    .map((j) => ({ line: j.line, op: j.op, to: j.to, s: j.stops.map((x) => [x.E, x.N, Math.round(x.a / 1000) - t0, Math.round(x.d / 1000) - t0]) }));
+  return { updated: new Date(now).toISOString(), t0, source: 'Fahrplan und Verspätungen: search.ch', partial: ok < res.length, buses: out };
 }
 const mem = new Map();
 
@@ -218,6 +234,7 @@ export default {
           sources: { city: 'Stadt Zug, Lufttemperaturen (opendata.swiss)', stations: 'MeteoSchweiz' } };
       });
     }
+    if (url.pathname === '/api/buses') return cached(request, ctx, 'buses', BUS_TTL, buses);
     if (url.pathname === '/api/trains') {
       return cached(request, ctx, 'trains', TRAIN_TTL, trains);
     }

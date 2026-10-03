@@ -626,7 +626,7 @@ body.m-home .tleg,body.touring .tleg{display:none}
     <button type="button" id="northBtn" aria-label="Nach Norden ausrichten"><svg class="ic" viewBox="0 0 34 34" id="north" aria-hidden="true"><path d="M17 3 L22.5 18 L17 15.2 L11.5 18 Z" fill="var(--brand)"/><path d="M17 31 L11.5 18 L17 20.8 L22.5 18 Z" fill="currentColor" fill-opacity=".4"/></svg></button>
     <button type="button" id="tPhoto" aria-pressed="true" aria-label="Luftbild beim Heranzoomen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 12h14l-4.5-6-3.5 4.5-2.5-3z"/></svg></button>
     <button type="button" id="tPark" aria-pressed="false" aria-label="Parkhäuser mit freien Plätzen">P</button>
-    <button type="button" id="tTrain" aria-pressed="true" aria-label="Züge und Schiffe nach Fahrplan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c-4 0-7 .5-7 4v9.5A3.5 3.5 0 0 0 8.5 19L7 20.5V21h2.2l2-2h1.6l2 2H17v-.5L15.5 19a3.5 3.5 0 0 0 3.5-3.5V6c0-3.5-3-4-7-4zM7.5 17a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5-7H7V6h4zm2 0V6h4v4zm3.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
+    <button type="button" id="tTrain" aria-pressed="true" aria-label="Züge, Busse und Schiffe nach Fahrplan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c-4 0-7 .5-7 4v9.5A3.5 3.5 0 0 0 8.5 19L7 20.5V21h2.2l2-2h1.6l2 2H17v-.5L15.5 19a3.5 3.5 0 0 0 3.5-3.5V6c0-3.5-3-4-7-4zM7.5 17a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5-7H7V6h4zm2 0V6h4v4zm3.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
     <button type="button" id="tUV" aria-pressed="false" aria-label="UV-Index-Karte"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
     <button type="button" id="tTemp" aria-pressed="false" aria-label="Lufttemperatur jetzt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v9.1a5 5 0 1 0 6 0V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v10.2l.45.3a3 3 0 1 1-2.9 0l.45-.3V5a1 1 0 0 1 1-1zm-1 6v5.3a2 2 0 1 0 2 0V10z"/></svg></button>
   </div>
@@ -3367,53 +3367,67 @@ function buildRibbons() {
   scene.add(RAIL.ribbons);
 }
 /* Fahrzeuge: Wagen als Instanzen; Farbe je Kategorie (Fernverkehr weiss mit rotem Band, S-Bahn weiss mit blauem Band) */
-var trainMat = new THREE.ShaderMaterial({
-  uniforms: Object.assign({}, U),
-  vertexShader: [
-    'attribute vec3 aCol; uniform float uVZ; varying vec3 vL; varying vec3 vW; varying vec3 vCol; varying float vDist;',
-    'void main(){ vL = position; vCol = aCol; vec4 w = modelMatrix*instanceMatrix*vec4(position, 1.0); vW = w.xyz; vDist = distance(w.xyz, cameraPosition); gl_Position = projectionMatrix*viewMatrix*w; }'
-  ].join('\n'),
-  fragmentShader: [
-    'uniform vec3 uFog; uniform float uFogNear, uFogFar, uDark;',
-    LIGHT, SHADOW,
-    'varying vec3 vL; varying vec3 vW; varying vec3 vCol; varying float vDist;',
-    'void main(){',
-    '  vec3 n = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW); if(dot(n, V) < 0.0) n = -n;',
-    '  float y = vL.y, side = step(0.45, abs(vL.z)), endc = step(0.495, abs(vL.x));',
-    '  vec3 body = vec3(0.93, 0.93, 0.92);',
-    '  float win = step(0.52, y)*step(y, 0.8)*side*(1.0 - endc)*step(0.06, fract(vL.x*7.0 + 0.5))*1.0;',
-    '  float band = step(0.14, y)*step(y, 0.3)*side;',
-    '  vec3 col = mix(body, vCol, band);',
-    '  col = mix(col, vec3(0.13, 0.16, 0.2), win*0.92);',
-    '  col = mix(col, vec3(0.55, 0.56, 0.58), step(0.98, y));',
-    '  col = mix(col, vec3(0.16, 0.17, 0.19), step(y, 0.08));',
-    '  if(endc > 0.5) col = mix(vec3(0.9, 0.9, 0.89), vec3(0.12, 0.14, 0.18), step(0.5, y)*step(y, 0.8));',
-    '  float lamb = max(dot(n, uSunDir), 0.0), vis = lamb > 0.0 && uSunMix > 0.001 ? shadowVis(vW, n, lamb) : 1.0;',
-    '  vec3 lit = col*(uAmb*uSkyCol + uDif*lamb*vis*uSunCol) + win*pow(max(dot(reflect(-uSunDir, n), V), 0.0), 30.0)*uSunCol*0.5;',
-    '  vec3 fl = normalize(vec3(-0.55, 0.62, -0.56));',
-    '  col = mix(col*(0.65 + 0.35*max(dot(n, fl), 0.0)), lit, uSunMix);',
-    '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
-    '  gl_FragColor = vec4(col, 1.0);',
-    '}'
-  ].join('\n')
-});
-var trainDepthMat = new THREE.ShaderMaterial({ vertexShader: 'void main(){ gl_Position = projectionMatrix*viewMatrix*modelMatrix*instanceMatrix*vec4(position, 1.0); }', fragmentShader: DEPTH_FS });
-trainDepthMat.colorWrite = false;
-function trainSpec(cat) {
-  if (/^(IC|EC|ICE|TGV|RJX|EN|NJ)$/.test(cat)) return { n: 9, L: 26.4, c: [0.82, 0.08, 0.1] };
-  if (/^(IR|RE|PE)$/.test(cat)) return { n: 6, L: 26.4, c: [0.82, 0.08, 0.1] };
-  return { n: 4, L: 19, c: [0.12, 0.32, 0.68] };
+/* Zuglackierung aus Parametern: Kasten, Streifen, Fensterbänder, Türen, Kopf mit Frontscheibe */
+function trainPaint(sp, head) {
+  return function (T) {
+    var L = T.L, cab = head ? sp.cab : 0;
+    T.rect(0, L, 0, 6, sp.body);
+    (sp.stripes || []).forEach(function (st) { T.rect(st[3] || 0, L - (head && st[4] ? cab : 0), st[0], st[1], st[2]); });
+    var doors = sp.doors(L, head), dw = sp.doorW || 1.3;
+    function inDoor(x0, x1) { return doors.some(function (dx) { return x1 > dx - dw / 2 - 0.15 && x0 < dx + dw / 2 + 0.15; }); }
+    sp.win.forEach(function (b) {
+      var pitch = b[2] || sp.pitch, w = pitch * (b[3] || 0.82), xa = head ? 1.0 : 0.9, xb = L - (head ? cab + 0.6 : 0.9);
+      for (var x = xa; x + w <= xb; x += pitch) if (!inDoor(x, x + w)) T.glass(x, x + w, b[0], b[1]);
+    });
+    doors.forEach(function (dx) {
+      T.rect(dx - dw / 2, dx + dw / 2, sp.floor, sp.doorTop, sp.doorCol || sp.body);
+      T.glass(dx - dw / 2 + 0.12, dx - 0.04, sp.doorWin[0], sp.doorWin[1], 'rgba(60,62,66,1)'); T.glass(dx + 0.04, dx + dw / 2 - 0.12, sp.doorWin[0], sp.doorWin[1], 'rgba(60,62,66,1)');
+      T.line(dx - dw / 2, dx + dw / 2, sp.doorTop, 2, 'rgba(40,40,40,0.6)');
+    });
+    if (head) {
+      T.rect(L - cab, L, 0, 6, sp.front || sp.body);
+      (sp.frontStripes || []).forEach(function (st) { T.rect(L - cab, L, st[0], st[1], st[2]); });
+      T.glass(L - sp.wsLen, L, sp.ws[0], sp.ws[1]);
+      T.glass(L - cab + 0.25, L - cab + 1.05, sp.ws[0] + 0.15, sp.ws[1] - 0.1); // Seitenfenster Führerstand
+      T.rect(L - 0.18, L, sp.skirt + 0.25, sp.skirt + 0.5, '#f4f2e8'); // Stirnlampen (Endspalte = Stirnfläche)
+    }
+    T.rect(0, L, 0, sp.skirt, sp.skirtCol || '#3a3d41');
+  };
 }
-function ensureTrainMesh(cap) {
-  if (TRN.mesh && TRN.cap >= cap) return;
-  if (TRN.mesh) { scene.remove(TRN.mesh); TRN.mesh.geometry.dispose(); }
-  var g = new THREE.BoxGeometry(1, 1, 1); g.translate(0, 0.5, 0);
-  var col = new Float32Array(cap * 3); g.setAttribute('aCol', new THREE.InstancedBufferAttribute(col, 3));
-  TRN.mesh = new THREE.InstancedMesh(g, trainMat, cap); TRN.mesh.frustumCulled = false; TRN.mesh.count = 0; TRN.cap = cap;
-  scene.add(TRN.mesh);
-  // Schatten der Züge: zweite Instanz mit derselben Matrix-Liste in der Schattenszene
-  var dm = new THREE.InstancedMesh(g, trainDepthMat, cap); dm.instanceMatrix = TRN.mesh.instanceMatrix; dm.frustumCulled = false; dm.count = 0;
-  smScene.add(dm); TRN.depth = dm;
+var TRAIN_PARTS = [], TRAIN_TYPES = null;
+function trainParts() {
+  if (TRAIN_TYPES) return TRAIN_TYPES;
+  TRAIN_TYPES = {};
+  Object.keys(TRAIN_DEF).forEach(function (k) {
+    var d = TRAIN_DEF[k], base = Object.assign({ W: 2.9, H: 4.2, y0: 0.55, roofR: 0.85, botR: 0.2, tumble: 0.05, step: 1.3, texW: 1024, roof: '#7d8186', gangway: true }, d.geo);
+    var head = vehPart(Object.assign({}, base, { L: d.Lh, noseF: d.nose, noseW: d.noseW, noseH: d.noseH, bogies: d.bogH(d.Lh), roofBoxes: d.roofH, panto: d.pantoH, gangway: false }), trainPaint(d.paint, true), 260);
+    var mid = d.Lm ? vehPart(Object.assign({}, base, { L: d.Lm, bogies: d.bogM(d.Lm), roofBoxes: d.roofM, panto: d.pantoM }), trainPaint(d.paint, false), 600) : null;
+    TRAIN_PARTS.push(head); if (mid) TRAIN_PARTS.push(mid);
+    TRAIN_TYPES[k] = function (units) { // Zugbildung: je Einheit Kopf, Mittelwagen, Kopf gedreht
+      var cars = [], len = 0;
+      for (var u = 0; u < units; u++) {
+        cars.push({ p: head, L: d.Lh, flip: false });
+        for (var m = 0; m < d.nMid; m++) cars.push({ p: mid, L: d.Lm, flip: m % 2 === 1 });
+        cars.push({ p: head, L: d.Lh, flip: true, gap: 1.2 });
+      }
+      cars.forEach(function (c) { len += c.L + 0.7; });
+      return { cars: cars, len: len, name: d.name };
+    };
+  });
+  return TRAIN_TYPES;
+}
+var TRAIN_DEF = {
+  flirt: { name: 'FLIRT (vorläufig)', Lh: 18.4, Lm: 14.8, nMid: 2, nose: 3.4, noseW: 0.28, noseH: 0.34,
+    bogH: function (L) { return [-L / 2 + 2.6, L / 2 - 0.4]; }, bogM: function (L) { return [L / 2 - 0.4]; },
+    roofH: [[-2, 3.5, 0.45, 1.8]], roofM: [[0, 4, 0.4, 1.6]], pantoH: null, pantoM: 2,
+    paint: { body: '#f2f2ef', stripes: [[0.62, 1.0, '#c8102e']], win: [[1.45, 2.55]], pitch: 1.9, floor: 0.62, doorTop: 2.6, doorW: 1.3, doorCol: '#c8102e', doorWin: [1.35, 2.3],
+      doors: function (L, head) { return head ? [L * 0.42] : [-1, L * 0.5]; }, cab: 3.6, wsLen: 2.4, ws: [1.75, 2.75], skirt: 0.62, front: '#f2f2ef', frontStripes: [[0.62, 1.4, '#c8102e']] } }
+};
+function TRAIN_PICK(cat, line) { return ['flirt', /^(IC|EC|IR|RE)$/.test(cat) ? 2 : 1]; }
+function trainSpec(j) {
+  var T = trainParts(), cat = j.cat || '', line = String(j.line || '');
+  var pick = TRAIN_PICK(cat, line);
+  return T[pick[0]](pick[1]);
 }
 function loadTrains() {
   if (TRN.req) return TRN.req;
@@ -3431,7 +3445,7 @@ function journeyPrep(j, ship) {
     var h0 = Math.min(h, (s.a - stops[k - 1].d) / 3), h1 = Math.min(h, (stops[k + 1].a - s.d) / 3);
     s.a -= Math.max(0, h0); s.d += Math.max(0, h1);
   }
-  return { line: j.line, cat: j.cat, to: j.to, op: j.op, stops: stops, ship: !!ship, spec: ship ? null : trainSpec(j.cat) };
+  return { line: j.line, cat: j.cat, to: j.to, op: j.op, stops: stops, ship: !!ship, spec: ship ? null : trainSpec(j) };
 }
 function setTrains(d) {
   TRN.updated = d.updated || ''; TRN.at = Date.now();
@@ -3445,7 +3459,7 @@ function journeyState(j, now) {
   for (var i = 0; i < n; i++) {
     if (now <= st[i].d) return { i: i, at: true };
     if (i < n - 1 && now < st[i + 1].a) {
-      var T = Math.max(30000, st[i + 1].a - st[i].d), x = (now - st[i].d) / T, acc = Math.min(0.3, 70000 / T);
+      var T = Math.max(30000, st[i + 1].a - st[i].d), x = (now - st[i].d) / T, acc = Math.min(0.3, (j.acc || 70000) / T);
       var f = x < acc ? x * x / (2 * acc * (1 - acc)) : x > 1 - acc ? 1 - (1 - x) * (1 - x) / (2 * acc * (1 - acc)) : (x - acc / 2) / (1 - acc);
       return { i: i, at: false, f: clamp(f, 0, 1) };
     }
@@ -3462,40 +3476,289 @@ var tmpP = { E: 0, N: 0, h: 0, t: 0 }, tmpQ = { E: 0, N: 0, h: 0, t: 0 }, tmpM =
 function updateTrains(now) {
   var show = TRN.on && GL && cam && cam.d < 14000 && !touring;
   if (RAIL.ribbons) { railMat.uniforms.uRailA.value = lerp(railMat.uniforms.uRailA.value, cam && cam.d < 2600 ? 1 : 0, 0.15); RAIL.ribbons.visible = railMat.uniforms.uRailA.value > 0.01; }
-  if (!show || !RAIL.ok) { if (TRN.mesh) TRN.mesh.count = 0; if (TRN.depth) TRN.depth.count = 0; TRN.shipMeshes.forEach(function (m) { m.visible = false; }); return; }
+  if (!show || !RAIL.ok) { if (TRAIN_PARTS.length) { vehBegin(TRAIN_PARTS); vehEnd(TRAIN_PARTS); } TRN.shipMeshes.forEach(function (m) { m.visible = false; }); return; }
   var tnow = Date.now(), cars = 0;
-  ensureTrainMesh(800);
-  var colA = TRN.mesh.geometry.attributes.aCol;
+  trainParts(); vehBegin(TRAIN_PARTS);
   TRN.trains.forEach(function (j) {
     var s = journeyState(j, tnow); if (!s) return;
     var a = j.stops[s.i], path = null, head = 0;
     if (s.at) { // am Bahnsteig: Spitze am Halt, Wagen entlang des folgenden oder vorigen Abschnitts
       var nb = j.stops[s.i + 1], pv = j.stops[s.i - 1];
-      if (nb) { var sp = segPath(a, nb); if (sp) { path = sp.P; head = Math.min(path.L, j.spec.n * j.spec.L * 0.5); } }
+      if (nb) { var sp = segPath(a, nb); if (sp) { path = sp.P; head = Math.min(path.L, j.spec.len * 0.5); } }
       else if (pv) { var sp2 = segPath(pv, a); if (sp2) { path = sp2.P; head = path.L; } }
     } else {
       var spm = segPath(a, j.stops[s.i + 1]); if (spm) { path = spm.P; head = s.f * (spm.P.L + spm.extra); }
     }
     if (!path) return;
     j.pos = null;
-    for (var c = 0; c < j.spec.n && cars < TRN.cap; c++) {
-      var s1 = head - c * (j.spec.L + 0.6), s0 = s1 - j.spec.L;
-      if (s1 > path.L + 1 || s1 < -j.spec.L) continue;
-      pathAt(path, clamp(s1, 0, path.L), tmpP); pathAt(path, clamp(s0, 0, path.L), tmpQ);
+    var off = 0, cons = j.spec.cars;
+    for (var c = 0; c < cons.length; c++) {
+      var cw = cons[c], s1 = head - off, s0 = s1 - cw.L; off += cw.L + (cw.gap == null ? 0.7 : cw.gap);
+      if (s1 > path.L + 1 || s1 < -cw.L) continue;
+      pathAt(path, clamp(s1 - 2.5, 0, path.L), tmpP); pathAt(path, clamp(s0 + 2.5, 0, path.L), tmpQ);
       if (tmpP.t || tmpQ.t) continue;
-      var dx = tmpP.E - tmpQ.E, dn = tmpP.N - tmpQ.N, len = Math.hypot(dx, dn); if (len < 2) continue;
+      var dx = tmpP.E - tmpQ.E, dn = tmpP.N - tmpQ.N, len = Math.hypot(dx, dn); if (len < 1) continue;
       if (!j.pos) j.pos = { E: tmpP.E, N: tmpP.N, h: tmpP.h };
-      tmpT.set(X((tmpP.E + tmpQ.E) / 2), ((tmpP.h + tmpQ.h) / 2 - H0 + 0.6) * vz, Z((tmpP.N + tmpQ.N) / 2));
-      tmpE3.set(0, Math.atan2(dn, dx), Math.atan2((tmpP.h - tmpQ.h) * vz, len), 'YZX'); tmpQt.setFromEuler(tmpE3);
-      tmpS.set(j.spec.L, 4.1 * vz, 2.9);
-      tmpM.compose(tmpT, tmpQt, tmpS); TRN.mesh.setMatrixAt(cars, tmpM);
-      colA.setXYZ(cars, j.spec.c[0], j.spec.c[1], j.spec.c[2]); cars++;
+      // Wagenmitte auf der Sehne zwischen den Drehgestellen
+      vehPut(cw.p, X((tmpP.E + tmpQ.E) / 2), ((tmpP.h + tmpQ.h) / 2 - H0 + 0.25) * vz, Z((tmpP.N + tmpQ.N) / 2), Math.atan2(dn, dx), Math.atan2((tmpP.h - tmpQ.h) * vz, len), cw.flip);
+      cars++;
     }
   });
-  TRN.mesh.count = cars; TRN.mesh.instanceMatrix.needsUpdate = true; colA.needsUpdate = true;
-  if (TRN.depth) { TRN.depth.count = cars; if (cars) smState.need = true; }
+  vehEnd(TRAIN_PARTS);
   if (window.__zgFollow) { var fj = TRN.trains.filter(function (j) { return j.pos && j.line === window.__zgFollow; })[0]; if (fj) { ex.E = fj.pos.E; ex.N = fj.pos.N; } }
   updateShips(tnow);
+}
+/* ---------------- Fahrzeugmodelle: Querschnitt entlang der Länge extrudiert, Lackierung als Textur ----------------
+   Jeder Typ besteht aus Teilen (Kopfwagen, Mittelwagen, Bus); jedes Teil ist ein InstancedMesh mit eigener Canvas-Textur.
+   Koordinaten im Teil: x entlang (vorne +x), y hoch ab Schiene/Strasse, z quer. Textur: u entlang der Länge (0 hinten, 1 vorne),
+   v über den halben Querschnitt (0 Mitte unten, 1 Mitte Dach); beide Seiten zeigen dieselbe Textur. */
+var vehMat0 = {
+  vs: [
+    'uniform float uVZ; varying vec2 vUv; varying vec3 vW; varying vec3 vN; varying float vDist;',
+    'void main(){ vUv = uv; vec4 w = modelMatrix*instanceMatrix*vec4(position, 1.0); vW = w.xyz;',
+    '  vN = normalize(mat3(modelMatrix*instanceMatrix)*normal); vDist = distance(w.xyz, cameraPosition); gl_Position = projectionMatrix*viewMatrix*w; }'
+  ].join('\n'),
+  fs: [
+    'uniform vec3 uFog; uniform float uFogNear, uFogFar, uDark, uDusk; uniform sampler2D uMap;',
+    'varying vec2 vUv; varying vec3 vW; varying vec3 vN; varying float vDist;',
+    'void main(){',
+    '  vec3 V = normalize(cameraPosition - vW); vec3 n = normalize(vN); if(dot(n, V) < 0.0) n = -n;',
+    '  vec4 t = texture2D(uMap, vUv); vec3 col = t.rgb; float glass = 1.0 - t.a;',  // Alpha < 1: Glas (spiegelt)
+    '  float lamb = max(dot(n, uSunDir), 0.0), vis = lamb > 0.0 && uSunMix > 0.001 ? shadowVis(vW, n, lamb) : 1.0;',
+    '  vec3 R = reflect(-V, n); float fr = pow(1.0 - max(dot(n, V), 0.0), 3.0);',
+    '  vec3 sky = mix(uFog, uSkyCol, clamp(R.y*1.5 + 0.3, 0.0, 1.0));',
+    '  vec3 lit = col*(uAmb*mix(uSkyCol, vec3(1.0), 0.35) + uDif*lamb*vis*uSunCol);',
+    '  lit = mix(lit, sky*0.85, glass*(0.18 + 0.6*fr));',
+    '  lit += (0.25 + 0.75*glass)*uSunCol*pow(max(dot(R, uSunDir), 0.0), mix(24.0, 90.0, glass))*vis*mix(0.12, 0.9, glass);',
+    '  lit += glass*uDusk*vec3(1.0, 0.86, 0.62)*0.35;',  // Innenbeleuchtung in der Dämmerung
+    '  vec3 fl = normalize(vec3(-0.55, 0.62, -0.56));',
+    '  col = mix(col*(0.62 + 0.38*max(dot(n, fl), 0.0)), lit, uSunMix);',
+    '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
+    '  gl_FragColor = vec4(col, 1.0);',
+    '}'
+  ].join('\n')
+};
+var vehDepthMat = new THREE.ShaderMaterial({ vertexShader: 'void main(){ gl_Position = projectionMatrix*viewMatrix*modelMatrix*instanceMatrix*vec4(position, 1.0); }', fragmentShader: DEPTH_FS, side: THREE.DoubleSide });
+vehDepthMat.colorWrite = false;
+
+/* Halber Querschnitt [z, y] von unten Mitte bis Dach Mitte; y ab Kastenunterkante */
+function vehProfile(o) {
+  var hw = o.W / 2, H = o.H - o.y0, rr = o.roofR || 0.9, rb = o.botR || 0.18, tu = o.tumble || 0.04, P = [[0, 0], [hw - rb, 0]];
+  for (var a = 1; a <= 3; a++) { var t = a / 3 * Math.PI / 2; P.push([hw - rb + Math.sin(t) * rb, rb - Math.cos(t) * rb]); }
+  var ys = o.sideTop != null ? o.sideTop - o.y0 : H - rr;
+  P.push([hw - tu * 0.4, ys * 0.55]); P.push([hw - tu, ys]);
+  var cx = hw - tu - rr, cy = ys;
+  for (a = 1; a <= 6; a++) { var u = a / 6 * Math.PI / 2; P.push([cx + Math.cos(u) * rr, cy + Math.sin(u) * (H - ys)]); }
+  P.push([0, H]);
+  var cum = [0]; for (var k = 1; k < P.length; k++) cum.push(cum[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+  var tot = cum[cum.length - 1];
+  // v einer Seitenhöhe (Meter über Kastenunterkante) für die Textur
+  var k0 = 4, k1 = 6;
+  function vAt(y) {
+    if (y <= P[k0][1]) return cum[k0] * y / Math.max(1e-6, P[k0][1]) / tot;
+    for (var q = k0; q < P.length - 1; q++) if (y <= P[q + 1][1] || q === P.length - 2) { var f = clamp((y - P[q][1]) / Math.max(1e-6, P[q + 1][1] - P[q][1]), 0, 1); return (cum[q] + f * (cum[q + 1] - cum[q])) / tot; }
+    return 1;
+  }
+  return { P: P, v: cum.map(function (c) { return c / tot; }), vAt: vAt, vSide0: cum[k0] / tot, vSide1: cum[k1] / tot, H: H };
+}
+
+/* Geometrie eines Teils: Kasten mit Kopfform vorne/hinten, Drehgestelle, Dachaufbauten. Alles mit UV in die Textur. */
+function vehGeometry(o) {
+  var pr = vehProfile(o), P = pr.P, np = P.length, L = o.L, pos = [], uvs = [], idx = [];
+  function shape(x) { // Verjüngung der Kopfform
+    var nf = o.noseF || 0, nb = o.noseB || 0, t = 0;
+    if (nf > 0 && x > L / 2 - nf) t = (x - (L / 2 - nf)) / nf; else if (nb > 0 && x < -L / 2 + nb) t = ((-L / 2 + nb) - x) / nb;
+    var nw = o.noseW == null ? 0.22 : o.noseW, nh = o.noseH == null ? 0.3 : o.noseH;
+    return [1 - nw * Math.pow(t, 2.2), 1 - nh * Math.pow(t, 1.6), t];
+  }
+  var xs = [], step = o.step || 1.2;
+  for (var x = -L / 2; x < L / 2 - 1e-6; x += step) xs.push(x);
+  [o.noseF, o.noseB].forEach(function (nl, s) { if (!nl) return; for (var q = 1; q < 8; q++) xs.push((s ? -1 : 1) * (L / 2 - nl * q / 8)); });
+  xs.push(L / 2); xs.sort(function (a, b) { return a - b; });
+  var rings = [];
+  xs.forEach(function (x) {
+    var sh = shape(x), ring = [];
+    for (var side = 0; side < 2; side++) for (var k = 0; k < np; k++) {
+      var q = side ? np - 1 - k : k; if (side && (q === np - 1)) continue; // Dachmitte nur einmal
+      var z = P[q][0] * sh[0] * (side ? -1 : 1), y = o.y0 + P[q][1] * sh[1];
+      pos.push(x, y, z); uvs.push((x + L / 2) / L, pr.v[q]); ring.push(pos.length / 3 - 1);
+    }
+    rings.push(ring);
+  });
+  for (var r = 0; r < rings.length - 1; r++) { var A = rings[r], B = rings[r + 1]; for (var k = 0; k < A.length - 1; k++) idx.push(A[k], B[k], B[k + 1], A[k], B[k + 1], A[k + 1]); }
+  // Stirnflächen: Fächer, Farbe aus der Endspalte der Textur
+  [[0, 0], [rings.length - 1, 1]].forEach(function (e) {
+    var ring = rings[e[0]], c = [0, 0, 0], n = ring.length;
+    ring.forEach(function (i) { c[0] += pos[i * 3]; c[1] += pos[i * 3 + 1]; c[2] += pos[i * 3 + 2]; });
+    var ci = pos.length / 3; pos.push(c[0] / n, c[1] / n, 0); uvs.push(e[1] ? 0.999 : 0.001, 0.62);
+    var base = pos.length / 3;
+    ring.forEach(function (i) { pos.push(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]); uvs.push(e[1] ? 0.999 : 0.001, uvs[i * 2 + 1]); });
+    for (var k = 0; k < n - 1; k++) if (e[1]) idx.push(ci, base + k, base + k + 1); else idx.push(ci, base + k + 1, base + k);
+  });
+  // Quader mit fester Texturstelle (Drehgestelle, Dachaufbauten, Faltenbalg)
+  function box(x0, x1, y0, y1, w, u, v) {
+    var b = pos.length / 3, cs = [[x0, y0, -w], [x1, y0, -w], [x1, y0, w], [x0, y0, w], [x0, y1, -w], [x1, y1, -w], [x1, y1, w], [x0, y1, w]];
+    cs.forEach(function (c) { pos.push(c[0], c[1], c[2]); uvs.push(u, v); });
+    [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 6, 7]].forEach(function (f) { idx.push(b + f[0], b + f[1], b + f[2], b + f[0], b + f[2], b + f[3]); });
+  }
+  (o.bogies || []).forEach(function (bx) { box(bx - 1.4, bx + 1.4, 0.15, o.y0 + 0.05, o.W * 0.36, 0.5, 0.02); });
+  (o.wheels || []).forEach(function (wx) { box(wx - 0.5, wx + 0.5, 0.0, o.y0 + 0.4, o.W / 2 - 0.08, 0.5, 0.02); });
+  (o.roofBoxes || []).forEach(function (rb) { box(rb[0] - rb[1] / 2, rb[0] + rb[1] / 2, o.H - 0.06, o.H + rb[2], rb[3] / 2, 0.5, 0.995); });
+  if (o.panto != null) { box(o.panto - 0.9, o.panto + 0.9, o.H, o.H + 0.35, 0.05, 0.5, 0.02); box(o.panto - 0.05, o.panto + 0.05, o.H + 0.3, o.H + 0.75, 0.9, 0.5, 0.02); }
+  if (o.gangway) { box(L / 2 - 0.05, L / 2 + 0.32, o.y0 + 0.3, o.H - 0.35, o.W * 0.4, 0.5, 0.02); }
+  var g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  return { g: g, pr: pr };
+}
+
+/* Lackierung zeichnen: Hilfen in Metern (x entlang 0..L, y über Schiene/Strasse) */
+function vehTexture(o, pr, paint) {
+  var W = o.texW || 1024, Hh = 256, cv = document.createElement('canvas'); cv.width = W; cv.height = Hh;
+  var c = cv.getContext('2d');
+  var Y = function (y) { return (1 - pr.vAt(y - o.y0)) * Hh; }, Xp = function (x) { return x / o.L * W; };
+  var T = {
+    c: c, W: W, H: Hh, L: o.L, Y: Y, X: Xp,
+    rect: function (x0, x1, y0, y1, col) { c.fillStyle = col; c.fillRect(Xp(x0), Y(y1), Xp(x1) - Xp(x0), Y(y0) - Y(y1)); },
+    vband: function (v0, v1, col) { c.fillStyle = col; c.fillRect(0, (1 - v1) * Hh, W, (v1 - v0) * Hh); },
+    glass: function (x0, x1, y0, y1, frame) { // Glas mit Alpha 0.55, schmaler Rahmen
+      c.fillStyle = frame || 'rgba(40,44,50,1)'; c.fillRect(Xp(x0) - 1, Y(y1) - 1, Xp(x1) - Xp(x0) + 2, Y(y0) - Y(y1) + 2);
+      c.fillStyle = 'rgba(52,64,76,0.55)'; c.clearRect(Xp(x0), Y(y1), Xp(x1) - Xp(x0), Y(y0) - Y(y1)); c.fillRect(Xp(x0), Y(y1), Xp(x1) - Xp(x0), Y(y0) - Y(y1));
+    },
+    line: function (x0, x1, y, w, col) { c.fillStyle = col; c.fillRect(Xp(x0), Y(y) - w / 2, Xp(x1) - Xp(x0), w); }
+  };
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, Hh);
+  paint(T);
+  // Dach (über der Seitenkante) und Unterseite
+  var roofV = pr.vSide1 + 0.02;
+  c.fillStyle = o.roof || '#8c9196'; c.fillRect(0, 0, W, (1 - roofV) * Hh);
+  c.fillStyle = '#2a2c2f'; c.fillRect(0, (1 - pr.vSide0 * 0.6) * Hh, W, pr.vSide0 * 0.6 * Hh);
+  // feste Stellen für Drehgestelle (u 0.5, v 0.02) und Dachaufbauten (u 0.5, v 0.995)
+  c.fillStyle = '#26282b'; c.fillRect(W / 2 - 4, Hh - 8, 8, 8);
+  c.fillStyle = o.roofBox || '#9a9fa4'; c.fillRect(W / 2 - 4, 0, 8, 3);
+  var tex = new THREE.CanvasTexture(cv); tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter; tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  return tex;
+}
+function vehPart(o, paint, cap) {
+  var gp = vehGeometry(o), tex = vehTexture(o, gp.pr, paint);
+  var mat = new THREE.ShaderMaterial({ side: THREE.DoubleSide, uniforms: Object.assign({ uMap: { value: tex } }, U), vertexShader: vehMat0.vs, fragmentShader: [vehMat0.fs.split('\n')[0], LIGHT, SHADOW].concat(vehMat0.fs.split('\n').slice(1)).join('\n') });
+  var m = new THREE.InstancedMesh(gp.g, mat, cap); m.frustumCulled = false; m.count = 0; scene.add(m);
+  var dm = new THREE.InstancedMesh(gp.g, vehDepthMat, cap); dm.instanceMatrix = m.instanceMatrix; dm.frustumCulled = false; dm.count = 0; smScene.add(dm);
+  return { o: o, m: m, dm: dm, n: 0, cap: cap };
+}
+function vehBegin(parts) { parts.forEach(function (p) { p.n = 0; }); }
+function vehPut(p, cx, cy, cz, yaw, pitch, flip) {
+  if (p.n >= p.cap) return;
+  tmpT.set(cx, cy, cz); tmpE3.set(0, yaw + (flip ? Math.PI : 0), flip ? -pitch : pitch, 'YZX'); tmpQt.setFromEuler(tmpE3); tmpS.set(1, vz, 1);
+  tmpM.compose(tmpT, tmpQt, tmpS); p.m.setMatrixAt(p.n++, tmpM);
+}
+function vehEnd(parts) {
+  var any = false;
+  parts.forEach(function (p) { p.m.count = p.dm.count = p.n; p.m.instanceMatrix.needsUpdate = true; if (p.n) any = true; });
+  if (any) smState.need = true;
+}
+/* ---------------- Busse nach Fahrplan entlang der OSM-Linienwege ---------------- */
+var BUS = { netP: null, net: null, list: [], req: null, at: 0, parts: null };
+function loadBusNet() {
+  if (!BUS.netP) BUS.netP = fetch('bus.json').then(function (r) { if (!r.ok) throw new Error('bus'); return r.json(); }).then(function (d) {
+    var W = d.ways.map(function (w) { var x = 0, y = 0, P = []; for (var k = 0; k < w.length; k += 2) { x += w[k]; y += w[k + 1]; P.push([d.E0 + x / 10, d.N0 + y / 10]); } return P; });
+    var by = {};
+    d.routes.forEach(function (r) {
+      var Lp = [];
+      for (var k = 0; k < r.w.length; k += 3) {
+        var g = W[r.w[k]], a = r.w[k + 1], b = r.w[k + 2], n = g.length - 1, seg;
+        var ring = n > 1 && Math.hypot(g[0][0] - g[n][0], g[0][1] - g[n][1]) < 0.5;
+        if (a <= b) seg = g.slice(a, b + 1); else if (ring) seg = g.slice(a).concat(g.slice(1, b + 1)); else seg = g.slice(b, a + 1).reverse();
+        if (Lp.length && seg.length && Math.hypot(Lp[Lp.length - 1][0] - seg[0][0], Lp[Lp.length - 1][1] - seg[0][1]) < 0.5) seg = seg.slice(1);
+        Lp = Lp.concat(seg);
+      }
+      if (Lp.length > 1) (by[r.l] = by[r.l] || []).push(ferryPath(Lp));
+    });
+    BUS.net = by; return by;
+  }).catch(function () { BUS.netP = null; });
+  return BUS.netP;
+}
+function loadBuses() {
+  if (BUS.req) return BUS.req;
+  BUS.req = Promise.all([loadBusNet(), fetch('api/buses', { headers: { Accept: 'application/json' } }).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })])
+    .then(function (r) { BUS.req = null; if (r[0]) setBuses(r[1]); }).catch(function () { BUS.req = null; });
+  return BUS.req;
+}
+/* nächster Punkt des Wegs ab Weglänge sMin: [s, Abstand] */
+function pathProject(P, E, N, sMin) {
+  var best = 1e18, bs = -1;
+  for (var i = 0; i < P.E.length - 1; i++) {
+    if (P.S[i + 1] < sMin) continue;
+    var ax = P.E[i], ay = P.N[i], vx = P.E[i + 1] - ax, vy = P.N[i + 1] - ay, l2 = vx * vx + vy * vy || 1e-9;
+    var t = clamp(((E - ax) * vx + (N - ay) * vy) / l2, 0, 1), s = P.S[i] + t * (P.S[i + 1] - P.S[i]);
+    if (s < sMin) { t = clamp((sMin - P.S[i]) / Math.max(1e-6, P.S[i + 1] - P.S[i]), 0, 1); s = sMin; }
+    var px = ax + t * vx, py = ay + t * vy, d2 = (E - px) * (E - px) + (N - py) * (N - py);
+    if (d2 < best) { best = d2; bs = s; }
+  }
+  return [bs, Math.sqrt(best)];
+}
+/* Fahrt einer Linienvariante zuordnen: Halte der Reihe nach auf den Weg projizieren, kleinste mittlere Abweichung gewinnt */
+function busMatch(stops, line) {
+  var best = null;
+  (BUS.net[line] || []).forEach(function (P) {
+    var sm = 0, cost = 0, ss = [];
+    for (var k = 0; k < stops.length; k++) { var r = pathProject(P, stops[k].E, stops[k].N, Math.max(0, sm - 10)); ss.push(r[0]); cost += Math.min(r[1], 300); sm = Math.max(sm, r[0]); }
+    cost /= stops.length;
+    if (!best || cost < best.cost) best = { P: P, s: ss, cost: cost };
+  });
+  return best && best.cost < 45 ? best : null;
+}
+function setBuses(d) {
+  var t0 = (d.t0 || 0) * 1000; BUS.at = Date.now();
+  BUS.list = (d.buses || []).map(function (j) {
+    var stops = j.s.map(function (x) { return { E: x[0], N: x[1], a: t0 + x[2] * 1000, d: t0 + x[3] * 1000 }; });
+    for (var k = 1; k < stops.length - 1; k++) { var s = stops[k], h = (20000 - (s.d - s.a)) / 2; if (h > 0) { s.a -= Math.min(h, (s.a - stops[k - 1].d) / 3); s.d += Math.min(h, (stops[k + 1].a - s.d) / 3); } }
+    var m = busMatch(stops, j.line); if (!m) return null;
+    stops.forEach(function (s, k) { s.s = m.s[k]; });
+    return { line: j.line, to: j.to, op: j.op, stops: stops, P: m.P, acc: 12000, type: busType(j) };
+  }).filter(Boolean);
+}
+function updateBuses(tnow) {
+  if (!BUS.parts) return;
+  vehBegin(BUS.parts.all);
+  var show = TRN.on && cam && cam.d < 7000 && !touring && BUS.net;
+  if (show) BUS.list.forEach(function (j) {
+    var st = journeyState(j, tnow); if (!st) return;
+    var a = j.stops[st.i], s = st.at ? a.s : lerp(a.s, j.stops[st.i + 1].s, st.f), T = j.type, P = j.P;
+    // Gelenkbus: Vorderwagen und Nachläufer folgen dem Weg getrennt
+    var segs = T.art ? [[s + T.L / 2 - T.Lf / 2, T.Lf, T.front], [s + T.L / 2 - T.Lf - 0.6 - T.Lr / 2, T.Lr, T.rear]] : [[s, T.L, T.front]];
+    segs.forEach(function (q) {
+      var sc = clamp(q[0], q[1] / 2, P.L - q[1] / 2), f = pathAt(P, sc + q[1] / 2 - 1.5, tmpP), r = pathAt(P, sc - q[1] / 2 + 1.5, tmpQ);
+      var dx = f.E - r.E, dn = f.N - r.N, len = Math.hypot(dx, dn); if (len < 0.5) return;
+      var ux = dx / len, un = dn / len, ce = (f.E + r.E) / 2 + un * 1.7, cn = (f.N + r.N) / 2 - ux * 1.7; // rechte Fahrspur
+      var hf = hAt(f.E + un * 1.7, f.N - ux * 1.7), hr = hAt(r.E + un * 1.7, r.N - ux * 1.7);
+      vehPut(q[2], X(ce), ((hf + hr) / 2 - H0) * vz, Z(cn), Math.atan2(dn, dx), Math.atan2((hf - hr) * vz, len), false);
+    });
+    if (window.__zgFollow === 'bus' && !st.at && !BUS.fol) BUS.fol = j;
+    if (BUS.fol === j) { var fp = pathAt(P, s, tmpP); ex.E = fp.E; ex.N = fp.N; }
+  });
+  vehEnd(BUS.parts.all);
+}
+function startBuses() { loadBuses(); }
+
+/* Bustypen: 12-m-Solobus und 18-m-Gelenkbus; Lackierung siehe busPaint */
+function busPaint(T) { // Platzhalter, wird nach Recherche ersetzt
+  T.rect(0, T.L, 0, 4, '#f4f4f2');
+  for (var x = 1.2; x < T.L - 2.6; x += 1.55) T.glass(x, x + 1.4, 1.35, 2.65);
+  T.glass(T.L - 2.4, T.L - 0.05, 1.0, 2.75);
+}
+function busParts() {
+  if (BUS.parts) return BUS.parts;
+  var base = { W: 2.55, H: 3.2, y0: 0.32, roofR: 0.25, botR: 0.12, tumble: 0.02, sideTop: 3.0, step: 0.9, texW: 512, roof: '#c9ccd0' };
+  function part(L, cap, nf, nb, wh) { var o = Object.assign({}, base, { L: L, noseF: nf, noseB: nb, noseW: 0.03, noseH: 0.03, wheels: wh, roofBoxes: [[L * 0.1, 2.6, 0.28, 1.9]] }); return vehPart(o, busPaint, cap); }
+  var solo = part(12.1, 160, 0.4, 0.3, [3.35, -2.6]), af = part(11.6, 80, 0.4, 0, [3.1, -2.6]), ar = part(6.0, 80, 0, 0.3, [-1.2]);
+  BUS.parts = { solo: solo, af: af, ar: ar, all: [solo, af, ar] };
+  return BUS.parts;
+}
+function busType(j) {
+  var p = busParts();
+  return /^(601|602|603|605|614)$/.test(j.line) ? { art: true, L: 18.1, Lf: 11.6, Lr: 6.0, front: p.af, rear: p.ar } : { art: false, L: 12.1, front: p.solo };
 }
 /* Schiffe der Zugersee Schifffahrt (MS Zug 45,6 × 9,2 m, MS Rigi 46,5 × 9,5 m): Liegeplatz am Bahnhofsteg entlang der Pfahlreihe */
 var SHIP_BERTH = { E: 2681471.4, N: 1224896.7, az: 74.5 }, SHIP_U = '8502251';
@@ -3587,7 +3850,7 @@ $('#tTrain').addEventListener('click', function () {
   TRN.on = !TRN.on; this.setAttribute('aria-pressed', String(TRN.on)); lastInteract = performance.now();
   if (TRN.on) startTrains(); else clearInterval(TRN.timer);
 });
-function startTrains() { clearInterval(TRN.timer); loadTrains(); TRN.timer = setInterval(function () { if (!document.hidden) loadTrains(); }, 180000); }
+function startTrains() { clearInterval(TRN.timer); loadTrains(); loadBuses(); TRN.timer = setInterval(function () { if (!document.hidden) { loadTrains(); loadBuses(); } }, 240000); }
 
 /* ---------------- sun shadow map ---------------- */
 var smScene = new THREE.Scene();
@@ -4550,6 +4813,7 @@ function frame(now) {
   updateOrtho(now);
   updateSb3(now);
   updateTrains(now);
+  if (GL) updateBuses(Date.now());
   U.uHeatOn.value += ((tempOn && TEMP.city.length ? 1 : 0) - U.uHeatOn.value) * Math.min(1, cdt * 4);
   U.uUVOn.value += ((uvOn ? 1 : 0) - U.uUVOn.value) * Math.min(1, cdt * 4); U.uUVClear.value = uvi(sun.alt, 400);
   updateShadow(now);
@@ -4659,7 +4923,8 @@ function frame(now) {
 }
 if (/[?&]debug\b/.test(location.search)) window.__zgFly = function (o) { flyTo(o); };
 if (/[?&]debug\b/.test(location.search)) window.__zgSun = function (t) { setSunT(t); };
-if (/[?&]debug\b/.test(location.search)) window.__zgTrains = function () { return { shipStops: TRN.ships.map(function (j) { return j.stops.map(function (x) { return [x.u, x.n, x.a, x.d]; }); }), berth: RAIL.berth, shipPos: TRN.shipMeshes.filter(function (m) { return m.visible; }).map(function (m) { return [Math.round(m.userData.E), Math.round(m.userData.N), Math.round(m.userData.az)]; }), pos: TRN.trains.filter(function (j) { return j.pos; }).map(function (j) { return [j.line, Math.round(j.pos.E), Math.round(j.pos.N)]; }), n: TRN.trains.length, ships: TRN.ships.length, cars: TRN.mesh ? TRN.mesh.count : -1, rail: RAIL.ok, sample: TRN.trains.slice(0, 3).map(function (j) { var s = journeyState(j, Date.now()); return [j.line, j.stops.map(function (x) { return x.n + ':' + x.v + ':' + Math.round(x.off); }).join(' / '), s && JSON.stringify(s)]; }) }; };
+if (/[?&]debug\b/.test(location.search)) window.__zgBuses = function () { return { n: BUS.list.length, net: !!BUS.net, parts: BUS.parts ? BUS.parts.all.map(function (p) { return p.n; }) : null, lines: BUS.list.slice(0, 8).map(function (j) { var st = journeyState(j, Date.now()); return [j.line, j.to, st && (st.at ? 'at' : Math.round(st.f * 100)), Math.round(j.P.L)]; }) }; };
+if (/[?&]debug\b/.test(location.search)) window.__zgTrains = function () { return { shipStops: TRN.ships.map(function (j) { return j.stops.map(function (x) { return [x.u, x.n, x.a, x.d]; }); }), berth: RAIL.berth, shipPos: TRN.shipMeshes.filter(function (m) { return m.visible; }).map(function (m) { return [Math.round(m.userData.E), Math.round(m.userData.N), Math.round(m.userData.az)]; }), pos: TRN.trains.filter(function (j) { return j.pos; }).map(function (j) { return [j.line, Math.round(j.pos.E), Math.round(j.pos.N)]; }), n: TRN.trains.length, ships: TRN.ships.length, cars: TRAIN_PARTS.reduce(function (a, p) { return a + p.n; }, 0), rail: RAIL.ok, sample: TRN.trains.slice(0, 3).map(function (j) { var s = journeyState(j, Date.now()); return [j.line, j.stops.map(function (x) { return x.n + ':' + x.v + ':' + Math.round(x.off); }).join(' / '), s && JSON.stringify(s)]; }) }; };
 if (/[?&]debug\b/.test(location.search)) window.__zgState = function () { return { ex: Object.assign({}, ex), cam: cam && Object.assign({}, cam), flight: flight && flight.to, mode: MODE, sel: SEL && [SEL.id, SEL.E, SEL.N] }; };
 if (TEST) {
   window.__frame = function () { frame(performance.now()); return true; }; window.__R = R;
