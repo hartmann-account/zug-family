@@ -1,6 +1,6 @@
 # zug-family
 
-„Zug entdecken“: Portal für den Kanton Zug auf einer dreidimensionalen Karte, ausgeliefert über Cloudflare Workers (statische Seite plus zwei kleine Endpunkte für Veranstaltungen).
+„Zug entdecken“: Portal für den Kanton Zug auf einer dreidimensionalen Karte, ausgeliefert über Cloudflare Workers (statische Seite plus kleine Endpunkte für Veranstaltungen, Parkhäuser, Temperaturen und Fahrplan).
 
 Die Startseite zeigt das Relief des ganzen Kantons und vier Einstiege:
 
@@ -9,7 +9,7 @@ Die Startseite zeigt das Relief des ganzen Kantons und vier Einstiege:
 - **Für Familien**: Spielplätze, Badis, Feuerstellen, Ausflugsziele, Kultur und Sport. Für jeden Spielplatz ist der Schattenanteil am 21. Juli berechnet; ein Filter zeigt nur Orte mit höchstens so viel Sonne (zur gewählten Uhrzeit oder im Tagesmittel 10–17 Uhr). Dazu UV-Index, Trinkbrunnen, WCs, die Lufttemperatur in der Nähe und an Badestellen am See die Wassertemperatur (Modellwert).
 - **Events**: Veranstaltungen live aus dem Veranstaltungskalender von Zug Tourismus (Guidle), mit Bild, Terminen, Ort auf der Karte und Filtern nach Zeitraum, Gemeinde und Kategorie.
 
-Auf der Karte lassen sich zuschalten: freie Plätze in den Parkhäusern (Parkleitsystem Zug, jede Minute) und die Lufttemperatur jetzt (rund 280 Sensoren der Stadt Zug und Stationen von MeteoSchweiz, als Werte und als Wärmefläche über der Stadt). In der Nahansicht kommen die Luftbilder live von swisstopo (SWISSIMAGE bis 10 cm), der See zeigt Uferlinie, Wellen, Spiegelung und Sonnenglanz.
+Auf der Karte lassen sich zuschalten: freie Plätze in den Parkhäusern (Parkleitsystem Zug, jede Minute), Züge und Kursschiffe nach Fahrplan, der UV-Index bei klarem Himmel für Datum und Uhrzeit und die Lufttemperatur jetzt (rund 280 Sensoren der Stadt Zug und Stationen von MeteoSchweiz, als Werte und als Wärmefläche über der Stadt). In der Nahansicht kommen die Luftbilder live von swisstopo (SWISSIMAGE bis 10 cm), die Gebäude erhalten ihre Dachformen aus swissBUILDINGS3D, der See zeigt Uferlinie, Wellen, Spiegelung und Sonnenglanz. Wer einen Ort wählt, sieht die Karte nach dem Heranfliegen langsam um ihn kreisen.
 
 Dazu ein Rundflug über den Kanton in sechs Stationen. Jede Ansicht hat eine eigene Adresse (`#/sehenswuerdigkeiten?g=cham`, `#/gemeinden/baar`, `#/events/<id>`), Zurück im Browser funktioniert.
 
@@ -43,12 +43,25 @@ Die Schnittstelle ist nicht öffentlich dokumentiert und kann sich ändern. Stab
 | `/api/parking` | Parkleitsystem Zug (`pls-zug.ch/?json=true`), freie Plätze, Preise, Koordinaten | 60 s |
 | `/api/temp` | Lufttemperaturen Stadt Zug (opendata.swiss, akenza-Schnittstelle mit dem öffentlich publizierten Schlüssel in `wrangler.jsonc`) und MeteoSchweiz-Messwerte (10 min, GeoJSON in LV95) | 10 min |
 | `/api/lake` | Alplakes (Eawag), Oberflächentemperatur aus dem Seemodell für Zugersee und Ägerisee | 3 h |
+| `/api/trains` | Abfahrtstafeln der Fahrplan-Schnittstelle von search.ch mit Folgehalten und Verspätungen: zehn Bahnhöfe (Zug, Baar, Cham, Rotkreuz, Steinhausen und weitere) und die Schiffstege Zug Bahnhofsteg und Arth am See | 3 min |
 
 Die Wärmefläche verbindet die Sensorwerte nach Entfernung und endet rund 350 m vom nächsten Sensor. Sie ist keine flächendeckende Messung. Die Hitzekarte der kantonalen Klimaanalyse (ZugMap) wäre die bessere Grundlage, war aber von ausserhalb der Schweiz nicht abrufbar.
 
+## Züge und Schiffe
+
+Für die Schweiz gibt es keinen offenen Datenstrom mit den Positionen der Fahrzeuge. opentransportdata.swiss bietet Echtzeit nur als Prognosen pro Halt an (GTFS-RT TripUpdates, OJP), ausdrücklich ohne Vehicle Positions. Die Karte schätzt die Lage deshalb aus Fahrplan und Verspätung: Zwischen zwei Halten fährt ein Zug mit Anfahr- und Bremsphase entlang der Gleisachsen aus swissTLM3D (`public/rail.json`, jedes Gleis einzeln, kürzester Weg im Gleisnetz). In Tunneln wird er ausgeblendet; Tunnel sind aus dem Gelände geschätzt (Gleis mehr als 9 m unter einer Hülle mit höchstens 3,5 % Steigung), nicht aus Tunneldaten. Liegt der vorige Halt ausserhalb der Karte (etwa Zürich HB), beginnt die Fahrt am nächsten Gleis am Kartenrand; die Strecke dorthin ist als Luftlinie geschätzt. Länge und Farbe folgen der Zugkategorie (IC/EC, IR/RE, S-Bahn), nicht dem eingesetzten Rollmaterial.
+
+Kursschiffe der Zugersee Schifffahrt fahren entlang der Fährlinien aus OpenStreetMap und legen an berechneten Liegeplätzen an: ab dem Steg so weit seewärts, bis der Rumpf ganz im Wasser liegt, parallel zum Ufer (`pipeline/rail/make_ferry.py`). Am Bahnhofsteg Zug ist der Liegeplatz nach den Pollern im Luftbild gesetzt. Da der Fahrplan an Zwischenhalten oft dieselbe Minute für An- und Abfahrt nennt, rechnet die Karte zwei Minuten Haltezeit um diese Minute. Die Saison 2026 endet am 1. November; danach bleibt das Schiff am Bahnhofsteg.
+
+Eine belastbarere Quelle wäre OJP 2.0 von opentransportdata.swiss mit kostenlosem Schlüssel (StopEventRequest, Limiten laut Plattform). geOps bietet echte Echtzeitpositionen an, verlangt aber einen Schlüssel und erlaubt die kostenlose Nutzung nur nicht kommerziell. search.ch erlaubt die Nutzung der Schnittstelle «für eigene Zwecke» und begrenzt sie auf 10'080 Abfahrtstabellen pro Tag; der Worker braucht 12 Tafeln alle drei Minuten pro Cache-Standort. Bei breiter Nutzung ist der Umstieg auf OJP angezeigt.
+
+## Gebäude in der Nahansicht
+
+Ab rund 2 km Kameraabstand lädt die Karte die Gebäude aus swissBUILDINGS3D als 3D Tiles von geo.admin.ch (b3dm mit Draco-Kompression, Decoder von jsDelivr) und blendet die einfachen Klötze aus `data/zg-base.js` an diesen Stellen aus. Dächer tragen das Luftbild, Fassaden sind aus Gebäudeart und Höhe gezeichnet: Altstadt verputzt, Kirchen und Türme mit wenigen hohen Fenstern, Bauten über 16 m mit Bandfenstern. Das Regierungsgebäude erhält Sandstein und hohe Geschosse, der Bahnhof Zug eine Glasfassade, hinter der in der Dämmerung die Farben der Lichtinstallation von James Turrell wechseln. Zwei abgebrochene Bauten am Strandbad, die im Datensatz noch stehen, sind ausgeblendet. Fotos der Bauten werden nicht als Textur verwendet.
+
 ## Strandbad Zug 2026
 
-`src/strandbad.js` beschreibt das im Mai 2026 eröffnete erweiterte Strandbad, weil SWISSIMAGE dort noch die Baustelle von 2025 zeigt und die Neubauten in den swisstopo-Gebäudedaten fehlen. Lage der Bauten nach OpenStreetMap (way 1502798337/1502798338) und Gebäuderegister; Form, Liegewiese, Sandbucht, Decks und Steine sind nach öffentlichen Angaben abgeschätzt. Das Modul malt den Boden in das Luftbild, `app.js` baut daraus die 3D-Teile. Sobald swisstopo neue Luftbilder und Gebäude liefert, kann das Modul entfallen.
+`src/strandbad.js` beschreibt das im Mai 2026 eröffnete erweiterte Strandbad, weil SWISSIMAGE dort noch die Baustelle von 2025 zeigt und die Neubauten in den swisstopo-Gebäudedaten fehlen. Lage der Bauten nach OpenStreetMap (way 1502798337/1502798338) und Gebäuderegister; Form, Liegewiese, Sandbucht, Decks und Steine sind nach öffentlichen Angaben abgeschätzt. Das Modul malt den Boden in das Luftbild, `app.js` baut daraus die 3D-Teile. Die Bucht vor dem Sandstrand zeigt flaches Wasser über Sand, wo das Luftbild noch Kies der Baustelle zeigt. Der Sprungturm im See ist nach dem Luftbild (10 cm) nachgebaut: runder Treppenkern, Plattform auf 5 m, Bretter auf 3 m und 1 m; das Abbild des Turms im Luftbild wird mit Wasser überdeckt. Sobald swisstopo neue Luftbilder und Gebäude liefert, kann das Modul entfallen.
 
 ## Inhalt
 
@@ -62,8 +75,9 @@ Die Wärmefläche verbindet die Sensorwerte nach Entfernung und endet rund 350 m
 | `data/zg-base.js` | Geodaten der Seite: Höhenmodell, Relief, Gemeindemaske, Gebäude, Bäume, Linien, Familienorte mit Schattenwerten |
 | `data/portal.json` | Sehenswürdigkeiten, Gemeindezahlen, Links und zusätzliche Familienorte (aus `pipeline/portal/build_portal.py`) |
 | `data/curated.json` | von Hand gepflegte Ergänzungen mit Quellen, z. B. Regierungsgebäude, Hinweise zum Strandbad |
-| `worker/index.js` | Cloudflare Worker mit `/api/events`, `/api/event`, `/api/parking`, `/api/temp`, `/api/lake` |
-| `pipeline/` | Python-Skripte für Datenbezug, Schattenberechnung und Kodierung; `pipeline/osm/` enthält die Overpass-Abfragen; `pipeline/portal/build_portal.py` schreibt `data/portal.json` |
+| `public/rail.json` | Gleisachsen (swissTLM3D), Bahnhöfe, Fährlinien und Schiffsliegeplätze, Koordinaten in Dezimetern |
+| `worker/index.js` | Cloudflare Worker mit `/api/events`, `/api/event`, `/api/parking`, `/api/temp`, `/api/lake`, `/api/trains` |
+| `pipeline/` | Python-Skripte für Datenbezug, Schattenberechnung und Kodierung; `pipeline/osm/` enthält die Overpass-Abfragen; `pipeline/portal/build_portal.py` schreibt `data/portal.json`; `pipeline/rail/` erzeugt `public/rail.json` (Gleise, dann Fährlinien mit `make_ferry.py`) |
 | `wrangler.jsonc`, `package.json` | Konfiguration für Cloudflare Workers |
 
 ## Neu bauen
@@ -76,7 +90,7 @@ Die Wärmefläche verbindet die Sensorwerte nach Entfernung und endet rund 350 m
 
 Schatten: Vegetations- und Gebäudehöhen ergeben sich aus swissSURFACE3D minus swissALTI3D (gelesen mit 1 m). Ein Punkt der Spielplatzfläche gilt als beschattet, wenn ein Strahl ab 1 m über Gelände, also etwa auf Kopfhöhe eines Kindes, in Richtung Sonne innerhalb von 95 m auf ein Hindernis trifft oder das Gelände im Umkreis von 8 km die Sonne verdeckt. Der Sonnenstand folgt dem NOAA-Verfahren, für die Schattenwerte am 21. Juli 2026. In der Nahansicht rechnet die Karte die Schatten für das gewählte Datum (21. Juli, heute, 21. Dezember) und die Uhrzeit direkt.
 
-UV-Index: Näherung aus Sonnenhöhe und Meereshöhe für wolkenlosen Himmel. Sie ersetzt keine Prognose von MeteoSchweiz.
+UV-Index: Näherung aus Sonnenhöhe und Meereshöhe für wolkenlosen Himmel. Die UV-Karte rechnet pro Bildpunkt weiter: Die Hälfte des Werts gilt als diffuser Anteil und bleibt auch im Schatten, die andere Hälfte folgt dem Einfallswinkel auf den Hang und fällt im Schatten von Gelände, Gebäuden und Bäumen weg. Farben nach den Stufen der WHO. Wolken sind nicht berücksichtigt. Die Werte ersetzen keine Prognose von MeteoSchweiz.
 
 Bäume: lokale Maxima des Vegetationshöhenmodells, eingefärbt aus dem Luftbild.
 
@@ -84,7 +98,7 @@ Grenzen: Die Vollständigkeit der OpenStreetMap-Daten ist nicht garantiert. Die 
 
 ## Daten und Rechte
 
-- Bundesamt für Landestopografie swisstopo: swissALTI3D, swissSURFACE3D, SWISSIMAGE, swissBOUNDARIES3D, Basiskarte Vektor. Es gelten die Nutzungsbedingungen von swisstopo für kostenlose Geodaten.
+- Bundesamt für Landestopografie swisstopo: swissALTI3D, swissSURFACE3D, SWISSIMAGE, swissBOUNDARIES3D, Basiskarte Vektor, swissBUILDINGS3D (3D Tiles, live), swissTLM3D Eisenbahn. Es gelten die Nutzungsbedingungen von swisstopo für kostenlose Geodaten.
 - © OpenStreetMap-Mitwirkende, Open Database License (ODbL) 1.0. Die abgeleitete Ortsdatenbank in `public/index.html` steht ebenfalls unter der ODbL.
 - Fotos von Wikimedia Commons unter der jeweils angegebenen Lizenz, für die Karte zugeschnitten und verkleinert.
 - Zug Tourismus: Die AGB (Ziffer V) erlauben die Übernahme von Texten und Bildern der Website nur mit schriftlicher Zustimmung. Von zug-tourismus.ch sind deshalb nur Fakten (Name, Ort, Koordinaten) übernommen und die Seiten verlinkt.
@@ -92,6 +106,7 @@ Grenzen: Die Vollständigkeit der OpenStreetMap-Daten ist nicht garantiert. Die 
 - Lufttemperaturen: Stadt Zug, Datensatz «Lufttemperaturen Stadt Zug» auf opendata.swiss (Nutzungsbedingung «Freie Nutzung»). Messwerte: MeteoSchweiz (CC BY 4.0, Quellenangabe «Quelle: MeteoSchweiz»).
 - Seetemperatur: Alplakes, Eawag. Für die Programmierschnittstelle ist Apache 2.0 angegeben, eine ausdrückliche Lizenz für die Daten fehlt; vor einer breiten Nutzung bei der Eawag nachfragen.
 - Parkhäuser: Parkleitsystem Zug AG (c/o WWZ). Nutzungsbedingungen sind nicht veröffentlicht.
+- Fahrplan und Verspätungen: Fahrplan-Schnittstelle von search.ch (Nutzung für eigene Zwecke, Tageslimite). Haltestellen: Dienststellen von SBB und opentransportdata.swiss. Fährlinien der Kursschiffe: OpenStreetMap (ODbL).
 - Veranstaltungen: Daten und Bilder stammen von den Veranstaltern über Guidle und den Kalender von Zug Tourismus. Sie werden live angezeigt und nicht gespeichert. Für die Anzeige der Bilder ausserhalb des Guidle-Kalenders braucht es die Zustimmung von Zug Tourismus beziehungsweise Guidle.
 - Einwohnerzahlen und Flächen: Bundesamt für Statistik und Statistik Kanton Zug, Quelle und Stichtag in der Gemeindeansicht.
 
