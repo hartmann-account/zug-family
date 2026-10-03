@@ -2813,7 +2813,7 @@ function shipModel(S) {
     return P;
   }
   var walls = []; // Umfangsmarken je Aufbau für die Lackierung
-  function block(P, y0, y1, row0, row1, roofRow, overhang) {
+  function block(P, y0, y1, row0, row1, roofRow, overhang, fasciaU) {
     var per = [0]; for (var k = 1; k <= P.length; k++) { var p = P[k - 1], q2 = P[k % P.length]; per.push(per[k - 1] + Math.hypot(q2[0] - p[0], q2[1] - p[1])); }
     var tot = per[per.length - 1];
     for (k = 0; k < P.length; k++) {
@@ -2827,7 +2827,8 @@ function shipModel(S) {
     for (k = 0; k < R.length; k++) idx.push(c, R[k], R[(k + 1) % R.length]);
     if (o > 0) for (k = 0; k < R.length; k++) { // Dachkante
       var p0 = P[k], p1 = P[(k + 1) % P.length], d0 = [p0[0] - cx, p0[1] - cz], d1 = [p1[0] - cx, p1[1] - cz], l0 = Math.hypot(d0[0], d0[1]) || 1, l1 = Math.hypot(d1[0], d1[1]) || 1;
-      quad(V(p0[0] + d0[0] / l0 * o, y1 - 0.3, p0[1] + d0[1] / l0 * o, 0.75, 1016), V(p1[0] + d1[0] / l1 * o, y1 - 0.3, p1[1] + d1[1] / l1 * o, 0.75, 1016), V(p1[0] + d1[0] / l1 * o, y1, p1[1] + d1[1] / l1 * o, 0.75, 1016), V(p0[0] + d0[0] / l0 * o, y1, p0[1] + d0[1] / l0 * o, 0.75, 1016));
+      var fu = fasciaU || [0.75, 1016];
+      quad(V(p0[0] + d0[0] / l0 * o, y1 - 0.3, p0[1] + d0[1] / l0 * o, fu[0], fu[1]), V(p1[0] + d1[0] / l1 * o, y1 - 0.3, p1[1] + d1[1] / l1 * o, fu[0], fu[1]), V(p1[0] + d1[0] / l1 * o, y1, p1[1] + d1[1] / l1 * o, fu[0], fu[1]), V(p0[0] + d0[0] / l0 * o, y1, p0[1] + d0[1] / l0 * o, fu[0], fu[1]));
     }
     walls.push({ P: P, per: per.map(function (v) { return v / tot; }), tot: tot, y0: y0, y1: y1, row0: row0, row1: row1 });
   }
@@ -2835,68 +2836,82 @@ function shipModel(S) {
   function rail(P, y0, h) {
     for (var k = 0; k < P.length - 1; k++) { var p0 = P[k], p1 = P[k + 1]; quad(V(p0[0], y0, p0[1], 0.1, 738), V(p1[0], y0, p1[1], 0.9, 738), V(p1[0], y0 + h, p1[1], 0.9, 682), V(p0[0], y0 + h, p0[1], 0.1, 682)); }
   }
-  var D = S.decks;
-  block(plan(D[0].x0, D[0].x1, D[0].w, D[0].rf, 0), deckY(0) - 0.05, D[0].y1, 200, 380, 980, 0.35);
-  block(plan(D[1].x0, D[1].x1, D[1].w, D[1].rf, 0), D[0].y1, D[1].y1, 380, 560, 980, 0.25);
-  block(plan(D[2].x0, D[2].x1, D[2].w, D[2].rf, 0), D[1].y1, D[2].y1, 560, 680, 980, 0.3);
-  // Reling: Bug, Sonnendeck, Achterdeck auf dem Salondach
-  var bow = []; for (var bx = D[0].x1 + 0.5; bx <= L / 2 - 0.3; bx += 0.8) bow.push([bx, hw(bx, deckY(bx)) - 0.1]);
-  var bowR = bow.map(function (p) { return [p[0], -p[1]]; }).reverse();
-  rail(bow.concat(bowR), deckY(D[0].x1 + 0.5), 1.0);
-  rail([[D[1].x0, D[1].w], [D[1].x1 - D[1].rf, D[1].w], [D[1].x1 - D[1].rf, -D[1].w], [D[1].x0, -D[1].w]], D[1].y1, 1.0);
-  rail([[D[1].x0, D[0].w], [D[0].x0, D[0].w], [D[0].x0, -D[0].w], [D[1].x0, -D[0].w]], D[0].y1, 1.0);
-  // Mast mit Flagge am Heck, Signalmast auf dem Steuerhaus
-  function stick(x, z, y0, y1, w, row) { var a = V(x - w, y0, z, 0.5, row), b = V(x + w, y0, z, 0.5, row), c = V(x + w, y1, z, 0.5, row), d = V(x - w, y1, z, 0.5, row); quad(a, b, c, d); var e = V(x, y0, z - w, 0.5, row), f = V(x, y0, z + w, 0.5, row), g = V(x, y1, z + w, 0.5, row), h = V(x, y1, z - w, 0.5, row); quad(e, f, g, h); }
+  var Mn = S.main, Up = S.upper, Cn = S.canopy, Wh = S.wheel, WHITE = [0.54, 900];
+  block(plan(Mn.x0, Mn.x1, Mn.w, Mn.rf), deckY(0) - 0.05, Mn.y1, 200, 380, 980, 0.12, WHITE);  // Salon Hauptdeck mit breiter Dachkante
+  block(plan(Up.x0, Up.x1, Up.w, Up.rf), Mn.y1, Up.y1, 380, 560, 980, 0, WHITE);               // verglaster Salon Oberdeck
+  // Sonnendach über dem Oberdeck, hinten offen: Platte mit Unterseite und Kante
+  (function () {
+    var P = plan(Cn.x0, Cn.x1, Cn.w, Cn.rf), cx = 0, cz = 0; P.forEach(function (p) { cx += p[0]; cz += p[1]; }); cx /= P.length; cz /= P.length;
+    [Cn.y0, Cn.y1].forEach(function (y) { var c = V(cx, y, cz, 0.54, 900), R = P.map(function (p) { return V(p[0], y, p[1], 0.54, 900); }); for (var k = 0; k < R.length; k++) idx.push(c, R[k], R[(k + 1) % R.length]); });
+    for (var k = 0; k < P.length; k++) { var p0 = P[k], p1 = P[(k + 1) % P.length]; quad(V(p0[0], Cn.y0, p0[1], 0.54, 900), V(p1[0], Cn.y0, p1[1], 0.54, 900), V(p1[0], Cn.y1, p1[1], 0.54, 900), V(p0[0], Cn.y1, p0[1], 0.54, 900)); }
+    // schräger Abschluss am Heck (Seitenschilde)
+    [-1, 1].forEach(function (sd) { var z = sd * (Cn.w - 0.05); quad(V(Cn.x0, Cn.y1, z, 0.54, 900), V(Cn.x0 + 2.2, Cn.y1, z, 0.54, 900), V(Cn.x0 + 3.0, Mn.y1, z, 0.54, 900), V(Cn.x0 + 1.4, Mn.y1, z, 0.54, 900)); });
+  })();
+  block(plan(Wh.x0, Wh.x1, Wh.w, Wh.rf), Cn.y1, Wh.y1, 560, 680, 980, 0.4);                    // Steuerhaus, Dachkante blau
+  // Reling: Bug, Achterdeck, offenes Oberdeck, Sonnendeck auf dem Dach
+  var bow = []; for (var bx = Mn.x1 + 0.4; bx <= L / 2 - 0.3; bx += 0.8) bow.push([bx, hw(bx, deckY(bx)) - 0.1]);
+  rail(bow.concat(bow.map(function (p) { return [p[0], -p[1]]; }).reverse()), deckY(Mn.x1 + 0.4), 1.0);
+  var aft = []; for (var ax = Mn.x0 - 0.2; ax >= -L / 2 + 0.4; ax -= 0.8) aft.push([ax, hw(ax, deckY(ax)) - 0.1]);
+  rail(aft.concat(aft.map(function (p) { return [p[0], -p[1]]; }).reverse()), deckY(-L / 2), 1.0);
+  rail([[Up.x0, Mn.w], [Mn.x0, Mn.w], [Mn.x0, -Mn.w], [Up.x0, -Mn.w]], Mn.y1, 1.0);
+  rail([[-2.6, Cn.w - 0.2], [Cn.x1 - Cn.rf, Cn.w - 0.2]], Cn.y1, 1.0); rail([[-2.6, -(Cn.w - 0.2)], [Cn.x1 - Cn.rf, -(Cn.w - 0.2)]], Cn.y1, 1.0);
+  rail([[-2.6, Cn.w - 0.2], [-2.6, -(Cn.w - 0.2)]], Cn.y1, 1.0);
+  // Stützen des Sonnendachs über dem offenen Oberdeck
+  function stick(x, z, y0, y1, w, row, x1) { x1 = x1 == null ? x : x1; var a = V(x - w, y0, z, 0.5, row), b = V(x + w, y0, z, 0.5, row), c = V(x1 + w, y1, z, 0.5, row), d = V(x1 - w, y1, z, 0.5, row); quad(a, b, c, d); var e = V(x, y0, z - w, 0.5, row), f = V(x, y0, z + w, 0.5, row), g = V(x1, y1, z + w, 0.5, row), h = V(x1, y1, z - w, 0.5, row); quad(e, f, g, h); }
+  [-15.6, -12.2, -8.8, -5.6].forEach(function (x) { [-1, 1].forEach(function (sd) { stick(x, sd * (Cn.w - 0.25), Mn.y1, Cn.y0, 0.07, 1020); }); });
+  // Flaggenstock am Heck, schräger Radarmast hinter dem Steuerhaus mit Radarbalken
   stick(-L / 2 + 0.6, 0, deckY(-L / 2), deckY(-L / 2) + 4.2, 0.05, 1020);
   (function () { var x = -L / 2 + 0.6, y = deckY(-L / 2) + 4.15; quad(V(x, y - 1.0, 0, 0.93, 1004), V(x - 1.0, y - 1.0, 0, 0.99, 1004), V(x - 1.0, y, 0, 0.99, 990), V(x, y, 0, 0.93, 990)); })();
-  stick((D[2].x0 + D[2].x1) / 2, 0, D[2].y1, D[2].y1 + 2.6, 0.06, 1020);
+  stick(S.mast[0], 0, Wh.y1, S.mast[3], 0.12, 1020, S.mast[1]);
+  (function () { var y = S.mast[2], x = S.mast[1] + 0.9; quad(V(x - 1.1, y, -0.12, 0.5, 1020), V(x + 1.1, y, -0.12, 0.5, 1020), V(x + 1.1, y + 0.22, 0.12, 0.5, 1020), V(x - 1.1, y + 0.22, 0.12, 0.5, 1020)); })();
   var g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   g.setIndex(idx); g.computeVertexNormals();
   return { g: g, walls: walls, deckY: deckY };
 }
-/* Kursschiff nach MS Zug (2003, 45,6 × 9,2 m): weisser Rumpf mit breitem dunklem Marineband und dünnem blauem Streifen,
-   rotbrauner Unterwasseranstrich, zwei verglaste Salondecks mit blauen Kanten, Steuerhaus mit Radarmast. Farben aus Fotos geschätzt.
-   Welches Schiff im Herbst 2026 fährt, ist offen; der Name wird deshalb nicht geschrieben. */
-var SHIP_SPEC = { L: 45.6, B: 9.2, draft: 1.0, freeboard: 1.95, sheer: 0.85, bowStart: 0.7, sternR: 3.2,
-  decks: [{ x0: -20.6, x1: 12.6, w: 4.2, rf: 2.6, y1: 4.5 }, { x0: -13.8, x1: 8.6, w: 4.05, rf: 3.0, y1: 6.9 }, { x0: -1.6, x1: 5.6, w: 2.9, rf: 1.9, y1: 9.0 }] };
+/* Kursschiff MS Zug (ÖSWAG 2003, 45,6 × 9,2 m), nach einem Foto vom Oktober 2026 vermessen (45,6 m ≈ 1'122 px):
+   weisser Rumpf mit dunklem Band knapp unter dem Deck, dünnem blauem Streifen, Bullaugen und rotbraunem Anstrich an der
+   Wasserlinie, Name «ZUG» am Bug; Hauptdecksalon mit hohem Fensterband und breiter weisser Dachkante, Oberdeck vorne verglast,
+   hinten offen unter dem Sonnendach, darauf das Steuerhaus mit Reling und schrägem Radarmast. Farben aus Fotos geschätzt. */
+var SHIP_SPEC = { L: 45.6, B: 9.2, draft: 1.0, freeboard: 1.9, sheer: 0.55, bowStart: 0.7, sternR: 3.2, name: 'ZUG',
+  main: { x0: -17.6, x1: 13.9, w: 4.3, rf: 2.4, y1: 4.45 }, upper: { x0: -5.0, x1: 12.2, w: 4.15, rf: 2.8, y1: 6.1 },
+  canopy: { x0: -19.1, x1: 13.3, w: 4.4, rf: 3.2, y0: 6.1, y1: 6.7 }, wheel: { x0: -0.8, x1: 8.6, w: 2.7, rf: 1.6, y1: 9.15 },
+  mast: [4.3, 2.7, 11.2, 13.4] }; // Fuss x, Spitze x, Höhe Radarbalken, Höhe Spitze
 function shipPart() {
   if (TRN.shipPart) return TRN.shipPart;
   var M = shipModel(SHIP_SPEC), S = SHIP_SPEC, AW = 1024;
   var cv = document.createElement('canvas'); cv.width = AW; cv.height = 1024; var c = cv.getContext('2d');
   c.fillStyle = '#f5f6f5'; c.fillRect(0, 0, AW, 1024);
-  // Rumpf, je Seite ein Band von 100 Zeilen: Höhe y -> Zeile
-  var Ht = S.freeboard + S.sheer + S.draft;
+  // Rumpf, je Seite ein Band von 100 Zeilen (Backbord normal, Steuerbord gespiegelt beschriftet): Höhe y -> Zeile
+  var Ht = S.freeboard + S.sheer + S.draft, X = function (x) { return (x + S.L / 2) / S.L * AW; };
   [0, 100].forEach(function (r0) {
     var R = function (y) { return r0 + 100 * (1 - (y + S.draft) / Ht); };
-    c.fillStyle = '#4a2a20'; c.fillRect(0, R(0.08), AW, R(-S.draft) - R(0.08));            // Unterwasser
-    c.fillStyle = '#0d1430'; c.fillRect(0, R(1.0), AW, R(0.08) - R(1.0));                   // Marineband
-    c.fillStyle = '#1e50b4'; c.fillRect(0, R(1.28), AW, R(1.12) - R(1.28));                 // blauer Streifen
-    c.fillStyle = '#dfe2e4'; c.fillRect(0, R(S.freeboard + S.sheer), AW, 2);               // Deckkante
-    c.fillStyle = 'rgba(30,40,60,0.8)'; for (var k = 0; k < 3; k++) { c.beginPath(); c.arc(AW * (0.42 + k * 0.05), R(0.4), 2.2, 0, 7); c.fill(); } // Bullaugen
-    // Band steigt zum Bug
-    c.fillStyle = '#0d1430'; c.beginPath(); c.moveTo(AW * 0.84, R(1.0)); c.lineTo(AW, R(1.65)); c.lineTo(AW, R(0.08)); c.lineTo(AW * 0.84, R(0.08)); c.fill();
-    c.fillStyle = '#1e50b4'; c.beginPath(); c.moveTo(AW * 0.84, R(1.12)); c.lineTo(AW, R(1.77)); c.lineTo(AW, R(1.93)); c.lineTo(AW * 0.84, R(1.28)); c.fill();
-  });
-  // Wände der Aufbauten: Fenster je Abschnitt (Front, Seiten, Heck), blaue Kante oben
-  function wallPaint(w, winY0, winY1, pitch, opts) {
-    var r = function (h) { return w.row1 - (w.row1 - w.row0) * h / (w.y1 - w.y0); }, H = w.y1 - w.y0, n = w.P.length;
-    c.fillStyle = '#1e50b4'; c.fillRect(0, r(H - 0.08), AW, r(H - 0.26) - r(H - 0.08) < 0 ? 3 : r(H - 0.26) - r(H - 0.08));
-    for (var k = 0; k < n; k++) {
-      var u0 = w.per[k], u1 = w.per[k + 1], segL = (u1 - u0) * w.tot, back = k === n - 2;
-      if (segL < 1.8) { c.fillStyle = 'rgba(43,58,74,0.55)'; c.clearRect(u0 * AW, r(winY1), (u1 - u0) * AW + 1, r(winY0) - r(winY1)); c.fillRect(u0 * AW, r(winY1), (u1 - u0) * AW + 1, r(winY0) - r(winY1)); continue; }
-      var m = back ? 0.6 : 0.35, cnt = Math.max(1, Math.round((segL - 2 * m) / pitch)), ww = (segL - 2 * m) / cnt;
-      for (var q = 0; q < cnt; q++) {
-        var a = u0 + (m + q * ww + 0.07) / w.tot, b = u0 + (m + (q + 1) * ww - 0.07) / w.tot;
-        if (back && opts && opts.door && q === Math.floor(cnt / 2)) { c.fillStyle = 'rgba(43,58,74,0.55)'; c.clearRect(a * AW, r(winY1), (b - a) * AW, r(0.05) - r(winY1)); c.fillRect(a * AW, r(winY1), (b - a) * AW, r(0.05) - r(winY1)); continue; }
-        c.fillStyle = '#d9dcde'; c.fillRect(a * AW - 1, r(winY1) - 1, (b - a) * AW + 2, r(winY0) - r(winY1) + 2);
-        c.clearRect(a * AW, r(winY1), (b - a) * AW, r(winY0) - r(winY1)); c.fillStyle = 'rgba(43,58,74,0.55)'; c.fillRect(a * AW, r(winY1), (b - a) * AW, r(winY0) - r(winY1));
-      }
+    c.fillStyle = '#6b3a2a'; c.fillRect(0, R(0.22), AW, R(-S.draft) - R(0.22));            // rotbrauner Anstrich an der Wasserlinie
+    c.fillStyle = '#1e50b4'; c.fillRect(0, R(1.08), AW, R(1.0) - R(1.08));                  // dünner blauer Streifen
+    c.fillStyle = '#0d1430'; c.fillRect(0, R(1.38), AW, R(1.08) - R(1.38));                 // dunkles Band
+    c.beginPath(); c.moveTo(AW * 0.84, R(1.38)); c.lineTo(AW, R(1.95)); c.lineTo(AW, R(1.6)); c.lineTo(AW * 0.84, R(1.08)); c.fill();
+    c.fillStyle = '#1e50b4'; c.beginPath(); c.moveTo(AW * 0.84, R(1.08)); c.lineTo(AW, R(1.6)); c.lineTo(AW, R(1.52)); c.lineTo(AW * 0.84, R(1.0)); c.fill();
+    c.fillStyle = 'rgba(40,46,56,0.9)'; [-12, -6, 0, 6].forEach(function (x) { c.beginPath(); c.arc(X(x), R(0.62), 2.4, 0, 7); c.fill(); }); // Bullaugen
+    c.fillStyle = '#dfe2e4'; c.fillRect(0, R(S.freeboard + S.sheer), AW, 2);
+    if (S.name) { // Name am Bug, auf der Steuerbordseite gespiegelt, damit er von aussen lesbar ist
+      c.save(); c.fillStyle = '#0d1430'; c.font = 'bold 40px sans-serif'; c.textBaseline = 'alphabetic';
+      var x0 = X(16.4), x1 = X(18.4), yb = R(1.68), yt = R(2.08), tw = c.measureText(S.name).width;
+      c.translate(r0 ? x1 : x0, yb); c.scale((r0 ? -1 : 1) * (x1 - x0) / tw, (yb - yt) / 30); c.fillText(S.name, 0, 0); c.restore();
     }
+  });
+  // Wände der Aufbauten. Umfang: Bogen vorne (Segmente 0–7), linke Seite (8), Heckwand (9), rechte Seite (10)
+  function glassRect(u0, u1, r0, r1) { c.fillStyle = '#1b1f24'; c.fillRect(u0 * AW - 1, r1 - 1, (u1 - u0) * AW + 2, r0 - r1 + 2); c.clearRect(u0 * AW, r1, (u1 - u0) * AW, r0 - r1); c.fillStyle = 'rgba(43,58,74,0.55)'; c.fillRect(u0 * AW, r1, (u1 - u0) * AW, r0 - r1); }
+  function wallPaint(w, d, h0, h1, wins, back) {
+    var r = function (h) { return w.row1 - (w.row1 - w.row0) * h / (w.y1 - w.y0); }, P = w.P, n = P.length;
+    var uL = function (x) { return w.per[n - 3] + ((d.x1 - d.rf) - x) / w.tot; }, uR = function (x) { return w.per[n - 1] + (x - d.x0) / w.tot; };
+    glassRect(0, w.per[n - 3], r(h0), r(h1)); // Panoramafenster an der Front
+    wins.forEach(function (q) { if (q[2] === 'door') { glassRect(uL(q[1]), uL(q[0]), r(0.05), r(h1)); glassRect(uR(q[0]), uR(q[1]), r(0.05), r(h1)); } else { glassRect(uL(q[1]), uL(q[0]), r(h0), r(h1)); glassRect(uR(q[0]), uR(q[1]), r(h0), r(h1)); } });
+    var b0 = w.per[n - 2], b1 = w.per[n - 1], bw = b1 - b0; // Heckwand
+    (back || []).forEach(function (q) { glassRect(b0 + bw * q[0], b0 + bw * q[1], r(q[2] === 'door' ? 0.05 : h0), r(h1)); });
   }
-  wallPaint(M.walls[0], 0.75, 2.4, 2.4, { door: true });
-  wallPaint(M.walls[1], 0.55, 2.2, 2.6, { door: true });
-  wallPaint(M.walls[2], 0.9, 1.95, 1.5);
+  wallPaint(M.walls[0], S.main, 0.12, 1.68, [[-17.2, -13.4], [-13.2, -9.4], [-9.2, -5.4], [-5.2, -1.6], [-1.2, 4.6, 'door'], [4.9, 8.4], [8.6, 11.5]], [[0.08, 0.4], [0.42, 0.58, 'door'], [0.6, 0.92]]);
+  wallPaint(M.walls[1], S.upper, 0.25, 1.5, [[-4.6, -0.8], [-0.6, 3.2], [3.4, 7.2], [7.4, 9.4]], [[0.08, 0.42], [0.44, 0.56, 'door'], [0.58, 0.92]]);
+  wallPaint(M.walls[2], S.wheel, 1.1, 2.3, [[-0.5, 3.0], [3.2, 6.9]], [[0.15, 0.85]]);
   // Reling: Glas mit weissem Handlauf
   c.clearRect(0, 682, AW, 56); c.fillStyle = 'rgba(160,175,185,0.55)'; c.fillRect(0, 682, AW, 56); c.fillStyle = '#f2f3f3'; c.fillRect(0, 682, AW, 7); c.fillRect(0, 730, AW, 8);
   // Flächen: Deck (links), Dächer (rechts), Schweizer Flagge
