@@ -401,6 +401,7 @@ function setMode(m, changed) {
   MODE = m;
   panel.inert = m === 'home' || touring;
   ['home', 'gemeinden', 'sights', 'familie', 'events'].forEach(function (k) { document.body.classList.toggle('m-' + k, k === m); });
+  if (typeof fitCtl === 'function') fitCtl();
   Array.prototype.forEach.call(document.querySelectorAll('#tabs a'), function (a) { if (a.dataset.mode === m) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   if (changed) {
     if (SEL || selGem) closeDetail(true);
@@ -926,6 +927,15 @@ function setSheet(s) {
   var top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top')) || 50;
   panel.style.setProperty('--sheet', s === 'peek' ? '26svh' : s === 'full' ? 'calc(100svh - ' + (top + 14) + 'px - var(--tabbar))' : '52svh');
 }
+// Kartenknöpfe auf dem Handy: reicht der Platz über dem halb offenen Blatt nicht, stehen sie in zwei Spalten
+function fitCtl() {
+  var g = document.querySelector('#mapctl .grp2:not(.zoom)'); if (!g) return;
+  g.classList.remove('cols2');
+  if (innerWidth > 760 || document.body.classList.contains('m-home')) return;
+  var tab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tabbar')) || 56;
+  if (g.getBoundingClientRect().bottom > innerHeight * 0.48 - tab - 8) g.classList.add('cols2');
+}
+window.addEventListener('resize', fitCtl);
 $('#handle').addEventListener('click', function () { setSheet(sheet === 'half' ? 'full' : sheet === 'full' ? 'peek' : 'half'); });
 // Wer im Blatt mit dem Finger nach unten scrollt, will die Liste sehen: Blatt dann auf volle Höhe ziehen.
 var sheetTouch = false;
@@ -1012,7 +1022,7 @@ var U = {
   uShadowMap: { value: blank }, uShadowMat: { value: new THREE.Matrix4() }, uShadowOn: { value: 0 }, uShadowTexel: { value: 1 }, uShadowRange: { value: 50000 }, uSMSize: { value: SM },
   uOrthoF: { value: blank }, uOrthoC: { value: blank }, uOrthoFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uOrthoCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uOrthoMix: { value: 0 }, uOrthoDim: { value: 1 },
-  uHeat: { value: blank }, uHeatRect: { value: new THREE.Vector4(0, 0, 1, 1) }, uHeatOn: { value: 0 },
+  uHeat: { value: blank }, uHeatRect: { value: new THREE.Vector4(0, 0, 1, 1) }, uHeatOn: { value: 0 }, uUVOn: { value: 0 }, uUVClear: { value: 0 },
   uCov: { value: blank },
   uWaterF: { value: blank }, uWaterC: { value: blank }, uWaterFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uWaterCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uHgt: { value: blank }, uHgtSize: { value: new THREE.Vector2(nx, ny) }
@@ -1103,7 +1113,11 @@ var terrainMat = new THREE.ShaderMaterial({
     'uniform vec3 uLand, uLit, uShade, uForest, uOut, uWater, uWaterDeep, uContour, uHi, uFog;',
     'uniform float uFocus, uContourA, uHover, uTime, uFogNear, uFogFar, uDark, uHiAny, uVZ; uniform float uHiv[12];',
     LIGHT, SHADOW, ORTHO, COMMON, WATER,
-    'uniform sampler2D uHeat; uniform vec4 uHeatRect; uniform float uHeatOn;',
+    'uniform sampler2D uHeat; uniform vec4 uHeatRect; uniform float uHeatOn, uUVOn, uUVClear;',
+    // UV-Index in den WHO-Farben: 0–2 grün, 3–5 gelb, 6–7 orange, 8–10 rot, ab 11 violett
+    'vec3 uvRamp(float u){ vec3 c = vec3(0.16, 0.58, 0.0);',
+    '  c = mix(c, vec3(0.97, 0.89, 0.0), smoothstep(2.35, 2.65, u)); c = mix(c, vec3(0.97, 0.35, 0.0), smoothstep(5.35, 5.65, u));',
+    '  c = mix(c, vec3(0.85, 0.0, 0.11), smoothstep(7.35, 7.65, u)); c = mix(c, vec3(0.42, 0.29, 0.78), smoothstep(10.35, 10.65, u)); return c; }',
     'varying vec2 vUv; varying vec3 vW; varying float vDist;',
     'vec3 tNormal(vec2 uv){',
     '  vec2 t = 1.0/uHgtSize; vec2 q = (uv*(uHgtSize-1.0)+0.5)/uHgtSize;',
@@ -1177,6 +1191,16 @@ var terrainMat = new THREE.ShaderMaterial({
     '    if(uh.x > 0.0 && uh.x < 1.0 && uh.y > 0.0 && uh.y < 1.0){ vec4 hc = texture2D(uHeat, uh); col = mix(col, hc.rgb, hc.a*uHeatOn*mix(0.78, 0.42, uOrthoMix)); } }',
     '  col = mix(col, wc, water);',
     '  col = mix(col, uOut, uFocus*(1.0-inside)*0.52);',
+    // UV-Karte: Wert bei klarem Himmel für die Höhe über Meer; direkter Anteil nach Hangneigung und Schatten, diffuser Anteil bleibt
+    '  if(uUVOn > 0.001){',
+    '    vec3 Nu = water > 0.5 ? vec3(0.0, 1.0, 0.0) : tNormal(vUv); float su = max(uSunDir.y, 0.0);',
+    // im See liegt das Geländenetz am Seegrund: dort keinen Schattentest
+    '    float lu = max(dot(Nu, uSunDir), 0.0), vu = water > 0.5 ? 1.0 : lu > 0.0 ? shadowVis(vW, Nu, lu) : 0.0;',
+    '    float hz = water > 0.5 ? 413.6 : h;',
+    '    float uvx = uUVClear*(1.0 + 0.1*max(0.0, hz - 400.0)/1000.0)*(0.5 + 0.5*clamp(lu/max(su, 0.1), 0.0, 1.5)*vu);',
+    // Farbe nach Helligkeit einfärben statt überblenden: Blau des Sees und Gelb ergäben sonst ein irreführendes Grün
+    '    float lum = mix(dot(col, vec3(0.3, 0.59, 0.11)), 0.75, water); col = mix(col, uvRamp(uvx)*(0.66 + 0.42*lum), uUVOn*mix(mix(0.85, 0.72, uOrthoMix), 0.93, water));',
+    '    col = mix(col, uOut, uUVOn*uFocus*(1.0-inside)*(1.0-water)*0.3); }',
     '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
     '  gl_FragColor = vec4(col, 1.0);',
     '}'
@@ -3259,7 +3283,16 @@ function showTempPop(c, kind) {
 var legEl = $('#tLegend');
 function updLegend() {
   if (!legEl) return;
-  legEl.hidden = !tempOn;
+  legEl.hidden = !tempOn && !uvOn; legEl.classList.toggle('uvleg', !!uvOn);
+  if (uvOn) {
+    if (legEl.dataset.k === 'uv') return;
+    legEl.dataset.k = 'uv';
+    legEl.innerHTML = '<b>UV-Index bei klarem Himmel</b><span class="bar uvbar"></span><span class="uvsc"><span>0–2</span><span>3–5</span><span>6–7</span><span>8–10</span><span>11+</span></span>' +
+      '<div class="sun" id="sunUV"></div><span class="src">Geschätzt aus Sonnenstand, Höhe über Meer, Hangneigung und Schatten von Gelände, Gebäuden und Bäumen. Wolken senken den Wert und sind nicht berücksichtigt.</span>';
+    buildSunUI($('#sunUV'), { compact: true });
+    return;
+  }
+  legEl.dataset.k = 'temp';
   if (!tempOn) return;
   if (TEMP.state === 'error' && !TEMP.city.length && !TEMP.st.length) { legEl.innerHTML = '<b>Lufttemperatur</b><span class="src">Die Messwerte konnten nicht geladen werden.</span>'; return; }
   if (!TEMP.at) { legEl.innerHTML = '<b>Lufttemperatur</b><span class="src">Messwerte werden geladen …</span>'; return; }
@@ -3296,8 +3329,16 @@ function fillWx(it) {
     box.innerHTML = h; box.hidden = !h;
   });
 }
+var uvOn = false;
+function setUV(on) { uvOn = on; $('#tUV').setAttribute('aria-pressed', String(on)); updLegend(); }
+$('#tUV').addEventListener('click', function () {
+  lastInteract = performance.now(); if (MODE === 'home' && !uvOn) go('gemeinden');
+  if (!uvOn && tempOn) $('#tTemp').click();
+  setUV(!uvOn);
+});
 $('#tTemp').addEventListener('click', function () {
   lastInteract = performance.now(); if (MODE === 'home' && !tempOn) go('gemeinden');
+  if (!tempOn && uvOn) setUV(false);
   tempOn = !tempOn; this.setAttribute('aria-pressed', String(tempOn));
   clearInterval(tempTimer);
   if (tempOn) {
@@ -3425,7 +3466,8 @@ function frame(now) {
   updateOrtho(now);
   updateSb3(now);
   updateTrains(now);
-  U.uHeatOn.value += ((tempOn && TEMP.city.length ? 1 : 0) - U.uHeatOn.value) * Math.min(1, dt * 4);
+  U.uHeatOn.value += ((tempOn && TEMP.city.length ? 1 : 0) - U.uHeatOn.value) * Math.min(1, cdt * 4);
+  U.uUVOn.value += ((uvOn ? 1 : 0) - U.uUVOn.value) * Math.min(1, cdt * 4); U.uUVClear.value = uvi(sun.alt, 400);
   updateShadow(now);
 
   if (listDirty && now - lastListUpd > 150) { if (MODE === 'familie') { lastListUpd = now; renderList(); } else listDirty = false; }
