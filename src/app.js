@@ -2127,7 +2127,7 @@ function updateSb3(now) {
    dem Gelände geschätzt: Bahnen steigen höchstens wenige Prozent; liegt das Gelände deutlich über einer solchen Linie,
    fährt der Zug im Tunnel und ist nicht zu sehen. */
 var RAIL = { p: null, ok: false, VE: null, VN: null, adj: null, grid: {}, ribbons: null, paths: {} };
-var TRN = { on: true, at: 0, req: null, trains: [], ships: [], mesh: null, cap: 0, shipMeshes: [], timer: null, updated: '' };
+var TRN = { on: true, at: 0, req: null, trains: [], ships: [], mesh: null, cap: 0, shipPos: [], timer: null, updated: '' };
 function loadRail() {
   if (!RAIL.p) RAIL.p = fetch('rail.json').then(function (r) { if (!r.ok) throw new Error('rail'); return r.json(); }).then(buildRail).catch(function () { RAIL.p = null; });
   return RAIL.p;
@@ -2286,63 +2286,131 @@ function buildRibbons() {
 /* Zuglackierung aus Parametern: Kasten, Streifen, Fensterbänder, Türen, Kopf mit Frontscheibe */
 function trainPaint(sp, head) {
   return function (T) {
-    var L = T.L, cab = head ? sp.cab : 0;
+    var L = T.L, cab = head ? sp.cab : 0, cabB = sp.both ? sp.cab : 0;
     T.rect(0, L, 0, 6, sp.body);
-    (sp.stripes || []).forEach(function (st) { T.rect(st[3] || 0, L - (head && st[4] ? cab : 0), st[0], st[1], st[2]); });
-    var doors = sp.doors(L, head), dw = sp.doorW || 1.3;
+    (sp.stripes || []).forEach(function (st) { T.rect(0, L, st[0], st[1], st[2]); });
+    (sp.band || []).forEach(function (b) { T.rect(cabB ? cabB : 0.5, L - (head ? cab : 0.5), b[0], b[1], b[2]); });
+    var doors = sp.doors ? sp.doors(L, head) : [], dw = sp.doorW || 1.3;
     function inDoor(x0, x1) { return doors.some(function (dx) { return x1 > dx - dw / 2 - 0.15 && x0 < dx + dw / 2 + 0.15; }); }
-    sp.win.forEach(function (b) {
-      var pitch = b[2] || sp.pitch, w = pitch * (b[3] || 0.82), xa = head ? 1.0 : 0.9, xb = L - (head ? cab + 0.6 : 0.9);
-      for (var x = xa; x + w <= xb; x += pitch) if (!inDoor(x, x + w)) T.glass(x, x + w, b[0], b[1]);
+    (sp.win || []).forEach(function (b) {
+      var pitch = b[2] || sp.pitch, w = pitch * (b[3] || 0.82), xa = (cabB ? cabB + 0.4 : 0.9), xb = L - (head ? cab + 0.5 : 0.9);
+      for (var x = xa; x + w <= xb; x += pitch) if (!inDoor(x, x + w)) T.glass(x, x + w, b[0], b[1], b[4] || 'rgba(21,21,21,1)');
     });
     doors.forEach(function (dx) {
       T.rect(dx - dw / 2, dx + dw / 2, sp.floor, sp.doorTop, sp.doorCol || sp.body);
-      T.glass(dx - dw / 2 + 0.12, dx - 0.04, sp.doorWin[0], sp.doorWin[1], 'rgba(60,62,66,1)'); T.glass(dx + 0.04, dx + dw / 2 - 0.12, sp.doorWin[0], sp.doorWin[1], 'rgba(60,62,66,1)');
-      T.line(dx - dw / 2, dx + dw / 2, sp.doorTop, 2, 'rgba(40,40,40,0.6)');
+      if (sp.doorHead) T.rect(dx - dw / 2, dx + dw / 2, sp.doorTop - 0.22, sp.doorTop, sp.doorHead);
+      T.glass(dx - dw / 2 + 0.12, dx - 0.04, sp.doorWin[0], sp.doorWin[1], 'rgba(40,40,42,1)'); T.glass(dx + 0.04, dx + dw / 2 - 0.12, sp.doorWin[0], sp.doorWin[1], 'rgba(40,40,42,1)');
     });
-    if (head) {
-      T.rect(L - cab, L, 0, 6, sp.front || sp.body);
-      (sp.frontStripes || []).forEach(function (st) { T.rect(L - cab, L, st[0], st[1], st[2]); });
-      T.glass(L - sp.wsLen, L, sp.ws[0], sp.ws[1]);
-      T.glass(L - cab + 0.25, L - cab + 1.05, sp.ws[0] + 0.15, sp.ws[1] - 0.1); // Seitenfenster Führerstand
-      T.rect(L - 0.18, L, sp.skirt + 0.25, sp.skirt + 0.5, '#f4f2e8'); // Stirnlampen (Endspalte = Stirnfläche)
+    function cabEnd(x0, x1, mirror) {
+      T.rect(x0, x1, sp.skirt, 6, sp.front || sp.body);
+      (sp.frontStripes || []).forEach(function (st) { T.rect(x0, x1, st[0], st[1], st[2]); });
+      var a = mirror ? x0 : x1 - sp.wsLen, b = mirror ? x0 + sp.wsLen : x1;
+      T.glass(a, b, sp.ws[0], sp.ws[1], 'rgba(18,18,18,1)');
+      if (sp.cap) T.rect(a, b, sp.ws[1], sp.cap, '#151515');
+      var e = mirror ? x0 : x1 - 0.18; T.rect(e, e + 0.18, sp.lamp || sp.skirt + 0.35, (sp.lamp || sp.skirt + 0.35) + 0.22, '#f4f2e8'); // Stirnlampen (Endspalte = Stirnfläche)
     }
+    if (head) cabEnd(L - cab, L, false);
+    if (cabB) cabEnd(0, cabB, true);
     T.rect(0, L, 0, sp.skirt, sp.skirtCol || '#3a3d41');
   };
 }
+/* Fahrzeuge der Linien durch den Kanton Zug (Recherche: Fahrplan search.ch Okt. 2026, Einsatz nach SBB-Daten 2025, Fotos Wikimedia Commons).
+   Längen in m nach Herstellerangaben; Farben nach SBB-Farbcodes bzw. aus Fotos geschätzt. Teile: L, Geometrie, Lackierung; form: Zugbildung. */
+var RED = '#eb0000', BLK = '#151515', ZVV = '#1f2e5a';
+function doorsAt(fr) { return function (L) { return fr.map(function (f) { return f < 0 ? L + f : f > 1 ? f : L * f; }); }; }
+var DD = { H: 4.6, y0: 0.38, roofR: 0.7, sideTop: 3.95, W: 2.8 };
+var TRAIN_DEF = {
+  flirt: { name: 'RABe 523 FLIRT', parts: {
+      h: { L: 20.9, nose: 3.2, noseW: 0.26, noseH: 0.32, bog: [-9.9, 6.2], roof: [[-3, 4, 0.45, 1.7]], head: true },
+      m: { L: 16.1, bog: [8.0], roof: [[0, 4, 0.4, 1.6]], panto: 3.5 } },
+    geo: { H: 4.19, W: 2.88, y0: 0.5, roof: '#b4b8bc' },
+    paint: { body: '#f2f3f4', stripes: [[3.48, 3.6, RED]], band: [], win: [[1.25, 2.45, 2.05, 0.86]], floor: 0.55, doorTop: 2.55, doorW: 1.3, doorCol: RED, doorWin: [1.25, 2.3],
+      doors: doorsAt([0.24, 0.62]), cab: 3.7, wsLen: 2.1, ws: [1.85, 3.35], cap: 3.7, front: '#f2f3f4', frontStripes: [[1.55, 3.7, RED]], skirt: 0.95, skirtCol: '#444444' },
+    form: [['h', 0], ['m', 0], ['m', 1], ['h', 1]], gap: 0.25 },
+  kiss: { name: 'RABe 511 KISS (ZVV)', parts: {
+      h: { L: 25.4, nose: 3.6, noseW: 0.22, noseH: 0.3, bog: [-10.6, 10.0], roof: [[-4, 5, 0.35, 1.6]], head: true },
+      m: { L: 24.8, bog: [-10.4, 10.4], roof: [[0, 5, 0.35, 1.6]], panto: 7 } },
+    geo: DD,
+    paint: { body: '#f4f4f4', stripes: [[2.3, 2.45, ZVV]], win: [[1.0, 2.05, 1.9, 0.86], [2.75, 3.75, 1.9, 0.86]], floor: 0.45, doorTop: 2.45, doorW: 1.4, doorCol: RED, doorWin: [1.0, 2.25],
+      doors: doorsAt([3.4, -3.4]), cab: 4.6, wsLen: 2.2, ws: [2.3, 3.55], cap: 4.0, front: RED, skirt: 0.92, skirtCol: ZVV },
+    form: [['h', 0], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['h', 1]] },
+  dtz: { name: 'RABe 514 DTZ (ZVV)', parts: {
+      h: { L: 25.0, nose: 1.2, noseW: 0.08, noseH: 0.06, bog: [-10.2, 10.2], roof: [[-2, 5, 0.35, 1.6]], head: true },
+      m: { L: 25.0, bog: [-10.2, 10.2], roof: [[0, 5, 0.35, 1.6]], panto: 6 } },
+    geo: DD,
+    paint: { body: '#eef0f0', stripes: [[2.3, 2.45, ZVV]], win: [[1.0, 2.05, 1.8, 0.84], [2.75, 3.75, 1.8, 0.84]], floor: 0.45, doorTop: 2.45, doorW: 1.4, doorCol: RED, doorWin: [1.0, 2.25],
+      doors: doorsAt([0.3, 0.7]), cab: 3.0, wsLen: 1.4, ws: [2.2, 3.45], cap: 4.0, front: RED, skirt: 0.92, skirtCol: '#24294a' },
+    form: [['h', 0], ['m', 0], ['m', 1], ['h', 1]] },
+  dosto: { name: 'RABe 502 FV-Dosto', parts: {
+      h: { L: 25.6, nose: 5.6, noseW: 0.3, noseH: 0.36, bog: [-10.6, 9.4], roof: [[-4, 5, 0.35, 1.6]], head: true },
+      m: { L: 24.9, bog: [-10.4, 10.4], roof: [[0, 5, 0.35, 1.6]], panto: 7 } },
+    geo: Object.assign({}, DD, { roof: '#5c6064' }),
+    paint: { body: '#f4f4f2', band: [[1.0, 2.1, BLK], [2.72, 3.8, BLK]], win: [[1.05, 2.05, 1.95, 0.9], [2.77, 3.75, 1.95, 0.9]], floor: 0.45, doorTop: 2.5, doorW: 1.4, doorCol: RED, doorHead: '#2d327d', doorWin: [1.05, 2.2],
+      doors: doorsAt([3.6, -3.6]), cab: 6.4, wsLen: 3.0, ws: [2.5, 3.7], cap: 4.4, front: RED, frontStripes: [[0.4, 1.0, '#353237']], skirt: 0.95, skirtCol: '#353237' },
+    form: [['h', 0], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['h', 1]] },
+  giruno: { name: 'RABe 501 Giruno', parts: {
+      h: { L: 22.25, nose: 7.0, noseW: 0.4, noseH: 0.46, bog: [-9.4, 5.6], roof: [[-4, 5, 0.4, 1.7]], head: true },
+      m: { L: 17.5, bog: [8.4], roof: [[0, 4, 0.4, 1.6]], panto: 3 } },
+    geo: { H: 4.26, W: 2.9, y0: 0.5, roof: '#a3a7ab' },
+    paint: { body: '#f4f4f4', stripes: [[3.55, 3.72, RED]], band: [[1.3, 2.5, BLK]], win: [[1.36, 2.44, 1.75, 0.92]], floor: 0.55, doorTop: 2.55, doorW: 1.3, doorCol: RED, doorWin: [1.3, 2.3],
+      doors: doorsAt([0.18]), cab: 7.2, wsLen: 4.2, ws: [2.05, 3.5], cap: 3.9, front: '#f4f4f4', frontStripes: [[0.5, 1.5, RED], [3.4, 3.72, RED]], skirt: 0.75, skirtCol: '#767676' },
+    form: [['h', 0], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['m', 0], ['h', 1]], gap: 0.3 },
+  ic2000: { name: 'Re 460 mit IC2000', parts: {
+      l: { L: 18.5, nose: 2.0, noseB: 2.0, noseW: 0.16, noseH: 0.2, bog: [-5.3, 5.3], roof: [[0, 6, 0.45, 1.8]], panto: 4.5, geo: { H: 4.3, W: 2.95, y0: 0.9, roof: '#5a5d61', sideTop: 3.55 },
+        paint: { body: RED, stripes: [[2.5, 3.1, '#c80000']], win: [[2.05, 2.65, 1.3, 0.8]], doors: doorsAt([2.6, -2.6]), doorW: 0.7, floor: 1.1, doorTop: 3.0, doorCol: '#d20000', doorWin: [2.2, 2.7],
+          cab: 2.2, both: true, wsLen: 1.5, ws: [2.55, 3.45], front: RED, skirt: 1.15, skirtCol: '#3a3a3a' }, head: true },
+      c: { L: 26.8, bog: [-10.6, 10.6], roof: [[0, 4, 0.3, 1.6]] },
+      b: { L: 26.8, nose: 2.4, noseW: 0.12, noseH: 0.16, bog: [-10.6, 10.6], roof: [[-2, 4, 0.3, 1.6]], head: true } },
+    geo: { H: 4.3, W: 3.0, y0: 0.4, roofR: 0.65, sideTop: 3.75, roof: '#7d8186' },
+    paint: { body: '#ffffff', stripes: [[3.85, 4.0, RED]], band: [[2.7, 3.7, BLK]], win: [[1.05, 2.05, 1.85, 0.82], [2.75, 3.65, 1.85, 0.94]], floor: 0.6, doorTop: 2.45, doorW: 1.3, doorCol: RED, doorHead: '#2d327d', doorWin: [1.1, 2.2],
+      doors: doorsAt([2.7, -2.7]), cab: 4.2, wsLen: 1.6, ws: [2.3, 3.4], cap: 3.6, front: RED, skirt: 0.75, skirtCol: '#111213' },
+    form: [['l', 0], ['c', 0], ['c', 1], ['c', 0], ['c', 1], ['c', 0], ['c', 1], ['c', 0], ['c', 1], ['b', 1]] },
+  traverso: { name: 'SOB RABe 526 Traverso', parts: {
+      h: { L: 20.9, nose: 3.0, noseW: 0.24, noseH: 0.3, bog: [-9.9, 6.2], roof: [[-3, 4, 0.45, 1.7]], head: true },
+      m: { L: 18.1, bog: [9.0], roof: [[0, 4, 0.4, 1.6]], panto: 3.5 } },
+    geo: { H: 4.12, W: 2.82, y0: 0.5, roof: '#6f5a50' },
+    paint: { body: '#b55935', band: [[1.2, 2.5, '#121c12']], stripes: [], win: [[1.28, 2.42, 2.1, 0.9]], floor: 0.55, doorTop: 2.55, doorW: 1.3, doorCol: '#8a9593', doorWin: [1.25, 2.3],
+      doors: doorsAt([0.3]), cab: 3.4, wsLen: 2.2, ws: [1.8, 3.4], cap: 3.8, front: '#b55935', frontStripes: [[1.6, 3.8, '#151515']], skirt: 0.8, skirtCol: '#5a3626' },
+    form: [['h', 0], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['m', 0], ['m', 1], ['h', 1]] }
+};
+// Rot-orange Linien über und unter dem Fensterband des Traverso
+TRAIN_DEF.traverso.paint.stripes = [[1.12, 1.2, '#fa4331'], [2.5, 2.58, '#fa4331']];
 var TRAIN_PARTS = [], TRAIN_TYPES = null;
 function trainParts() {
   if (TRAIN_TYPES) return TRAIN_TYPES;
   TRAIN_TYPES = {};
   Object.keys(TRAIN_DEF).forEach(function (k) {
-    var d = TRAIN_DEF[k], base = Object.assign({ W: 2.9, H: 4.2, y0: 0.55, roofR: 0.85, botR: 0.2, tumble: 0.05, step: 1.3, texW: 1024, roof: '#7d8186', gangway: true }, d.geo);
-    var head = vehPart(Object.assign({}, base, { L: d.Lh, noseF: d.nose, noseW: d.noseW, noseH: d.noseH, bogies: d.bogH(d.Lh), roofBoxes: d.roofH, panto: d.pantoH, gangway: false }), trainPaint(d.paint, true), 260);
-    var mid = d.Lm ? vehPart(Object.assign({}, base, { L: d.Lm, bogies: d.bogM(d.Lm), roofBoxes: d.roofM, panto: d.pantoM }), trainPaint(d.paint, false), 600) : null;
-    TRAIN_PARTS.push(head); if (mid) TRAIN_PARTS.push(mid);
-    TRAIN_TYPES[k] = function (units) { // Zugbildung: je Einheit Kopf, Mittelwagen, Kopf gedreht
+    var d = TRAIN_DEF[k], made = {};
+    Object.keys(d.parts).forEach(function (pk) {
+      var pd = d.parts[pk], g = Object.assign({ W: 2.9, H: 4.2, y0: 0.55, roofR: 0.85, botR: 0.2, tumble: 0.05, step: 1.3, texW: 1024, roof: '#7d8186' }, d.geo, pd.geo || {});
+      var o = Object.assign({}, g, { L: pd.L, noseF: pd.nose || 0, noseB: pd.noseB || 0, noseW: pd.noseW, noseH: pd.noseH, bogies: pd.bog, roofBoxes: pd.roof, panto: pd.panto, gangway: !pd.head || !!pd.noseB === false && !pd.nose });
+      if (pd.head) o.gangway = false;
+      made[pk] = vehPart(o, trainPaint(pd.paint || d.paint, !!pd.head), pd.head ? 200 : 520);
+      TRAIN_PARTS.push(made[pk]);
+    });
+    TRAIN_TYPES[k] = function (units) {
       var cars = [], len = 0;
-      for (var u = 0; u < units; u++) {
-        cars.push({ p: head, L: d.Lh, flip: false });
-        for (var m = 0; m < d.nMid; m++) cars.push({ p: mid, L: d.Lm, flip: m % 2 === 1 });
-        cars.push({ p: head, L: d.Lh, flip: true, gap: 1.2 });
-      }
-      cars.forEach(function (c) { len += c.L + 0.7; });
+      for (var u = 0; u < units; u++) d.form.forEach(function (f, i) { cars.push({ p: made[f[0]], L: d.parts[f[0]].L, flip: !!f[1], gap: i === d.form.length - 1 ? 1.2 : d.gap }); });
+      cars.forEach(function (c) { len += c.L + (c.gap == null ? 0.7 : c.gap); });
       return { cars: cars, len: len, name: d.name };
     };
   });
   return TRAIN_TYPES;
 }
-var TRAIN_DEF = {
-  flirt: { name: 'FLIRT (vorläufig)', Lh: 18.4, Lm: 14.8, nMid: 2, nose: 3.4, noseW: 0.28, noseH: 0.34,
-    bogH: function (L) { return [-L / 2 + 2.6, L / 2 - 0.4]; }, bogM: function (L) { return [L / 2 - 0.4]; },
-    roofH: [[-2, 3.5, 0.45, 1.8]], roofM: [[0, 4, 0.4, 1.6]], pantoH: null, pantoM: 2,
-    paint: { body: '#f2f2ef', stripes: [[0.62, 1.0, '#c8102e']], win: [[1.45, 2.55]], pitch: 1.9, floor: 0.62, doorTop: 2.6, doorW: 1.3, doorCol: '#c8102e', doorWin: [1.35, 2.3],
-      doors: function (L, head) { return head ? [L * 0.42] : [-1, L * 0.5]; }, cab: 3.6, wsLen: 2.4, ws: [1.75, 2.75], skirt: 0.62, front: '#f2f2ef', frontStripes: [[0.62, 1.4, '#c8102e']] } }
-};
-function TRAIN_PICK(cat, line) { return ['flirt', /^(IC|EC|IR|RE)$/.test(cat) ? 2 : 1]; }
+/* Zuordnung Linie -> Fahrzeug (Einsatz 2025/26; Abweichungen im Betrieb möglich) */
+function TRAIN_PICK(cat, line) {
+  var l = line.replace(/\s+/g, '');
+  if (/^S5$/.test(l)) return ['kiss', 1];
+  if (/^S24$/.test(l)) return ['dtz', 1];
+  if (/^IR46$/.test(l)) return ['traverso', 1];
+  if (/^IR75$/.test(l)) return ['ic2000', 1];
+  if (/^IR70$/.test(l)) return ['dosto', 1];
+  if (cat === 'EC' || /^IC2$/.test(l) || cat === 'ICE') return ['giruno', 1];
+  if (/^(IC|IR)$/.test(cat)) return ['ic2000', 1];
+  return ['flirt', 1];
+}
 function trainSpec(j) {
-  var T = trainParts(), cat = j.cat || '', line = String(j.line || '');
-  var pick = TRAIN_PICK(cat, line);
+  var T = trainParts(), pick = TRAIN_PICK(j.cat || '', String(j.line || ''));
   return T[pick[0]](pick[1]);
 }
 function loadTrains() {
@@ -2392,7 +2460,7 @@ var tmpP = { E: 0, N: 0, h: 0, t: 0 }, tmpQ = { E: 0, N: 0, h: 0, t: 0 }, tmpM =
 function updateTrains(now) {
   var show = TRN.on && GL && cam && cam.d < 14000 && !touring;
   if (RAIL.ribbons) { railMat.uniforms.uRailA.value = lerp(railMat.uniforms.uRailA.value, cam && cam.d < 2600 ? 1 : 0, 0.15); RAIL.ribbons.visible = railMat.uniforms.uRailA.value > 0.01; }
-  if (!show || !RAIL.ok) { if (TRAIN_PARTS.length) { vehBegin(TRAIN_PARTS); vehEnd(TRAIN_PARTS); } TRN.shipMeshes.forEach(function (m) { m.visible = false; }); return; }
+  if (!show || !RAIL.ok) { if (TRAIN_PARTS.length) { vehBegin(TRAIN_PARTS); vehEnd(TRAIN_PARTS); } if (TRN.shipPart) TRN.shipPart.m.count = TRN.shipPart.dm.count = 0; return; }
   var tnow = Date.now(), cars = 0;
   trainParts(); vehBegin(TRAIN_PARTS);
   TRN.trains.forEach(function (j) {
@@ -2643,7 +2711,7 @@ function updateBuses(tnow) {
     var st = journeyState(j, tnow); if (!st) return;
     var a = j.stops[st.i], s = st.at ? a.s : lerp(a.s, j.stops[st.i + 1].s, st.f), T = j.type, P = j.P;
     // Gelenkbus: Vorderwagen und Nachläufer folgen dem Weg getrennt
-    var segs = T.art ? [[s + T.L / 2 - T.Lf / 2, T.Lf, T.front], [s + T.L / 2 - T.Lf - 0.6 - T.Lr / 2, T.Lr, T.rear]] : [[s, T.L, T.front]];
+    var segs = T.art ? [[s + T.L / 2 - T.Lf / 2, T.Lf, T.front], [s + T.L / 2 - T.Lf - T.gap - T.Lr / 2, T.Lr, T.rear]] : [[s, T.L, T.front]];
     segs.forEach(function (q) {
       var sc = clamp(q[0], q[1] / 2, P.L - q[1] / 2), f = pathAt(P, sc + q[1] / 2 - 1.5, tmpP), r = pathAt(P, sc - q[1] / 2 + 1.5, tmpQ);
       var dx = f.E - r.E, dn = f.N - r.N, len = Math.hypot(dx, dn); if (len < 0.5) return;
@@ -2658,70 +2726,191 @@ function updateBuses(tnow) {
 }
 function startBuses() { loadBuses(); }
 
-/* Bustypen: 12-m-Solobus und 18-m-Gelenkbus; Lackierung siehe busPaint */
-function busPaint(T) { // Platzhalter, wird nach Recherche ersetzt
-  T.rect(0, T.L, 0, 4, '#f4f4f2');
-  for (var x = 1.2; x < T.L - 2.6; x += 1.55) T.glass(x, x + 1.4, 1.35, 2.65);
-  T.glass(T.L - 2.4, T.L - 0.05, 1.0, 2.75);
+/* Busse: Zugerland Verkehrsbetriebe (ZVB) 2025: Mercedes Citaro/Citaro G und Hess (Diesel), Mercedes eCitaro G und Solaris Urbino 12
+   electric; Diesellackierung weiss mit schwarzem Fensterband, dunkelblauem Sockel und blauem Zierstreifen, E-Busse weiss mit
+   dünnem blauem Streifen (Farben aus Fotos geschätzt). Linien 601/602 mit Hess-Buszug (Bus mit Anhänger). PostAuto gelb. */
+var BUS_LIV = {
+  diesel: { body: '#f4f6f8', skirt: [0, 0.82, '#14306f'], stripes: [[0.9, 1.04, '#1859c9']], roof: '#eceff1', roofBox: '#c8ccd0', boxH: 0.28 },
+  electric: { body: '#f2f4f6', skirt: null, stripes: [[0.93, 1.0, '#0b5cc4']], roof: '#e6e8ea', roofBox: '#c9cdd1', boxH: 0.42 },
+  post: { body: '#ffcc00', skirt: [0, 0.5, '#4a4d50'], stripes: [], roof: '#f1f1ee', roofBox: '#c8ccd0', boxH: 0.3 }
+};
+function busPainter(lv, kind) {
+  return function (T) {
+    var L = T.L, front = kind !== 'ar' && kind !== 'trl', rear = kind !== 'af';
+    T.rect(0, L, 0, 4, lv.body);
+    if (lv.skirt) T.rect(0, L, lv.skirt[0], lv.skirt[1], lv.skirt[2]);
+    lv.stripes.forEach(function (st) { T.rect(0, L, st[0], st[1], st[2]); });
+    T.rect(front ? 0.1 : 0, L - (front ? 2.4 : 0), 1.12, 2.8, '#0a0d10'); // durchgehendes Fensterband
+    for (var x = 0.4; x < L - (front ? 2.6 : 0.2); x += 1.32) T.glass(x, x + 1.2, 1.2, 2.72, 'rgba(10,13,16,1)');
+    var doors = kind === 'solo' ? [L - 1.25, L * 0.52, 2.3] : kind === 'af' ? [L - 1.25, 1.4] : kind === 'ar' ? [L - 1.2, 1.5] : [L * 0.55, 1.8];
+    doors.forEach(function (dx) { T.rect(dx - 0.62, dx + 0.62, 0.3, 2.85, '#0a0d10'); T.glass(dx - 0.56, dx - 0.03, 0.42, 2.78, 'rgba(30,32,36,1)'); T.glass(dx + 0.03, dx + 0.56, 0.42, 2.78, 'rgba(30,32,36,1)'); });
+    if (front) { T.glass(L - 2.3, L, 1.0, 3.02, 'rgba(10,13,16,1)'); T.rect(L - 0.12, L, 0.62, 0.78, '#f2f0e4'); }
+    if (rear) T.glass(0, 0.16, 1.9, 2.85, 'rgba(10,13,16,1)');
+    T.rect(0, L, 2.92, 3.4, lv.body);
+  };
 }
-function busParts() {
-  if (BUS.parts) return BUS.parts;
-  var base = { W: 2.55, H: 3.2, y0: 0.32, roofR: 0.25, botR: 0.12, tumble: 0.02, sideTop: 3.0, step: 0.9, texW: 512, roof: '#c9ccd0' };
-  function part(L, cap, nf, nb, wh) { var o = Object.assign({}, base, { L: L, noseF: nf, noseB: nb, noseW: 0.03, noseH: 0.03, wheels: wh, roofBoxes: [[L * 0.1, 2.6, 0.28, 1.9]] }); return vehPart(o, busPaint, cap); }
-  var solo = part(12.1, 160, 0.4, 0.3, [3.35, -2.6]), af = part(11.6, 80, 0.4, 0, [3.1, -2.6]), ar = part(6.0, 80, 0, 0.3, [-1.2]);
-  BUS.parts = { solo: solo, af: af, ar: ar, all: [solo, af, ar] };
-  return BUS.parts;
+function busPart(liv, kind) {
+  BUS.parts = BUS.parts || { all: [] };
+  var key = liv + '_' + kind; if (BUS.parts[key]) return BUS.parts[key];
+  var lv = BUS_LIV[liv], L = { solo: 12.1, af: 11.6, ar: 6.0, trl: 11.0 }[kind];
+  var o = { W: 2.55, H: 3.15, y0: 0.32, roofR: 0.25, botR: 0.12, tumble: 0.02, sideTop: 2.95, step: 0.9, texW: 512, roof: lv.roof, roofBox: lv.roofBox,
+    L: L, noseF: kind === 'solo' || kind === 'af' ? 0.4 : 0, noseB: kind === 'af' ? 0 : 0.3, noseW: 0.03, noseH: 0.03,
+    wheels: { solo: [3.35, -2.6], af: [3.1, -2.6], ar: [-1.2], trl: [0.6] }[kind], roofBoxes: kind === 'trl' ? [] : [[kind === 'ar' ? -0.5 : L * 0.08, kind === 'solo' ? 4.2 : 2.6, lv.boxH, 1.95]] };
+  var p = vehPart(o, busPainter(lv, kind), kind === 'solo' ? 160 : 90);
+  BUS.parts[key] = p; BUS.parts.all.push(p); return p;
 }
 function busType(j) {
-  var p = busParts();
-  return /^(601|602|603|605|614)$/.test(j.line) ? { art: true, L: 18.1, Lf: 11.6, Lr: 6.0, front: p.af, rear: p.ar } : { art: false, L: 12.1, front: p.solo };
+  var h = 0, k = j.line + (j.s && j.s[0] ? j.s[0][3] : 0); for (var q = 0; q < k.length; q++) h = (h * 31 + k.charCodeAt(q)) >>> 0;
+  if (/^PA/.test(j.op || '')) return { art: false, L: 12.1, front: busPart('post', 'solo') };
+  if (/^(601|602)$/.test(j.line)) return { art: true, trailer: true, L: 23.6, Lf: 12.1, Lr: 11.0, gap: 0.5, front: busPart('diesel', 'solo'), rear: busPart('diesel', 'trl') };
+  var liv = h % 10 < 4 ? 'electric' : 'diesel'; // gut 40 % der ZVB-Flotte fahren elektrisch
+  if (/^(603|605|606|607|611|614)$/.test(j.line)) return { art: true, L: 18.1, Lf: 11.6, Lr: 6.0, gap: 0.5, front: busPart(liv, 'af'), rear: busPart(liv, 'ar') };
+  return { art: false, L: 12.1, front: busPart(liv, 'solo') };
 }
-/* Schiffe der Zugersee Schifffahrt (MS Zug 45,6 × 9,2 m, MS Rigi 46,5 × 9,5 m): Liegeplatz am Bahnhofsteg entlang der Pfahlreihe */
+/* Schiffe der Zugersee Schifffahrt: Liegeplatz am Bahnhofsteg entlang der Pfahlreihe */
 var SHIP_BERTH = { E: 2681471.4, N: 1224896.7, az: 74.5 }, SHIP_U = '8502251';
-function shipGeometry() {
-  var Pp = [], Gg = [], Cc = [], Kk = [], Uu = [], Ii = [], g0 = 413.55;
-  function v(x, y, z, c, k) { Pp.push(x, y, z); Gg.push(g0 - H0); Cc.push(c[0], c[1], c[2]); Kk.push(k); Uu.push(x, y); return Pp.length / 3 - 1; }
-  function quad(a, b, c, d) { Ii.push(a, b, c, a, c, d); }
-  // Rumpf: Querschnitte entlang der Länge (x vorne), Bug zugespitzt
-  var WHITE = [0.95, 0.95, 0.94], NAVY = [0.08, 0.16, 0.36], GLASS = [0.16, 0.2, 0.26], DECK = [0.62, 0.55, 0.47];
-  function hullW(x) { var t = (x + 22.8) / 45.6; return t > 0.78 ? 4.6 * Math.sqrt(Math.max(0, (1 - t) / 0.22)) : t < 0.04 ? 4.6 * (0.8 + 5 * t) : 4.6; }
-  var xs = []; for (var x = -22.8; x <= 22.81; x += 2.28) xs.push(x);
-  var rows = [[-0.6, NAVY], [0.4, NAVY], [0.55, WHITE], [2.3, WHITE]], prevL = null, prevR = null;
+/* Kursschiff als texturiertes Modell: Rumpf aus Querschnitten, Aufbauten als senkrecht extrudierte Grundrisse.
+   Texturatlas 1024 × 1024 (Zeilen von oben): Rumpf 0–200 (Backbord 0–100, Steuerbord 100–200), Salon Hauptdeck 200–380, Oberdeck 380–560, Steuerhaus 560–680,
+   Reling 680–740, Flächen 740–1024 (Deck links, Dächer rechts). x vorne +, y hoch ab Wasserlinie, z quer. */
+function shipModel(S) {
+  var pos = [], uvs = [], idx = [], AH = 1024;
+  function V(x, y, z, u, row) { pos.push(x, y, z); uvs.push(u, 1 - row / AH); return pos.length / 3 - 1; }
+  function quad(a, b, c, d) { idx.push(a, b, c, a, c, d); }
+  var L = S.L, B = S.B;
+  // Grundriss des Rumpfs: halbe Breite über x (Heck gerundet, Bug mit Kurve zur Spitze)
+  function hw(x, y) {
+    var t = (x + L / 2) / L, w = B / 2;
+    if (t > S.bowStart) { var b = (t - S.bowStart) / (1 - S.bowStart); w *= Math.pow(Math.max(0, 1 - b * b), 0.62); }
+    if (t < S.sternR / L) { var r = 1 - t * L / S.sternR; w *= Math.sqrt(Math.max(0, 1 - r * r * 0.55)); }
+    return Math.max(0.04, w * (y < 0 ? 0.86 + 0.14 * (1 + y / S.draft) : 1 + 0.02 * y));
+  }
+  function deckY(x) { var t = (x + L / 2) / L; return S.freeboard + S.sheer * Math.pow(Math.max(0, t - 0.55) / 0.45, 2); }
+  var xs = []; for (var x = -L / 2; x <= L / 2 + 1e-6; x += L / 60) xs.push(x);
+  var hullRows = [-S.draft, -0.15, 0.25, 0.6, 1]; // letzte Zeile: Deckkante (relativ)
+  var prev = null;
   xs.forEach(function (x) {
-    var w = Math.max(0.05, hullW(x)), L = [], R = [];
-    rows.forEach(function (r) { var ww = w * (r[0] < 0 ? 0.85 : 1); L.push(v(x, r[0], ww, r[1], 0)); R.push(v(x, r[0], -ww, r[1], 0)); });
-    if (prevL) for (var k = 0; k < rows.length - 1; k++) { quad(prevL[k], L[k], L[k + 1], prevL[k + 1]); quad(prevR[k], prevR[k + 1], R[k + 1], R[k]); }
-    prevL = L; prevR = R;
+    var dy = deckY(x), u = (x + L / 2) / L, ring = [];
+    hullRows.forEach(function (fy) {
+      var y = fy === 1 ? dy : fy < 0 ? fy : fy * dy, row = 100 * (1 - (y + S.draft) / (S.freeboard + S.sheer + S.draft));
+      ring.push([V(x, y, hw(x, y), u, row), V(x, y, -hw(x, y), u, row + 100)]);
+    });
+    if (prev) for (var k = 0; k < ring.length - 1; k++) { quad(prev[k][0], ring[k][0], ring[k + 1][0], prev[k + 1][0]); quad(prev[k][1], prev[k + 1][1], ring[k + 1][1], ring[k][1]); }
+    prev = ring;
   });
-  // Hauptdeck
-  for (var q = 0; q < xs.length - 1; q++) { var w0 = hullW(xs[q]), w1 = hullW(xs[q + 1]); quad(v(xs[q], 2.3, w0, DECK, 0), v(xs[q + 1], 2.3, w1, DECK, 0), v(xs[q + 1], 2.3, -w1, DECK, 0), v(xs[q], 2.3, -w0, DECK, 0)); }
-  function box(x0, x1, y0, y1, w, c, winBand) {
-    var cs = [[x0, -w], [x1, -w], [x1, w], [x0, w]], lo = [], hi = [], mid0 = [], mid1 = [];
-    cs.forEach(function (p) { lo.push(v(p[0], y0, p[1], c, 0)); hi.push(v(p[0], y1, p[1], c, 0)); });
-    quad(hi[0], hi[1], hi[2], hi[3]);
-    for (var j = 0; j < 4; j++) {
-      var m = (j + 1) % 4;
-      if (winBand) { // Fensterband
-        var ya = y0 + (y1 - y0) * 0.3, yb = y0 + (y1 - y0) * 0.85;
-        var a0 = v(cs[j][0], y0, cs[j][1], c, 0), a1 = v(cs[m][0], y0, cs[m][1], c, 0), b0 = v(cs[j][0], ya, cs[j][1], c, 0), b1 = v(cs[m][0], ya, cs[m][1], c, 0);
-        var g0b = v(cs[j][0], ya, cs[j][1], GLASS, 0), g1b = v(cs[m][0], ya, cs[m][1], GLASS, 0), g0t = v(cs[j][0], yb, cs[j][1], GLASS, 0), g1t = v(cs[m][0], yb, cs[m][1], GLASS, 0);
-        var t0 = v(cs[j][0], yb, cs[j][1], c, 0), t1 = v(cs[m][0], yb, cs[m][1], c, 0), u0 = v(cs[j][0], y1, cs[j][1], c, 0), u1 = v(cs[m][0], y1, cs[m][1], c, 0);
-        quad(a0, a1, b1, b0); quad(g0b, g1b, g1t, g0t); quad(t0, t1, u1, u0);
-      } else quad(lo[j], lo[m], hi[m], hi[j]);
+  // Heckspiegel
+  (function () { var x = xs[0], dy = deckY(x), a = V(x, -S.draft, hw(x, -S.draft) * 0.9, 0.002, 190), b = V(x, -S.draft, -hw(x, -S.draft) * 0.9, 0.002, 190), c = V(x, dy, -hw(x, dy), 0.002, 10), d = V(x, dy, hw(x, dy), 0.002, 10); quad(a, b, c, d); })();
+  // Hauptdeck: Fläche bis zur Deckkante
+  for (var q = 0; q < xs.length - 1; q++) {
+    var x0 = xs[q], x1 = xs[q + 1], y0 = deckY(x0), y1 = deckY(x1);
+    quad(V(x0, y0, hw(x0, y0), 0.02 + 0.46 * q / xs.length, 800), V(x1, y1, hw(x1, y1), 0.02 + 0.46 * (q + 1) / xs.length, 800),
+         V(x1, y1, -hw(x1, y1), 0.02 + 0.46 * (q + 1) / xs.length, 960), V(x0, y0, -hw(x0, y0), 0.02 + 0.46 * q / xs.length, 960));
+  }
+  // Aufbau: Grundriss als Rechteck mit gerundeter Front (und optional gerundetem Heck), senkrecht extrudiert
+  function plan(x0, x1, w, rf) { // Umfang: Front (rechts nach links), linke Seite, Heckwand, rechte Seite
+    var P = [], n = 8;
+    for (var k = 0; k <= n; k++) { var a = -Math.PI / 2 + Math.PI * k / n; P.push([x1 - rf + Math.cos(a) * rf, Math.sin(a) * w]); }
+    P.push([x0, w]); P.push([x0, -w]);
+    return P;
+  }
+  var walls = []; // Umfangsmarken je Aufbau für die Lackierung
+  function block(P, y0, y1, row0, row1, roofRow, overhang) {
+    var per = [0]; for (var k = 1; k <= P.length; k++) { var p = P[k - 1], q2 = P[k % P.length]; per.push(per[k - 1] + Math.hypot(q2[0] - p[0], q2[1] - p[1])); }
+    var tot = per[per.length - 1];
+    for (k = 0; k < P.length; k++) {
+      var p0 = P[k], p1 = P[(k + 1) % P.length], u0 = per[k] / tot, u1 = per[k + 1] / tot;
+      quad(V(p0[0], y0, p0[1], u0, row1), V(p1[0], y0, p1[1], u1, row1), V(p1[0], y1, p1[1], u1, row0), V(p0[0], y1, p0[1], u0, row0));
+    }
+    // Dach mit Überstand
+    var cx = 0, cz = 0; P.forEach(function (p) { cx += p[0]; cz += p[1]; }); cx /= P.length; cz /= P.length;
+    var o = overhang || 0, c = V(cx, y1, cz, 0.75, roofRow);
+    var R = P.map(function (p) { var dx = p[0] - cx, dz = p[1] - cz, l = Math.hypot(dx, dz) || 1; return V(p[0] + dx / l * o, y1, p[1] + dz / l * o, 0.75 + (p[0] - cx) / 200, roofRow + (p[1] - cz)); });
+    for (k = 0; k < R.length; k++) idx.push(c, R[k], R[(k + 1) % R.length]);
+    if (o > 0) for (k = 0; k < R.length; k++) { // Dachkante
+      var p0 = P[k], p1 = P[(k + 1) % P.length], d0 = [p0[0] - cx, p0[1] - cz], d1 = [p1[0] - cx, p1[1] - cz], l0 = Math.hypot(d0[0], d0[1]) || 1, l1 = Math.hypot(d1[0], d1[1]) || 1;
+      quad(V(p0[0] + d0[0] / l0 * o, y1 - 0.3, p0[1] + d0[1] / l0 * o, 0.75, 1016), V(p1[0] + d1[0] / l1 * o, y1 - 0.3, p1[1] + d1[1] / l1 * o, 0.75, 1016), V(p1[0] + d1[0] / l1 * o, y1, p1[1] + d1[1] / l1 * o, 0.75, 1016), V(p0[0] + d0[0] / l0 * o, y1, p0[1] + d0[1] / l0 * o, 0.75, 1016));
+    }
+    walls.push({ P: P, per: per.map(function (v) { return v / tot; }), tot: tot, y0: y0, y1: y1, row0: row0, row1: row1 });
+  }
+  // Reling als dünne, halbtransparente Wand um einen Grundriss
+  function rail(P, y0, h) {
+    for (var k = 0; k < P.length - 1; k++) { var p0 = P[k], p1 = P[k + 1]; quad(V(p0[0], y0, p0[1], 0.1, 738), V(p1[0], y0, p1[1], 0.9, 738), V(p1[0], y0 + h, p1[1], 0.9, 682), V(p0[0], y0 + h, p0[1], 0.1, 682)); }
+  }
+  var D = S.decks;
+  block(plan(D[0].x0, D[0].x1, D[0].w, D[0].rf, 0), deckY(0) - 0.05, D[0].y1, 200, 380, 980, 0.35);
+  block(plan(D[1].x0, D[1].x1, D[1].w, D[1].rf, 0), D[0].y1, D[1].y1, 380, 560, 980, 0.25);
+  block(plan(D[2].x0, D[2].x1, D[2].w, D[2].rf, 0), D[1].y1, D[2].y1, 560, 680, 980, 0.3);
+  // Reling: Bug, Sonnendeck, Achterdeck auf dem Salondach
+  var bow = []; for (var bx = D[0].x1 + 0.5; bx <= L / 2 - 0.3; bx += 0.8) bow.push([bx, hw(bx, deckY(bx)) - 0.1]);
+  var bowR = bow.map(function (p) { return [p[0], -p[1]]; }).reverse();
+  rail(bow.concat(bowR), deckY(D[0].x1 + 0.5), 1.0);
+  rail([[D[1].x0, D[1].w], [D[1].x1 - D[1].rf, D[1].w], [D[1].x1 - D[1].rf, -D[1].w], [D[1].x0, -D[1].w]], D[1].y1, 1.0);
+  rail([[D[1].x0, D[0].w], [D[0].x0, D[0].w], [D[0].x0, -D[0].w], [D[1].x0, -D[0].w]], D[0].y1, 1.0);
+  // Mast mit Flagge am Heck, Signalmast auf dem Steuerhaus
+  function stick(x, z, y0, y1, w, row) { var a = V(x - w, y0, z, 0.5, row), b = V(x + w, y0, z, 0.5, row), c = V(x + w, y1, z, 0.5, row), d = V(x - w, y1, z, 0.5, row); quad(a, b, c, d); var e = V(x, y0, z - w, 0.5, row), f = V(x, y0, z + w, 0.5, row), g = V(x, y1, z + w, 0.5, row), h = V(x, y1, z - w, 0.5, row); quad(e, f, g, h); }
+  stick(-L / 2 + 0.6, 0, deckY(-L / 2), deckY(-L / 2) + 4.2, 0.05, 1020);
+  (function () { var x = -L / 2 + 0.6, y = deckY(-L / 2) + 4.15; quad(V(x, y - 1.0, 0, 0.93, 1004), V(x - 1.0, y - 1.0, 0, 0.99, 1004), V(x - 1.0, y, 0, 0.99, 990), V(x, y, 0, 0.93, 990)); })();
+  stick((D[2].x0 + D[2].x1) / 2, 0, D[2].y1, D[2].y1 + 2.6, 0.06, 1020);
+  var g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  return { g: g, walls: walls, deckY: deckY };
+}
+/* Kursschiff nach MS Zug (2003, 45,6 × 9,2 m): weisser Rumpf mit breitem dunklem Marineband und dünnem blauem Streifen,
+   rotbrauner Unterwasseranstrich, zwei verglaste Salondecks mit blauen Kanten, Steuerhaus mit Radarmast. Farben aus Fotos geschätzt.
+   Welches Schiff im Herbst 2026 fährt, ist offen; der Name wird deshalb nicht geschrieben. */
+var SHIP_SPEC = { L: 45.6, B: 9.2, draft: 1.0, freeboard: 1.95, sheer: 0.85, bowStart: 0.7, sternR: 3.2,
+  decks: [{ x0: -20.6, x1: 12.6, w: 4.2, rf: 2.6, y1: 4.5 }, { x0: -13.8, x1: 8.6, w: 4.05, rf: 3.0, y1: 6.9 }, { x0: -1.6, x1: 5.6, w: 2.9, rf: 1.9, y1: 9.0 }] };
+function shipPart() {
+  if (TRN.shipPart) return TRN.shipPart;
+  var M = shipModel(SHIP_SPEC), S = SHIP_SPEC, AW = 1024;
+  var cv = document.createElement('canvas'); cv.width = AW; cv.height = 1024; var c = cv.getContext('2d');
+  c.fillStyle = '#f5f6f5'; c.fillRect(0, 0, AW, 1024);
+  // Rumpf, je Seite ein Band von 100 Zeilen: Höhe y -> Zeile
+  var Ht = S.freeboard + S.sheer + S.draft;
+  [0, 100].forEach(function (r0) {
+    var R = function (y) { return r0 + 100 * (1 - (y + S.draft) / Ht); };
+    c.fillStyle = '#4a2a20'; c.fillRect(0, R(0.08), AW, R(-S.draft) - R(0.08));            // Unterwasser
+    c.fillStyle = '#0d1430'; c.fillRect(0, R(1.0), AW, R(0.08) - R(1.0));                   // Marineband
+    c.fillStyle = '#1e50b4'; c.fillRect(0, R(1.28), AW, R(1.12) - R(1.28));                 // blauer Streifen
+    c.fillStyle = '#dfe2e4'; c.fillRect(0, R(S.freeboard + S.sheer), AW, 2);               // Deckkante
+    c.fillStyle = 'rgba(30,40,60,0.8)'; for (var k = 0; k < 3; k++) { c.beginPath(); c.arc(AW * (0.42 + k * 0.05), R(0.4), 2.2, 0, 7); c.fill(); } // Bullaugen
+    // Band steigt zum Bug
+    c.fillStyle = '#0d1430'; c.beginPath(); c.moveTo(AW * 0.84, R(1.0)); c.lineTo(AW, R(1.65)); c.lineTo(AW, R(0.08)); c.lineTo(AW * 0.84, R(0.08)); c.fill();
+    c.fillStyle = '#1e50b4'; c.beginPath(); c.moveTo(AW * 0.84, R(1.12)); c.lineTo(AW, R(1.77)); c.lineTo(AW, R(1.93)); c.lineTo(AW * 0.84, R(1.28)); c.fill();
+  });
+  // Wände der Aufbauten: Fenster je Abschnitt (Front, Seiten, Heck), blaue Kante oben
+  function wallPaint(w, winY0, winY1, pitch, opts) {
+    var r = function (h) { return w.row1 - (w.row1 - w.row0) * h / (w.y1 - w.y0); }, H = w.y1 - w.y0, n = w.P.length;
+    c.fillStyle = '#1e50b4'; c.fillRect(0, r(H - 0.08), AW, r(H - 0.26) - r(H - 0.08) < 0 ? 3 : r(H - 0.26) - r(H - 0.08));
+    for (var k = 0; k < n; k++) {
+      var u0 = w.per[k], u1 = w.per[k + 1], segL = (u1 - u0) * w.tot, back = k === n - 2;
+      if (segL < 1.8) { c.fillStyle = 'rgba(43,58,74,0.55)'; c.clearRect(u0 * AW, r(winY1), (u1 - u0) * AW + 1, r(winY0) - r(winY1)); c.fillRect(u0 * AW, r(winY1), (u1 - u0) * AW + 1, r(winY0) - r(winY1)); continue; }
+      var m = back ? 0.6 : 0.35, cnt = Math.max(1, Math.round((segL - 2 * m) / pitch)), ww = (segL - 2 * m) / cnt;
+      for (var q = 0; q < cnt; q++) {
+        var a = u0 + (m + q * ww + 0.07) / w.tot, b = u0 + (m + (q + 1) * ww - 0.07) / w.tot;
+        if (back && opts && opts.door && q === Math.floor(cnt / 2)) { c.fillStyle = 'rgba(43,58,74,0.55)'; c.clearRect(a * AW, r(winY1), (b - a) * AW, r(0.05) - r(winY1)); c.fillRect(a * AW, r(winY1), (b - a) * AW, r(0.05) - r(winY1)); continue; }
+        c.fillStyle = '#d9dcde'; c.fillRect(a * AW - 1, r(winY1) - 1, (b - a) * AW + 2, r(winY0) - r(winY1) + 2);
+        c.clearRect(a * AW, r(winY1), (b - a) * AW, r(winY0) - r(winY1)); c.fillStyle = 'rgba(43,58,74,0.55)'; c.fillRect(a * AW, r(winY1), (b - a) * AW, r(winY0) - r(winY1));
+      }
     }
   }
-  box(-18.5, 13.5, 2.3, 4.9, 4.15, WHITE, true);   // Salon Hauptdeck
-  box(-15.5, 9.5, 4.9, 7.3, 3.9, WHITE, true);     // Oberdeck
-  box(4.5, 9.0, 7.3, 9.4, 2.2, WHITE, true);       // Steuerhaus
-  box(-17.5, -16.9, 4.9, 6.0, 4.0, NAVY, false);   // Reling hinten (vereinfacht)
-  var geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(Pp, 3));
-  geo.setAttribute('aG', new THREE.Float32BufferAttribute(Gg, 1));
-  geo.setAttribute('aCol', new THREE.Float32BufferAttribute(Cc, 3));
-  geo.setAttribute('aK', new THREE.Float32BufferAttribute(Kk, 1));
-  geo.setAttribute('aU', new THREE.Float32BufferAttribute(Uu, 2));
-  geo.setIndex(Ii);
-  return geo;
+  wallPaint(M.walls[0], 0.75, 2.4, 2.4, { door: true });
+  wallPaint(M.walls[1], 0.55, 2.2, 2.6, { door: true });
+  wallPaint(M.walls[2], 0.9, 1.95, 1.5);
+  // Reling: Glas mit weissem Handlauf
+  c.clearRect(0, 682, AW, 56); c.fillStyle = 'rgba(160,175,185,0.55)'; c.fillRect(0, 682, AW, 56); c.fillStyle = '#f2f3f3'; c.fillRect(0, 682, AW, 7); c.fillRect(0, 730, AW, 8);
+  // Flächen: Deck (links), Dächer (rechts), Schweizer Flagge
+  c.fillStyle = '#b8b3a9'; c.fillRect(0, 740, AW / 2, 284);
+  c.fillStyle = '#f1f2f2'; c.fillRect(AW / 2, 740, AW / 2, 284);
+  c.fillStyle = '#1e50b4'; c.fillRect(AW * 0.6, 1010, AW * 0.3, 12);  // blaue Dachkanten
+  c.fillStyle = '#d52b1e'; c.fillRect(AW * 0.93, 990, AW * 0.06, 14);
+  c.fillStyle = '#ffffff'; c.fillRect(AW * 0.955, 992, AW * 0.012, 10); c.fillRect(AW * 0.947, 995.5, AW * 0.028, 3);
+  var tex = new THREE.CanvasTexture(cv); tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  var mat = new THREE.ShaderMaterial({ side: THREE.DoubleSide, uniforms: Object.assign({ uMap: { value: tex } }, U), vertexShader: vehMat0.vs, fragmentShader: [vehMat0.fs.split('\n')[0], LIGHT, SHADOW].concat(vehMat0.fs.split('\n').slice(1)).join('\n') });
+  var m = new THREE.InstancedMesh(M.g, mat, 4); m.frustumCulled = false; m.count = 0; scene.add(m);
+  var dm = new THREE.InstancedMesh(M.g, vehDepthMat, 4); dm.instanceMatrix = m.instanceMatrix; dm.frustumCulled = false; dm.count = 0; smScene.add(dm);
+  TRN.shipPart = { m: m, dm: dm, n: 0, cap: 4 };
+  return TRN.shipPart;
 }
 function shipBerth(u, E, N) { return u === SHIP_U ? SHIP_BERTH : (RAIL.berth && RAIL.berth[u]) || { E: E, N: N, az: null }; }
 function azNear(az, ref) { if (az == null) return ref; if (ref == null) return az; var d = ((az - ref) % 360 + 540) % 360 - 180; return Math.abs(d) > 90 ? az + 180 : az; }
@@ -2748,19 +2937,16 @@ function updateShips(now) {
     var first = TRN.ships.reduce(function (m, j) { return !m || j.stops[0].d < m.d ? j.stops[0] : m; }, null);
     var at = last || first; if (at) { var B0 = shipBerth(at.u, at.E, at.N); poses.push({ E: B0.E, N: B0.N, az: B0.az == null ? 74.5 : B0.az, at: true }); }
   }
-  while (TRN.shipMeshes.length < poses.length) {
-    var sg = shipGeometry(), m = new THREE.Mesh(sg, sbzMat), md = new THREE.Mesh(sg, sbzDepthMat);
-    m.frustumCulled = md.frustumCulled = false; scene.add(m); smScene.add(md); m.userData.depth = md; TRN.shipMeshes.push(m);
-  }
-  TRN.shipMeshes.forEach(function (m, k) {
-    var p = poses[k]; m.visible = !!p; if (!p) return;
-    if (p.az != null) m.userData.az = p.at ? azNear(p.az, m.userData.az) : p.az;
-    var az = (m.userData.az != null ? m.userData.az : 74.5) * DEG;
-    m.position.set(X(p.E), 0, Z(p.N)); m.rotation.set(0, Math.PI / 2 - az, 0);
-    m.userData.depth.position.copy(m.position); m.userData.depth.rotation.copy(m.rotation); m.userData.E = p.E; m.userData.N = p.N;
+  var sp = shipPart(); sp.n = 0; TRN.shipPos = [];
+  poses.forEach(function (p, k) {
+    var prevAz = TRN.shipAz && TRN.shipAz[k];
+    var az = p.az != null ? (p.at ? azNear(p.az, prevAz) : p.az) : prevAz != null ? prevAz : 74.5;
+    (TRN.shipAz = TRN.shipAz || [])[k] = az;
+    vehPut(sp, X(p.E), (413.55 - H0) * vz, Z(p.N), Math.PI / 2 - az * DEG, 0, false);
+    TRN.shipPos.push([p.E, p.N, az]);
   });
-  TRN.shipMeshes.forEach(function (m) { m.userData.depth.visible = m.visible; });
-  if (window.__zgFollow === 'ship' && TRN.shipMeshes[0] && TRN.shipMeshes[0].visible) { ex.E = TRN.shipMeshes[0].userData.E; ex.N = TRN.shipMeshes[0].userData.N; }
+  sp.m.count = sp.dm.count = sp.n; sp.m.instanceMatrix.needsUpdate = true; if (sp.n) smState.need = true;
+  if (window.__zgFollow === 'ship' && TRN.shipPos[0]) { ex.E = TRN.shipPos[0][0]; ex.N = TRN.shipPos[0][1]; }
 }
 $('#tTrain').addEventListener('click', function () {
   TRN.on = !TRN.on; this.setAttribute('aria-pressed', String(TRN.on)); lastInteract = performance.now();
@@ -3840,7 +4026,7 @@ function frame(now) {
 if (/[?&]debug\b/.test(location.search)) window.__zgFly = function (o) { flyTo(o); };
 if (/[?&]debug\b/.test(location.search)) window.__zgSun = function (t) { setSunT(t); };
 if (/[?&]debug\b/.test(location.search)) window.__zgBuses = function () { return { n: BUS.list.length, net: !!BUS.net, parts: BUS.parts ? BUS.parts.all.map(function (p) { return p.n; }) : null, lines: BUS.list.slice(0, 8).map(function (j) { var st = journeyState(j, Date.now()); return [j.line, j.to, st && (st.at ? 'at' : Math.round(st.f * 100)), Math.round(j.P.L)]; }) }; };
-if (/[?&]debug\b/.test(location.search)) window.__zgTrains = function () { return { shipStops: TRN.ships.map(function (j) { return j.stops.map(function (x) { return [x.u, x.n, x.a, x.d]; }); }), berth: RAIL.berth, shipPos: TRN.shipMeshes.filter(function (m) { return m.visible; }).map(function (m) { return [Math.round(m.userData.E), Math.round(m.userData.N), Math.round(m.userData.az)]; }), pos: TRN.trains.filter(function (j) { return j.pos; }).map(function (j) { return [j.line, Math.round(j.pos.E), Math.round(j.pos.N)]; }), n: TRN.trains.length, ships: TRN.ships.length, cars: TRAIN_PARTS.reduce(function (a, p) { return a + p.n; }, 0), rail: RAIL.ok, sample: TRN.trains.slice(0, 3).map(function (j) { var s = journeyState(j, Date.now()); return [j.line, j.stops.map(function (x) { return x.n + ':' + x.v + ':' + Math.round(x.off); }).join(' / '), s && JSON.stringify(s)]; }) }; };
+if (/[?&]debug\b/.test(location.search)) window.__zgTrains = function () { return { shipStops: TRN.ships.map(function (j) { return j.stops.map(function (x) { return [x.u, x.n, x.a, x.d]; }); }), berth: RAIL.berth, shipPos: (TRN.shipPos || []).map(function (q) { return q.map(Math.round); }), pos: TRN.trains.filter(function (j) { return j.pos; }).map(function (j) { return [j.line, Math.round(j.pos.E), Math.round(j.pos.N)]; }), n: TRN.trains.length, ships: TRN.ships.length, cars: TRAIN_PARTS.reduce(function (a, p) { return a + p.n; }, 0), rail: RAIL.ok, sample: TRN.trains.slice(0, 3).map(function (j) { var s = journeyState(j, Date.now()); return [j.line, j.stops.map(function (x) { return x.n + ':' + x.v + ':' + Math.round(x.off); }).join(' / '), s && JSON.stringify(s)]; }) }; };
 if (/[?&]debug\b/.test(location.search)) window.__zgState = function () { return { ex: Object.assign({}, ex), cam: cam && Object.assign({}, cam), flight: flight && flight.to, mode: MODE, sel: SEL && [SEL.id, SEL.E, SEL.N] }; };
 if (TEST) {
   window.__frame = function () { frame(performance.now()); return true; }; window.__R = R;

@@ -9,7 +9,7 @@ Die Startseite zeigt das Relief des ganzen Kantons und vier Einstiege:
 - **Für Familien**: Spielplätze, Badis, Feuerstellen, Ausflugsziele, Kultur und Sport. Für jeden Spielplatz ist der Schattenanteil am 21. Juli berechnet; ein Filter zeigt nur Orte mit höchstens so viel Sonne (zur gewählten Uhrzeit oder im Tagesmittel 10–17 Uhr). Dazu UV-Index, Trinkbrunnen, WCs, die Lufttemperatur in der Nähe und an Badestellen am See die Wassertemperatur (Modellwert).
 - **Events**: Veranstaltungen live aus dem Veranstaltungskalender von Zug Tourismus (Guidle), mit Bild, Terminen, Ort auf der Karte und Filtern nach Zeitraum, Gemeinde und Kategorie.
 
-Auf der Karte lassen sich zuschalten: freie Plätze in den Parkhäusern (Parkleitsystem Zug, jede Minute), Züge und Kursschiffe nach Fahrplan, der UV-Index bei klarem Himmel für Datum und Uhrzeit und die Lufttemperatur jetzt (rund 280 Sensoren der Stadt Zug und Stationen von MeteoSchweiz, als Werte und als Wärmefläche über der Stadt). In der Nahansicht kommen die Luftbilder live von swisstopo (SWISSIMAGE bis 10 cm), die Gebäude erhalten ihre Dachformen aus swissBUILDINGS3D, der See zeigt Uferlinie, Wellen, Spiegelung und Sonnenglanz. Wer einen Ort wählt, sieht die Karte nach dem Heranfliegen langsam um ihn kreisen.
+Auf der Karte lassen sich zuschalten: freie Plätze in den Parkhäusern (Parkleitsystem Zug, jede Minute), Züge, Busse und Kursschiffe nach Fahrplan, der UV-Index bei klarem Himmel für Datum und Uhrzeit und die Lufttemperatur jetzt (rund 280 Sensoren der Stadt Zug und Stationen von MeteoSchweiz, als Werte und als Wärmefläche über der Stadt). In der Nahansicht kommen die Luftbilder live von swisstopo (SWISSIMAGE bis 10 cm), die Gebäude erhalten ihre Dachformen aus swissBUILDINGS3D, der See zeigt Uferlinie, Wellen, Spiegelung und Sonnenglanz. Wer einen Ort wählt, sieht die Karte nach dem Heranfliegen langsam um ihn kreisen.
 
 Dazu ein Rundflug über den Kanton in sechs Stationen. Jede Ansicht hat eine eigene Adresse (`#/sehenswuerdigkeiten?g=cham`, `#/gemeinden/baar`, `#/events/<id>`), Zurück im Browser funktioniert.
 
@@ -43,17 +43,22 @@ Die Schnittstelle ist nicht öffentlich dokumentiert und kann sich ändern. Stab
 | `/api/parking` | Parkleitsystem Zug (`pls-zug.ch/?json=true`), freie Plätze, Preise, Koordinaten | 60 s |
 | `/api/temp` | Lufttemperaturen Stadt Zug (opendata.swiss, akenza-Schnittstelle mit dem öffentlich publizierten Schlüssel in `wrangler.jsonc`) und MeteoSchweiz-Messwerte (10 min, GeoJSON in LV95) | 10 min |
 | `/api/lake` | Alplakes (Eawag), Oberflächentemperatur aus dem Seemodell für Zugersee und Ägerisee | 3 h |
-| `/api/trains` | Abfahrtstafeln der Fahrplan-Schnittstelle von search.ch mit Folgehalten und Verspätungen: zehn Bahnhöfe (Zug, Baar, Cham, Rotkreuz, Steinhausen und weitere) und die Schiffstege Zug Bahnhofsteg und Arth am See | 3 min |
+| `/api/trains` | Abfahrtstafeln der Fahrplan-Schnittstelle von search.ch mit Folgehalten und Verspätungen: zehn Bahnhöfe (Zug, Baar, Cham, Rotkreuz, Steinhausen und weitere) und die Schiffstege Zug Bahnhofsteg und Arth am See | 4 min |
+| `/api/buses` | Abfahrtstafeln von zwölf Bus-Knoten (Zug Metalli/Bahnhof, Postplatz, Kolinplatz, Baar Bahnhof, Cham Bahnhof und Gewerbestrasse, Rotkreuz Nord und Süd, Steinhausen, Oberägeri, Menzingen, Walchwil); sie erfassen rund 96 % der Fahrtabschnitte | 4 min |
 
 Die Wärmefläche verbindet die Sensorwerte nach Entfernung und endet rund 350 m vom nächsten Sensor. Sie ist keine flächendeckende Messung. Die Hitzekarte der kantonalen Klimaanalyse (ZugMap) wäre die bessere Grundlage, war aber von ausserhalb der Schweiz nicht abrufbar.
 
-## Züge und Schiffe
+## Züge, Busse und Schiffe
 
 Für die Schweiz gibt es keinen offenen Datenstrom mit den Positionen der Fahrzeuge. opentransportdata.swiss bietet Echtzeit nur als Prognosen pro Halt an (GTFS-RT TripUpdates, OJP), ausdrücklich ohne Vehicle Positions. Die Karte schätzt die Lage deshalb aus Fahrplan und Verspätung: Zwischen zwei Halten fährt ein Zug mit Anfahr- und Bremsphase entlang der Gleisachsen aus swissTLM3D (`public/rail.json`, jedes Gleis einzeln, kürzester Weg im Gleisnetz). In Tunneln wird er ausgeblendet; Tunnel sind aus dem Gelände geschätzt (Gleis mehr als 9 m unter einer Hülle mit höchstens 3,5 % Steigung), nicht aus Tunneldaten. Liegt der vorige Halt ausserhalb der Karte (etwa Zürich HB), beginnt die Fahrt am nächsten Gleis am Kartenrand; die Strecke dorthin ist als Luftlinie geschätzt. Länge und Farbe folgen der Zugkategorie (IC/EC, IR/RE, S-Bahn), nicht dem eingesetzten Rollmaterial.
 
 Kursschiffe der Zugersee Schifffahrt fahren entlang der Fährlinien aus OpenStreetMap und legen an berechneten Liegeplätzen an: ab dem Steg so weit seewärts, bis der Rumpf ganz im Wasser liegt, parallel zum Ufer (`pipeline/rail/make_ferry.py`). Am Bahnhofsteg Zug ist der Liegeplatz nach den Pollern im Luftbild gesetzt. Da der Fahrplan an Zwischenhalten oft dieselbe Minute für An- und Abfahrt nennt, rechnet die Karte zwei Minuten Haltezeit um diese Minute. Die Saison 2026 endet am 1. November; danach bleibt das Schiff am Bahnhofsteg.
 
-Eine belastbarere Quelle wäre OJP 2.0 von opentransportdata.swiss mit kostenlosem Schlüssel (StopEventRequest, Limiten laut Plattform). geOps bietet echte Echtzeitpositionen an, verlangt aber einen Schlüssel und erlaubt die kostenlose Nutzung nur nicht kommerziell. search.ch erlaubt die Nutzung der Schnittstelle «für eigene Zwecke» und begrenzt sie auf 10'080 Abfahrtstabellen pro Tag; der Worker braucht 12 Tafeln alle drei Minuten pro Cache-Standort. Bei breiter Nutzung ist der Umstieg auf OJP angezeigt.
+Busse fahren zwischen den Halten entlang der Linienwege aus OpenStreetMap (`public/bus.json`, erzeugt mit `pipeline/bus/make_bus.py`), auf der rechten Fahrspur; die Fahrplanhalte werden der Reihe nach auf die passende Linienvariante projiziert. Fahrten, die erst nach einem der zwölf Knoten beginnen, erscheinen erst ab dem Knoten.
+
+Fahrzeuge: Jede Linie erhält das Fahrzeug, das dort laut SBB-Einsatzdaten 2025 üblicherweise fährt (S1/S2/S26 FLIRT RABe 523, S5 KISS RABe 511, S24 DTZ RABe 514, IR 70 FV-Dosto RABe 502, IR 75 Re 460 mit IC2000, EC und IC 2 Giruno RABe 501, IR 46 Traverso der SOB). Im Betrieb kommen Abweichungen vor. Die Modelle sind aus Querschnitt, Kopfform, Wagenlängen und Lackierung nach Herstellerangaben und Fotos von Wikimedia Commons gebaut; Fotos dienen als Vorlage, nicht als Textur. Busse der Zugerland Verkehrsbetriebe tragen die Diesel- oder E-Bus-Lackierung (rund 40 % der Flotte fahren elektrisch, Zuteilung zufällig), Linien 603, 605, 606, 607, 611 und 614 fahren mit Gelenkbussen (nur 606 belegt), 601 und 602 mit Bus und Anhänger. Das Kursschiff ist nach der MS Zug (2003, 45,6 m) modelliert; welches Schiff fährt, steht nicht im Fahrplan, deshalb fehlt der Schiffsname.
+
+Eine belastbarere Quelle wäre OJP 2.0 von opentransportdata.swiss mit kostenlosem Schlüssel (StopEventRequest, Limiten laut Plattform). geOps bietet echte Echtzeitpositionen an, verlangt aber einen Schlüssel und erlaubt die kostenlose Nutzung nur nicht kommerziell. search.ch erlaubt die Nutzung der Schnittstelle «für eigene Zwecke» und begrenzt sie auf 10'080 Abfahrtstabellen pro Tag; der Worker braucht 24 Tafeln alle vier Minuten pro Cache-Standort (8'640 pro Tag). Bei breiter Nutzung ist der Umstieg auf OJP angezeigt.
 
 ## Gebäude in der Nahansicht
 
@@ -76,8 +81,9 @@ Ab rund 2 km Kameraabstand lädt die Karte die Gebäude aus swissBUILDINGS3D als
 | `data/portal.json` | Sehenswürdigkeiten, Gemeindezahlen, Links und zusätzliche Familienorte (aus `pipeline/portal/build_portal.py`) |
 | `data/curated.json` | von Hand gepflegte Ergänzungen mit Quellen, z. B. Regierungsgebäude, Hinweise zum Strandbad |
 | `public/rail.json` | Gleisachsen (swissTLM3D), Bahnhöfe, Fährlinien und Schiffsliegeplätze, Koordinaten in Dezimetern |
-| `worker/index.js` | Cloudflare Worker mit `/api/events`, `/api/event`, `/api/parking`, `/api/temp`, `/api/lake`, `/api/trains` |
-| `pipeline/` | Python-Skripte für Datenbezug, Schattenberechnung und Kodierung; `pipeline/osm/` enthält die Overpass-Abfragen; `pipeline/portal/build_portal.py` schreibt `data/portal.json`; `pipeline/rail/` erzeugt `public/rail.json` (Gleise, dann Fährlinien mit `make_ferry.py`) |
+| `public/bus.json` | Linienwege der Busse aus OpenStreetMap, Strassenstücke einmal gespeichert |
+| `worker/index.js` | Cloudflare Worker mit `/api/events`, `/api/event`, `/api/parking`, `/api/temp`, `/api/lake`, `/api/trains`, `/api/buses` |
+| `pipeline/` | Python-Skripte für Datenbezug, Schattenberechnung und Kodierung; `pipeline/osm/` enthält die Overpass-Abfragen; `pipeline/portal/build_portal.py` schreibt `data/portal.json`; `pipeline/rail/` erzeugt `public/rail.json` (Gleise, dann Fährlinien mit `make_ferry.py`), `pipeline/bus/` die Datei `public/bus.json` (Overpass-Abfrage und Skript) |
 | `wrangler.jsonc`, `package.json` | Konfiguration für Cloudflare Workers |
 
 ## Neu bauen
@@ -106,7 +112,7 @@ Grenzen: Die Vollständigkeit der OpenStreetMap-Daten ist nicht garantiert. Die 
 - Lufttemperaturen: Stadt Zug, Datensatz «Lufttemperaturen Stadt Zug» auf opendata.swiss (Nutzungsbedingung «Freie Nutzung»). Messwerte: MeteoSchweiz (CC BY 4.0, Quellenangabe «Quelle: MeteoSchweiz»).
 - Seetemperatur: Alplakes, Eawag. Für die Programmierschnittstelle ist Apache 2.0 angegeben, eine ausdrückliche Lizenz für die Daten fehlt; vor einer breiten Nutzung bei der Eawag nachfragen.
 - Parkhäuser: Parkleitsystem Zug AG (c/o WWZ). Nutzungsbedingungen sind nicht veröffentlicht.
-- Fahrplan und Verspätungen: Fahrplan-Schnittstelle von search.ch (Nutzung für eigene Zwecke, Tageslimite). Haltestellen: Dienststellen von SBB und opentransportdata.swiss. Fährlinien der Kursschiffe: OpenStreetMap (ODbL).
+- Fahrplan und Verspätungen: Fahrplan-Schnittstelle von search.ch (Nutzung für eigene Zwecke, Tageslimite). Haltestellen: Dienststellen von SBB und opentransportdata.swiss. Fährlinien der Kursschiffe und Linienwege der Busse: OpenStreetMap (ODbL). Vorlagen für die Fahrzeugmodelle: Fotos von Wikimedia Commons (nicht in die Karte übernommen).
 - Veranstaltungen: Daten und Bilder stammen von den Veranstaltern über Guidle und den Kalender von Zug Tourismus. Sie werden live angezeigt und nicht gespeichert. Für die Anzeige der Bilder ausserhalb des Guidle-Kalenders braucht es die Zustimmung von Zug Tourismus beziehungsweise Guidle.
 - Einwohnerzahlen und Flächen: Bundesamt für Statistik und Statistik Kanton Zug, Quelle und Stichtag in der Gemeindeansicht.
 
