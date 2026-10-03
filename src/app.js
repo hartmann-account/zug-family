@@ -1764,6 +1764,41 @@ function buildStrandbad() {
     for (j = 0; j < ip.count; j += 3) Ii.push(base + j, base + j + 1, base + j + 2);
   });
   ico.dispose();
+  // Sprungturm im See (Luftbild 10 cm, 2025): runder Treppenkern, 5-m-Plattform nach WNW, 3-m-Brett nach N, 1-m-Brett nach OSO
+  var TE = S.TOWER.E, TN = S.TOWER.N, GW = 413.55, CONC = [0.80, 0.79, 0.76], CONC2 = [0.70, 0.69, 0.66], STEEL = [0.66, 0.68, 0.70], BOARD = [0.60, 0.72, 0.82];
+  function tp(az, d, sd) { var r = az * DEG; return [TE + d * Math.sin(r) + sd * Math.cos(r), TN + d * Math.cos(r) - sd * Math.sin(r)]; }
+  function arm(az, d0, d1, W, y0, y1, c, k, sd) { var p = tp(az, (d0 + d1) / 2, sd || 0); box(p[0], p[1], (90 - az) * DEG, d1 - d0, W, y0, y1, GW, GW, c, k); }
+  function ring(r, y0, y1, c, n, cap) {
+    var prev = null, base = [];
+    for (var j = 0; j <= n; j++) {
+      var a = j / n * Math.PI * 2, e = TE + r * Math.cos(a), nn = TN + r * Math.sin(a);
+      var lo = v(e, nn, y0, GW, c, 0, a * r, 0), hi = v(e, nn, y1, GW, c, 0, a * r, y1 - y0);
+      if (prev) quad(prev[0], lo, hi, prev[1]); prev = [lo, hi]; base.push(hi);
+    }
+    if (cap) { var ctr = v(TE, TN, y1, GW, cap, 0, 0, 0); for (j = 0; j < n; j++) Ii.push(ctr, base[j], base[j + 1]); }
+  }
+  ring(1.45, -0.8, 5.0, CONC, 28, [0.24, 0.25, 0.27]);   // Kern, oben offen (dunkler Treppenschacht)
+  ring(1.45, 5.0, 6.05, CONC, 28, null);                 // Brüstung um den Ausstieg
+  ring(1.47, -0.8, 0.25, CONC2, 28, null);               // nasser Sockel an der Wasserlinie
+  [[282, 4.65, 5.0, 4.7, 2.5], [12, 2.65, 3.0, 3.9, 2.2], [108, 0.65, 1.0, 4.0, 2.2]].forEach(function (A2) {
+    var az = A2[0], yb = A2[1], yt = A2[2], d1 = A2[3], W = A2[4];
+    arm(az, 0.9, d1, W, yb, yt, CONC, 0);                                       // Plattform
+    arm(az, d1 - 1.1, d1 - 0.5, W - 0.5, -0.8, yb, CONC2, 0);                   // Wandscheibe als Stütze
+    [-1, 1].forEach(function (sg) {                                             // Geländer: Pfosten und Handlauf
+      for (var q = 1.2; q <= d1 - 0.2; q += 1.1) arm(az, q - 0.03, q + 0.03, 0.06, yt, yt + 1.05, STEEL, 0, sg * (W / 2 - 0.06));
+      arm(az, 1.1, d1 - 0.15, 0.06, yt + 1.0, yt + 1.06, STEEL, 0, sg * (W / 2 - 0.06));
+    });
+  });
+  // Sprungbretter mit Lagerbock
+  [[12, 3.0, 0.45], [108, 1.0, -0.4]].forEach(function (B2) {
+    arm(B2[0], 2.0, 6.2, 0.52, B2[1] + 0.06, B2[1] + 0.13, BOARD, 0, B2[2]);
+    arm(B2[0], 3.1, 3.5, 0.62, B2[1], B2[1] + 0.06, STEEL, 0, B2[2]);
+  });
+  // Leitern aus dem Wasser an Kern und 1-m-Arm
+  [[200, 1.5], [160, 1.5]].forEach(function (L2) {
+    [-0.25, 0.25].forEach(function (sd) { arm(L2[0], L2[1], L2[1] + 0.05, 0.05, -0.9, 1.0, STEEL, 0, sd); });
+    for (var y = -0.6; y < 0.9; y += 0.3) arm(L2[0], L2[1], L2[1] + 0.05, 0.5, y, y + 0.04, STEEL, 0, 0);
+  });
   // junge Bäume (Stamm, Krone) und Sonnenschirme
   var crown = new THREE.IcosahedronGeometry(1, 1), cp = crown.attributes.position, LEAF = [0.33, 0.45, 0.2];
   S.trees.forEach(function (tr, ti) {
@@ -1820,7 +1855,8 @@ var SB3 = { folder: null, folderP: null, draco: null, dracoP: null, tiles: {}, q
 SB3.covTex = new THREE.DataTexture(SB3.covData, 256, 256, THREE.RedFormat, THREE.UnsignedByteType);
 SB3.covTex.magFilter = SB3.covTex.minFilter = THREE.NearestFilter; SB3.covTex.needsUpdate = true; U.uCov.value = SB3.covTex;
 // Regierungsgebäude: Sandstein, hohe Geschosse; Bahnhof Zug (2003): Glasfassade, abends Lichtinstallation von James Turrell
-var SB3_LANDMARKS = [{ E: 2681586, N: 1224659, r: 28, kind: 4 }, { E: 2681616, N: 1225289, r: 12, kind: 6 }];
+var SB3_LANDMARKS = [{ E: 2681586, N: 1224659, r: 28, kind: 4 }, { E: 2681616, N: 1225289, r: 12, kind: 6 },
+  { E: 2680661, N: 1225328.5, r: 7, kind: -1 }]; // kind -1: Altbauten des Strandbads, abgebrochen (fehlen schon im Luftbild 2025)
 function sb3Folder() {
   if (!SB3.folderP) SB3.folderP = fetch(SB3_URL + 'tileset.json').then(function (r) { return r.json(); }).then(function (j) {
     var uri = j.root && j.root.children && j.root.children[0] && j.root.children[0].content && j.root.children[0].content.uri || '';
@@ -1917,7 +1953,10 @@ function sb3Build(t, data) {
   parts.forEach(function (pt) {
     POS.set(pt.P, off * 3);
     for (var i = 0; i < pt.n; i++) { var bi = pt.bid ? Math.round(pt.bid[i]) : 0, ok = bi < nB; INF[(off + i) * 4] = ok ? seedB[bi] : 0.5; INF[(off + i) * 4 + 1] = ok && baseB[bi] < 1e8 ? baseB[bi] : pt.P[i * 3 + 1]; INF[(off + i) * 4 + 2] = ok ? kindB[bi] : 0; INF[(off + i) * 4 + 3] = pt.roof; }
-    for (var j = 0; j < pt.I.length; j++) IDX.push(pt.I[j] + off);
+    for (var j = 0; j + 2 < pt.I.length; j += 3) {
+      var b0 = pt.bid ? Math.round(pt.bid[pt.I[j]]) : 0; if (b0 < nB && kindB[b0] < 0) continue;
+      IDX.push(pt.I[j] + off, pt.I[j + 1] + off, pt.I[j + 2] + off);
+    }
     off += pt.n;
   });
   var geo = new THREE.BufferGeometry();

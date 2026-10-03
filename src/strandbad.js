@@ -30,7 +30,8 @@
     P(562, 936), P(470, 790), P(372, 622)];
   // neue Sandbucht: Wasserlinie als Bogen landeinwärts der alten Uferlinie (P(372,622)–P(470,790))
   var water = [P(372, 622), P(398, 642), P(424, 668), P(444, 700), P(456, 738), P(466, 772), P(470, 790), P(562, 936)];
-  var bay = water.slice(0, 7);
+  // Flachwasser der Bucht vor der Wasserlinie bis zu den Steinblöcken; im Luftbild 2025 noch Kies der Baustelle
+  var bay = [P(325, 570), P(370, 564)].concat(water.slice(0, 7), [P(430, 780), P(370, 770), P(325, 748), P(280, 711), P(270, 671), P(302, 646), P(305, 591)]);
   var path = [P(494, 536), P(480, 584), P(474, 634), P(480, 694), P(498, 748), P(518, 796), P(548, 850), P(574, 900)];
   var decks = [ // [E, N, Seite in m, Drehung in Grad]
     [P(492, 800), 4.2, 18], [P(478, 812), 3.6, -14], [P(468, 826), 4.4, 30], [P(452, 838), 3.2, 4], [P(486, 828), 3.0, 52],
@@ -59,7 +60,7 @@
   var RES = 0.15, BB = null, CV = null;
   function bbox() {
     var e0 = 1e9, e1 = -1e9, n0 = 1e9, n1 = -1e9;
-    perim.forEach(function (p) { e0 = Math.min(e0, p[0]); e1 = Math.max(e1, p[0]); n0 = Math.min(n0, p[1]); n1 = Math.max(n1, p[1]); });
+    perim.concat(bay).forEach(function (p) { e0 = Math.min(e0, p[0]); e1 = Math.max(e1, p[0]); n0 = Math.min(n0, p[1]); n1 = Math.max(n1, p[1]); });
     return { E0: e0 - 2, E1: e1 + 2, N0: n0 - 2, N1: n1 + 2 };
   }
   function hash(x, y) { var h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return h - Math.floor(h); }
@@ -102,11 +103,11 @@
     var mask = ctx.getImageData(0, 0, W, H), md = mask.data;
     var img = ctx.createImageData(W, H), d = img.data;
     // Abstand zur Wasserlinie für nassen Sand
-    var wl = water.slice(0, 7).map(tf);
-    function dWater(x, y) {
-      var best = 1e9;
-      for (var i = 0; i < wl.length - 1; i++) {
-        var ax = wl[i][0], ay = wl[i][1], bx = wl[i + 1][0], by = wl[i + 1][1], vx = bx - ax, vy = by - ay;
+    var wl = water.slice(0, 7).map(tf), el = bay.slice(9).concat(bay.slice(0, 2)).map(tf);
+    function dWater(x, y, L) {
+      var best = 1e9, wl0 = L || wl;
+      for (var i = 0; i < wl0.length - 1; i++) {
+        var ax = wl0[i][0], ay = wl0[i][1], bx = wl0[i + 1][0], by = wl0[i + 1][1], vx = bx - ax, vy = by - ay;
         var t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)));
         best = Math.min(best, Math.hypot(x - ax - t * vx, y - ay - t * vy));
       }
@@ -122,9 +123,10 @@
         var stripe = Math.floor((e * ca + n * sa) / 2.4) % 2 ? 1 : 0;
         var v = 0.8 + 0.12 * n1 + 0.08 * n2 + 0.12 * (n3 - 0.5) + 0.025 * stripe - 0.08 * n4, dry = Math.max(0, n4 - 0.55) * 0.5;
         r = (84 + 40 * dry) * v; g = (110 + 14 * dry) * v; b = (52 + 8 * dry) * v;
-      } else if (m === 6) { // flaches Wasser über Sand: zum Strand hin heller
-        var ws = Math.min(1, dWater(x, y) / 6), vb = 0.95 + 0.05 * n1 + 0.04 * (n3 - 0.5);
+      } else if (m === 6) { // flaches Wasser über Sand: zum Strand hin heller, seewärts ins Luftbild auslaufend
+        var dw = dWater(x, y), ws = Math.min(1, dw / 6), vb = 0.95 + 0.05 * n1 + 0.04 * (n3 - 0.5) + 0.05 * (n4 - 0.5);
         r = (150 - 70 * ws) * vb; g = (156 - 40 * ws) * vb; b = (128 - 10 * ws) * vb;
+        d[k * 4 + 3] = 255 * Math.max(0, Math.min(1, 1.15 - (dw - 9) / 15)) * Math.min(1, dWater(x, y, el) / 5); d[k * 4] = r; d[k * 4 + 1] = g; d[k * 4 + 2] = b; continue;
       } else if (m === 2) { // Sand, zum Wasser hin dunkler und feuchter
         var w = Math.max(0, 1 - dWater(x, y) / 2.2);
         var vs = 0.92 + 0.06 * n1 + 0.05 * n2 + 0.12 * (n3 - 0.5);
@@ -154,8 +156,21 @@
     // Schatten der Steinblöcke und Decks auf dem Boden (Kontakt), Bäume der Liegewiese bleiben dem Luftbild überlassen
     stones.forEach(function (s) { var q = tf([s.E, s.N]); ctx.fillStyle = 'rgba(40,36,30,0.28)'; ctx.beginPath(); ctx.ellipse(q[0] + 0.3 / RES, q[1] + 0.3 / RES, s.r * 1.15 / RES, s.r * 0.95 / RES, 0, 0, 7); ctx.fill(); });
   }
+  // Sprungturm: Das Luftbild zeigt ihn samt Schatten von oben; der 3D-Turm steht darauf. Die Stelle wird mit Wasser
+  // überdeckt, das 16 m weiter entlang des Ufers liegt (gleiche Wassertiefe). Kopie innerhalb der Canvas, kein Pixel-Auslesen.
+  var TOWER = { E: 2680572.3, N: 1225359.0, cE: 2680572.6, cN: 1225361.5, r: 7.8, dE: -16, dN: 5 };
+  function patchTower(ctx, Emin, Nmax, scale) {
+    var t = TOWER, cx = (t.cE - Emin) * scale, cy = (Nmax - t.cN) * scale, r = t.r * scale, cw = ctx.canvas.width, ch = ctx.canvas.height;
+    var sx = cx + t.dE * scale, sy = cy - t.dN * scale;
+    if (r < 1.5 || sx - r < 0 || sy - r < 0 || cx + r > cw || cy + r > ch || sx + r > cw || sy + r > ch || cx - r < 0 || cy - r < 0) return;
+    [[1, 0.55], [0.8, 1]].forEach(function (q) {
+      ctx.save(); ctx.globalAlpha = q[1]; ctx.beginPath(); ctx.arc(cx, cy, r * q[0], 0, 7); ctx.clip();
+      ctx.drawImage(ctx.canvas, sx - r, sy - r, 2 * r, 2 * r, cx - r, cy - r, 2 * r, 2 * r); ctx.restore();
+    });
+  }
   // zeichnet den Boden in eine Karten-Canvas: Emin/Nmax = linke obere Ecke, scale = Pixel pro Meter
   function paint(ctx, Emin, Nmax, scale, Emax, Nmin) {
+    try { patchTower(ctx, Emin, Nmax, scale); } catch (e) {}
     if (!BB) { try { build(); } catch (e) { return false; } }
     if (Emax != null && (Emax < BB.E0 || Emin > BB.E1 || Nmax < BB.N0 || Nmin > BB.N1)) return false;
     var dx = (BB.E0 - Emin) * scale, dy = (Nmax - BB.N1) * scale, w = (BB.E1 - BB.E0) * scale, h = (BB.N1 - BB.N0) * scale;
@@ -163,6 +178,6 @@
     ctx.drawImage(CV, dx, dy, w, h);
     return true;
   }
-  root.ZGSBZ = { ARC: ARC, perim: perim, water: water, bay: bay, path: path, decks: decks, stones: stones, trees: trees, shades: shades, paint: paint, P: P,
+  root.ZGSBZ = { TOWER: TOWER, ARC: ARC, perim: perim, water: water, bay: bay, path: path, decks: decks, stones: stones, trees: trees, shades: shades, paint: paint, P: P,
     ground: 415.7, info: 'Neubauten 2026 nachgebildet; Luftbild 2025' };
 })(typeof self !== 'undefined' ? self : this);
