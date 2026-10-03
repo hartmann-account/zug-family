@@ -614,6 +614,7 @@ body.m-home .tleg,body.touring .tleg{display:none}
     <button type="button" id="northBtn" aria-label="Nach Norden ausrichten"><svg class="ic" viewBox="0 0 34 34" id="north" aria-hidden="true"><path d="M17 3 L22.5 18 L17 15.2 L11.5 18 Z" fill="var(--brand)"/><path d="M17 31 L11.5 18 L17 20.8 L22.5 18 Z" fill="currentColor" fill-opacity=".4"/></svg></button>
     <button type="button" id="tPhoto" aria-pressed="true" aria-label="Luftbild beim Heranzoomen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 12h14l-4.5-6-3.5 4.5-2.5-3z"/></svg></button>
     <button type="button" id="tPark" aria-pressed="false" aria-label="Parkhäuser mit freien Plätzen">P</button>
+    <button type="button" id="tTrain" aria-pressed="true" aria-label="Züge und Schiffe nach Fahrplan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c-4 0-7 .5-7 4v9.5A3.5 3.5 0 0 0 8.5 19L7 20.5V21h2.2l2-2h1.6l2 2H17v-.5L15.5 19a3.5 3.5 0 0 0 3.5-3.5V6c0-3.5-3-4-7-4zM7.5 17a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5-7H7V6h4zm2 0V6h4v4zm3.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
     <button type="button" id="tTemp" aria-pressed="false" aria-label="Lufttemperatur jetzt"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v9.1a5 5 0 1 0 6 0V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v10.2l.45.3a3 3 0 1 1-2.9 0l.45-.3V5a1 1 0 0 1 1-1zm-1 6v5.3a2 2 0 1 0 2 0V10z"/></svg></button>
   </div>
 </div>
@@ -1318,7 +1319,7 @@ function setSunT(t, src) {
   t = clamp(t, 7, 21);
   if (Math.abs(t - sunT) < 1e-4 && src !== 'force') return;
   sunT = t; sun = sunpos(t);
-  if (GL) sunVector(sun, U.uSunDir.value);
+  if (GL) { sunVector(sun, U.uSunDir.value); U.uDusk.value = sstep(2, -4, sun.alt); }
   var now = performance.now();
   if (src !== 'play' || now - lastUIupd > 60) { lastUIupd = now; updateSunUI(); }
   listDirty = true; markerShadeDirty = true;
@@ -2059,7 +2060,7 @@ var SM = (small || renderer.capabilities.maxTextureSize < 8192) ? 2048 : 4096;
 var blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1); blank.needsUpdate = true;
 var U = {
   uFog: { value: new THREE.Color() }, uFogNear: { value: 1e5 }, uFogFar: { value: 2e5 },
-  uTime: { value: 0 }, uDark: { value: 0 }, uPx: { value: 0.001 },
+  uTime: { value: 0 }, uDark: { value: 0 }, uDusk: { value: 0 }, uPx: { value: 0.001 },
   uVZ: { value: VZ }, uBZ: { value: VZ },
   uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunMix: { value: 0 }, uSunCol: { value: new THREE.Color(1, 1, 1) }, uSkyCol: { value: new THREE.Color(0.8, 0.85, 1) },
   uAmb: { value: 0.46 }, uDif: { value: 0.64 },
@@ -2071,7 +2072,7 @@ var U = {
   uWaterF: { value: blank }, uWaterC: { value: blank }, uWaterFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uWaterCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uHgt: { value: blank }, uHgtSize: { value: new THREE.Vector2(nx, ny) }
 };
-sunVector(sun, U.uSunDir.value);
+sunVector(sun, U.uSunDir.value); U.uDusk.value = sstep(2, -4, sun.alt);
 var C = {};
 ['--paper', '--m-land', '--m-lit', '--m-shade', '--m-forest', '--m-out', '--m-water', '--m-water-deep', '--m-contour', '--m-hi',
  '--m-side', '--m-side-2', '--m-roof', '--m-wall', '--m-window', '--m-line', '--m-muni', '--m-river', '--m-shore', '--m-lorze', '--ink',
@@ -2873,7 +2874,8 @@ function ecefToLV95(X, Y, Zc) {
 var SB3 = { folder: null, folderP: null, draco: null, dracoP: null, tiles: {}, queue: [], inflight: 0, active: 0, on: false, last: 0, covData: new Uint8Array(256 * 256), covTex: null, failed: 0 };
 SB3.covTex = new THREE.DataTexture(SB3.covData, 256, 256, THREE.RedFormat, THREE.UnsignedByteType);
 SB3.covTex.magFilter = SB3.covTex.minFilter = THREE.NearestFilter; SB3.covTex.needsUpdate = true; U.uCov.value = SB3.covTex;
-var SB3_LANDMARKS = [{ E: 2681586, N: 1224659, r: 28, kind: 4 }]; // Regierungsgebäude: Sandstein, hohe Geschosse
+// Regierungsgebäude: Sandstein, hohe Geschosse; Bahnhof Zug (2003): Glasfassade, abends Lichtinstallation von James Turrell
+var SB3_LANDMARKS = [{ E: 2681586, N: 1224659, r: 28, kind: 4 }, { E: 2681616, N: 1225289, r: 12, kind: 6 }];
 function sb3Folder() {
   if (!SB3.folderP) SB3.folderP = fetch(SB3_URL + 'tileset.json').then(function (r) { return r.json(); }).then(function (j) {
     var uri = j.root && j.root.children && j.root.children[0] && j.root.children[0].content && j.root.children[0].content.uri || '';
@@ -2991,7 +2993,7 @@ var sb3Mat = new THREE.ShaderMaterial({
   uniforms: Object.assign({}, U),
   vertexShader: SB3_VS,
   fragmentShader: [
-    'uniform vec3 uFog; uniform float uDark, uFogNear, uFogFar;',
+    'uniform vec3 uFog; uniform float uDark, uFogNear, uFogFar, uTime, uDusk;',
     LIGHT, SHADOW, ORTHO, COMMON,
     'varying vec3 vW; varying float vSeed, vRel, vKind, vRoof, vDist;',
     'void main(){',
@@ -3007,19 +3009,28 @@ var sb3Mat = new THREE.ShaderMaterial({
     '  else if(vKind > 1.5 && vKind < 2.5) wallc = vec3(0.80, 0.78, 0.73);',
     '  else if(vKind > 2.5 && vKind < 3.5) wallc = vec3(0.72, 0.74, 0.76);',
     '  else if(vKind > 3.5 && vKind < 4.5){ wallc = vec3(0.86, 0.81, 0.70); fh = 4.6; cw = 3.4; }',
-    '  else if(vKind > 4.5){ float ms = fract(vSeed*3.3); wallc = ms < 0.4 ? vec3(0.90, 0.90, 0.88) : ms < 0.7 ? vec3(0.78, 0.79, 0.80) : vec3(0.84, 0.80, 0.72); fh = 3.4; cw = 1.6; }',
+    '  else if(vKind > 4.5 && vKind < 5.5){ float ms = fract(vSeed*3.3); wallc = ms < 0.4 ? vec3(0.90, 0.90, 0.88) : ms < 0.7 ? vec3(0.78, 0.79, 0.80) : vec3(0.84, 0.80, 0.72); fh = 3.4; cw = 1.6; }',
     '  float u = abs(n.x) > abs(n.z) ? vW.z : vW.x;',
     '  float fl = (vRel - 1.0)/fh, cu = u/cw + vSeed*5.0; vec2 f = vec2(fract(cu), fract(fl));',
     // Fenster mit geglätteten Kanten; sobald ein Fenster nur noch wenige Pixel misst, wird es ausgeblendet (kein Flimmern)
     '  vec2 fw = max(fwidth(vec2(cu, fl)), vec2(1e-4)); float far = smoothstep(0.07, 0.2, max(fw.x, fw.y));',
     '  float wx0 = 0.34, wx1 = 0.66, wy0 = 0.3, wy1 = 0.8;',
     '  if(vKind > 3.5 && vKind < 4.5){ wx0 = 0.37; wx1 = 0.63; wy0 = 0.16; wy1 = 0.86; }',
-    '  if(vKind > 4.5){ wx0 = 0.06; wx1 = 0.94; wy0 = 0.28; wy1 = 0.86; }',
+    '  if(vKind > 4.5 && vKind < 5.5){ wx0 = 0.06; wx1 = 0.94; wy0 = 0.28; wy1 = 0.86; }',
     '  float win = smoothstep(wx0 - fw.x, wx0 + fw.x, f.x)*(1.0 - smoothstep(wx1 - fw.x, wx1 + fw.x, f.x))*smoothstep(wy0 - fw.y, wy0 + fw.y, f.y)*(1.0 - smoothstep(wy1 - fw.y, wy1 + fw.y, f.y));',
     '  win *= step(0.0, fl)*step(1.2, vRel)*(vKind > 4.5 ? 1.0 : step(0.18, fract(vSeed*13.7 + floor(cu)*0.618)));',
     '  if(vKind > 0.5 && vKind < 1.5){ float cu2 = u/4.2; vec2 f2 = vec2(fract(cu2), fract((vRel - 2.0)/9.0)); vec2 fw2 = max(fwidth(vec2(cu2, (vRel - 2.0)/9.0)), vec2(1e-4)); far = smoothstep(0.07, 0.2, max(fw2.x, fw2.y));',
     '    win = smoothstep(0.44 - fw2.x, 0.44 + fw2.x, f2.x)*(1.0 - smoothstep(0.56 - fw2.x, 0.56 + fw2.x, f2.x))*step(0.25, f2.y)*step(f2.y, 0.85)*step(2.0, vRel)*step(0.45, fract(floor(cu2)*0.37 + vSeed)); }',
     '  if(vKind > 1.5 && vKind < 3.5) win = 0.0;',
+    // Bahnhof: Pfosten-Riegel-Glasfassade; in der Dämmerung wandern Rot, Grün und Blau langsam über die Front
+    '  float glow = 0.0; vec3 glowc = vec3(0.0);',
+    '  if(vKind > 5.5){ float cu3 = u/1.55, fl3 = (vRel - 0.4)/4.2; vec2 f3 = fract(vec2(cu3, fl3)); vec2 fw3 = max(fwidth(vec2(cu3, fl3)), vec2(1e-4));',
+    '    float mx = smoothstep(0.0, 0.07 + fw3.x, f3.x)*(1.0 - smoothstep(0.93 - fw3.x, 1.0, f3.x)), my = smoothstep(0.0, 0.05 + fw3.y, f3.y)*(1.0 - smoothstep(0.92 - fw3.y, 1.0, f3.y));',
+    '    float pane = mix(mx*my, 0.85, smoothstep(0.15, 0.4, max(fw3.x, fw3.y)))*step(0.6, vRel);',
+    '    vec3 gl3 = mix(vec3(0.16, 0.24, 0.28), mix(uFog, uSkyCol, 0.4), 0.3 + 0.45*pow(1.0 - abs(dot(n, V)), 2.0));',
+    '    wallc = mix(vec3(0.74, 0.76, 0.77), gl3, pane); win = 0.0; far = 1.0;',
+    '    float hu = fract(uTime*0.003 + u*0.0012); glow = pane*(1.0 - roof)*(1.0 - smoothstep(18.0, 22.0, vRel));',
+    '    glowc = mix(vec3(1.0), clamp(abs(fract(hu + vec3(0.0, 0.667, 0.333))*6.0 - 3.0) - 1.0, 0.0, 1.0), 0.7)*(0.5 + 0.2*f3.y); }',
     // Glas mit etwas Himmelsspiegelung, heller Rahmen innen am Fensterrand
     '  float frame = win*(1.0 - smoothstep(0.035, 0.07, min(min(f.x - wx0, wx1 - f.x), min(f.y - wy0, wy1 - f.y))));',
     '  vec3 glass = mix(vec3(0.20, 0.24, 0.29), mix(uFog, uSkyCol, 0.5)*0.7, 0.25 + 0.35*(1.0 - abs(dot(n, V))));',
@@ -3038,6 +3049,7 @@ var sb3Mat = new THREE.ShaderMaterial({
     '    vec3 sky = uDark < 0.5 ? mix(uSkyCol, vec3(1.0, 0.97, 0.92), 0.55*(1.0 - roof)) : uSkyCol;',
     '    col = alb*(uAmb*sky + uDif*lamb*vis*uSunCol);',
     '  } else { vec3 fl2 = normalize(vec3(-0.55, 0.62, -0.56)); col = alb*(0.64 + 0.36*max(dot(n, fl2), 0.0)); }',
+    '  col = mix(col, glowc, glow*uDusk*0.75);',
     '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
     '  gl_FragColor = vec4(col, 1.0);',
     '}'
@@ -3100,6 +3112,390 @@ function updateSb3(now) {
   if (all.length > 260) all.map(function (k) { return [k, SB3.tiles[k]]; }).filter(function (e) { return !e[1].want; }).sort(function (a, b) { return a[1].used - b[1].used; })
     .slice(0, all.length - 220).forEach(function (e) { if (e[1].geo) e[1].geo.dispose(); delete SB3.tiles[e[0]]; });
 }
+
+/* ---------------- Bahn: Gleise (swissTLM3D), Züge und Schiffe nach Fahrplan mit Verspätung ----------------
+   Eine offene Quelle mit echten Fahrzeugpositionen gibt es in der Schweiz nicht. Die Seite rechnet die Position aus
+   Abfahrt, Ankunft und Verspätung (search.ch über den Worker) und führt den Zug entlang der Gleisachse. Tunnel werden aus
+   dem Gelände geschätzt: Bahnen steigen höchstens wenige Prozent; liegt das Gelände deutlich über einer solchen Linie,
+   fährt der Zug im Tunnel und ist nicht zu sehen. */
+var RAIL = { p: null, ok: false, VE: null, VN: null, adj: null, grid: {}, ribbons: null, paths: {} };
+var TRN = { on: true, at: 0, req: null, trains: [], ships: [], mesh: null, cap: 0, shipMeshes: [], timer: null, updated: '' };
+function loadRail() {
+  if (!RAIL.p) RAIL.p = fetch('rail.json').then(function (r) { if (!r.ok) throw new Error('rail'); return r.json(); }).then(buildRail).catch(function () { RAIL.p = null; });
+  return RAIL.p;
+}
+function buildRail(d) {
+  var VE = [], VN = [], adj = [], endIdx = {}, lines = [];
+  function endpoint(E, N) {
+    var kx = Math.round(E / 1.5), ky = Math.round(N / 1.5);
+    for (var a = -1; a <= 1; a++) for (var b = -1; b <= 1; b++) { var l = endIdx[(kx + a) + '_' + (ky + b)]; if (l) for (var q = 0; q < l.length; q++) if (Math.hypot(VE[l[q]] - E, VN[l[q]] - N) < 1.6) return l[q]; }
+    var id = VE.length; VE.push(E); VN.push(N); adj.push([]); (endIdx[kx + '_' + ky] = endIdx[kx + '_' + ky] || []).push(id); return id;
+  }
+  d.lines.forEach(function (arr) {
+    var x = 0, y = 0, pts = [];
+    for (var k = 0; k < arr.length; k += 2) { x += arr[k]; y += arr[k + 1]; pts.push([d.E0 + x / 10, d.N0 + y / 10]); }
+    if (pts.length < 2) return;
+    var ids = [];
+    for (k = 0; k < pts.length; k++) {
+      var id;
+      if (k === 0 || k === pts.length - 1) id = endpoint(pts[k][0], pts[k][1]);
+      else { id = VE.length; VE.push(pts[k][0]); VN.push(pts[k][1]); adj.push([]); }
+      if (ids.length) { var p0 = ids[ids.length - 1], w = Math.hypot(VE[id] - VE[p0], VN[id] - VN[p0]); adj[p0].push(id, w); adj[id].push(p0, w); }
+      ids.push(id);
+    }
+    lines.push(ids);
+  });
+  var grid = {};
+  for (var v = 0; v < VE.length; v++) { var key = Math.floor(VE[v] / 250) + '_' + Math.floor(VN[v] / 250); (grid[key] = grid[key] || []).push(v); }
+  RAIL.VE = VE; RAIL.VN = VN; RAIL.adj = adj; RAIL.grid = grid; RAIL.lines = lines; RAIL.st = d.st; RAIL.ok = true;
+  // Kursschiffe: Wege zwischen den Liegeplätzen (OSM route=ferry), zweimal nach Chaikin geglättet
+  RAIL.berth = {}; RAIL.ferry = {};
+  Object.keys(d.berth || {}).forEach(function (u) { var b = d.berth[u]; RAIL.berth[u] = { E: b[0], N: b[1], az: b[2] }; });
+  (d.ferry || []).forEach(function (f) {
+    var x = 0, y = 0, P = [];
+    for (var k = 0; k < f.c.length; k += 2) { x += f.c[k]; y += f.c[k + 1]; P.push([d.E0 + x / 10, d.N0 + y / 10]); }
+    for (var it = 0; it < 2; it++) { var Q = [P[0]]; for (k = 0; k < P.length - 1; k++) { var p = P[k], q = P[k + 1]; Q.push([0.75 * p[0] + 0.25 * q[0], 0.75 * p[1] + 0.25 * q[1]], [0.25 * p[0] + 0.75 * q[0], 0.25 * p[1] + 0.75 * q[1]]); } Q.push(P[P.length - 1]); P = Q; }
+    RAIL.ferry[f.a + '_' + f.b] = ferryPath(P); RAIL.ferry[f.b + '_' + f.a] = ferryPath(P.slice().reverse());
+  });
+  if (GL) buildRibbons();
+}
+function railNearest(E, N, maxR) {
+  var best = -1, bd = 1e18, cx = Math.floor(E / 250), cy = Math.floor(N / 250), rr = Math.ceil((maxR || 2000) / 250);
+  for (var r = 0; r <= rr; r++) {
+    for (var a = -r; a <= r; a++) for (var b = -r; b <= r; b++) {
+      if (Math.max(Math.abs(a), Math.abs(b)) !== r) continue;
+      var l = RAIL.grid[(cx + a) + '_' + (cy + b)]; if (!l) continue;
+      for (var q = 0; q < l.length; q++) { var dd = Math.hypot(RAIL.VE[l[q]] - E, RAIL.VN[l[q]] - N); if (dd < bd) { bd = dd; best = l[q]; } }
+    }
+    if (best >= 0 && bd < (r) * 250) break;
+  }
+  return best >= 0 && bd <= (maxR || 2000) ? [best, bd] : null;
+}
+/* kürzester Weg im Gleisnetz (Dijkstra mit Binärheap) */
+function railRoute(a, b) {
+  var key = a + '>' + b; if (RAIL.paths[key] !== undefined) return RAIL.paths[key];
+  var n = RAIL.VE.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), heap = [[0, a]], adj = RAIL.adj;
+  dist[a] = 0;
+  function push(x) { heap.push(x); var i = heap.length - 1; while (i > 0) { var p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; var t = heap[p]; heap[p] = heap[i]; heap[i] = t; i = p; } }
+  function pop() { var top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; var i = 0; for (;;) { var l = 2 * i + 1, r = l + 1, m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; var t = heap[m]; heap[m] = heap[i]; heap[i] = t; i = m; } } return top; }
+  var found = false, iter = 0;
+  while (heap.length && iter++ < 200000) {
+    var cur = pop(), u = cur[1]; if (cur[0] > dist[u]) continue;
+    if (u === b) { found = true; break; }
+    if (cur[0] > 60000) break;
+    var e = adj[u];
+    for (var k = 0; k < e.length; k += 2) { var v = e[k], nd = cur[0] + e[k + 1]; if (nd < dist[v]) { dist[v] = nd; prev[v] = u; push([nd, v]); } }
+  }
+  var res = null;
+  if (found) {
+    var ids = []; for (var x = b; x !== -1; x = prev[x]) { ids.push(x); if (x === a) break; }
+    ids.reverse(); res = railPathFrom(ids);
+  }
+  RAIL.paths[key] = res; return res;
+}
+/* Pfad mit Längen, Höhen (Gelände + 0.5 m) und Tunnelstellen (Gelände > 9 m über einer Linie mit höchstens 3.5 % Steigung) */
+function railPathFrom(ids) {
+  var E = [], N = [], S = [0];
+  ids.forEach(function (id, k) {
+    var e = RAIL.VE[id], nn = RAIL.VN[id];
+    if (k) { var pe = E[E.length - 1], pn = N[N.length - 1], L = Math.hypot(e - pe, nn - pn), m = Math.ceil(L / 12);
+      for (var j = 1; j < m; j++) { E.push(pe + (e - pe) * j / m); N.push(pn + (nn - pn) * j / m); S.push(S[S.length - 1] + L / m); }
+      S.push(S[S.length - 1] + L / m); }
+    E.push(e); N.push(nn);
+  });
+  var n = E.length, H = new Float32Array(n), R = new Float32Array(n), T = new Uint8Array(n);
+  for (var i = 0; i < n; i++) H[i] = hAt(E[i], N[i]);
+  R[0] = H[0]; for (i = 1; i < n; i++) R[i] = Math.min(H[i], R[i - 1] + 0.035 * (S[i] - S[i - 1]));
+  for (i = n - 2; i >= 0; i--) R[i] = Math.min(R[i], R[i + 1] + 0.035 * (S[i + 1] - S[i]));
+  for (i = 0; i < n; i++) T[i] = H[i] - R[i] > 9 ? 1 : 0;
+  return { E: E, N: N, S: S, H: H, T: T, L: S[n - 1] };
+}
+function ferryPath(P) {
+  var E = [], N = [], S = [], L = 0;
+  P.forEach(function (p, k) { if (k) L += Math.hypot(p[0] - P[k - 1][0], p[1] - P[k - 1][1]); E.push(p[0]); N.push(p[1]); S.push(L); });
+  return { E: E, N: N, S: S, H: E.map(function () { return 0; }), T: E.map(function () { return 0; }), L: L };
+}
+function pathAt(P, s, out) {
+  if (s <= 0) { out.E = P.E[0]; out.N = P.N[0]; out.h = P.H[0]; out.t = P.T[0]; return out; }
+  if (s >= P.L) { var n = P.E.length - 1; out.E = P.E[n]; out.N = P.N[n]; out.h = P.H[n]; out.t = P.T[n]; return out; }
+  var lo = 0, hi = P.S.length - 1; while (hi - lo > 1) { var m = (lo + hi) >> 1; if (P.S[m] <= s) lo = m; else hi = m; }
+  var f = (s - P.S[lo]) / Math.max(1e-6, P.S[hi] - P.S[lo]);
+  out.E = lerp(P.E[lo], P.E[hi], f); out.N = lerp(P.N[lo], P.N[hi], f); out.h = lerp(P.H[lo], P.H[hi], f); out.t = P.T[lo] || P.T[hi]; return out;
+}
+/* Gleisbett in der Nahansicht: Schotter, Schwellen und Schienen im Shader, auf dem Gelände */
+var railMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
+  uniforms: Object.assign({ uRailA: { value: 0 } }, U),
+  vertexShader: 'attribute vec2 aUV; uniform float uVZ; varying vec2 vUV; varying vec3 vW; varying float vDist; void main(){ vUV = aUV; vec3 p = position; p.y *= uVZ; vec4 w = modelMatrix*vec4(p, 1.0); vW = w.xyz; vDist = distance(w.xyz, cameraPosition); gl_Position = projectionMatrix*viewMatrix*w; }',
+  fragmentShader: [
+    'uniform vec3 uFog; uniform float uFogNear, uFogFar, uDark, uRailA;',
+    LIGHT, SHADOW, COMMON,
+    'varying vec2 vUV; varying vec3 vW; varying float vDist;',
+    'void main(){',
+    '  float v = vUV.y, u = vUV.x, av = abs(v);',
+    '  float fv = max(fwidth(v), 1e-4), fu = max(fwidth(u), 1e-4);',
+    '  vec3 ballast = vec3(0.50, 0.47, 0.43)*(0.82 + 0.3*noise(vW.xz*3.1) + 0.12*hash(floor(vW.xz*14.0)));',
+    '  float sl = smoothstep(0.30 + fu, 0.30 - fu, abs(fract(u/0.6) - 0.5))*smoothstep(1.32 + fv, 1.32 - fv, av);',
+    '  float slFar = smoothstep(0.4, 1.2, fu);',
+    '  vec3 col = mix(ballast, vec3(0.64, 0.63, 0.60), mix(sl, 0.45*step(av, 1.32), slFar));',
+    '  float rail = smoothstep(0.045 + fv, 0.045 - fv, abs(av - 0.7175));',
+    '  float railFar = smoothstep(0.05, 0.2, fv);',
+    '  col = mix(col, vec3(0.42, 0.40, 0.38), rail*(1.0 - railFar));',
+    '  float lamb = max(uSunDir.y, 0.0), vis = 1.0, spec = 0.0;',
+    '  if(uSunMix > 0.001 && lamb > 0.0) vis = shadowVis(vW, vec3(0.0, 1.0, 0.0), lamb);',
+    '  vec3 V = normalize(cameraPosition - vW), Rr = reflect(-uSunDir, vec3(0.0, 1.0, 0.0));',
+    '  spec = rail*(1.0 - railFar)*pow(max(dot(Rr, V), 0.0), 40.0)*vis;',
+    '  vec3 lit = col*(uAmb*uSkyCol + uDif*lamb*vis*uSunCol) + spec*uSunCol*0.8;',
+    '  col = mix(col*0.9, lit, uSunMix);',
+    '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
+    '  float a = smoothstep(1.62, 1.35, av)*uRailA;',
+    '  gl_FragColor = vec4(col, a);',
+    '}'
+  ].join('\n')
+});
+function buildRibbons() {
+  if (RAIL.ribbons || !RAIL.ok) return;
+  var POS = [], UV = [], IDX = [], vi = 0, W = 1.6;
+  RAIL.lines.forEach(function (ids) {
+    var P = railPathFrom(ids), n = P.E.length;
+    for (var i = 0; i < n; i++) {
+      var a = Math.max(0, i - 1), b = Math.min(n - 1, i + 1), dx = P.E[b] - P.E[a], dy = P.N[b] - P.N[a], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
+      var y = P.H[i] - H0 + 0.45;
+      POS.push(X(P.E[i] + nx * W), y, Z(P.N[i] + ny * W), X(P.E[i] - nx * W), y, Z(P.N[i] - ny * W));
+      UV.push(P.S[i], W, P.S[i], -W);
+      if (i && !P.T[i] && !P.T[i - 1]) IDX.push(vi - 2, vi - 1, vi + 1, vi - 2, vi + 1, vi);
+      vi += 2;
+    }
+  });
+  var g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(POS, 3));
+  g.setAttribute('aUV', new THREE.Float32BufferAttribute(UV, 2));
+  g.setIndex(IDX);
+  RAIL.ribbons = new THREE.Mesh(g, railMat); RAIL.ribbons.frustumCulled = false; RAIL.ribbons.renderOrder = 2;
+  scene.add(RAIL.ribbons);
+}
+/* Fahrzeuge: Wagen als Instanzen; Farbe je Kategorie (Fernverkehr weiss mit rotem Band, S-Bahn weiss mit blauem Band) */
+var trainMat = new THREE.ShaderMaterial({
+  uniforms: Object.assign({}, U),
+  vertexShader: [
+    'attribute vec3 aCol; uniform float uVZ; varying vec3 vL; varying vec3 vW; varying vec3 vCol; varying float vDist;',
+    'void main(){ vL = position; vCol = aCol; vec4 w = modelMatrix*instanceMatrix*vec4(position, 1.0); vW = w.xyz; vDist = distance(w.xyz, cameraPosition); gl_Position = projectionMatrix*viewMatrix*w; }'
+  ].join('\n'),
+  fragmentShader: [
+    'uniform vec3 uFog; uniform float uFogNear, uFogFar, uDark;',
+    LIGHT, SHADOW,
+    'varying vec3 vL; varying vec3 vW; varying vec3 vCol; varying float vDist;',
+    'void main(){',
+    '  vec3 n = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW); if(dot(n, V) < 0.0) n = -n;',
+    '  float y = vL.y, side = step(0.45, abs(vL.z)), endc = step(0.495, abs(vL.x));',
+    '  vec3 body = vec3(0.93, 0.93, 0.92);',
+    '  float win = step(0.52, y)*step(y, 0.8)*side*(1.0 - endc)*step(0.06, fract(vL.x*7.0 + 0.5))*1.0;',
+    '  float band = step(0.14, y)*step(y, 0.3)*side;',
+    '  vec3 col = mix(body, vCol, band);',
+    '  col = mix(col, vec3(0.13, 0.16, 0.2), win*0.92);',
+    '  col = mix(col, vec3(0.55, 0.56, 0.58), step(0.98, y));',
+    '  col = mix(col, vec3(0.16, 0.17, 0.19), step(y, 0.08));',
+    '  if(endc > 0.5) col = mix(vec3(0.9, 0.9, 0.89), vec3(0.12, 0.14, 0.18), step(0.5, y)*step(y, 0.8));',
+    '  float lamb = max(dot(n, uSunDir), 0.0), vis = lamb > 0.0 && uSunMix > 0.001 ? shadowVis(vW, n, lamb) : 1.0;',
+    '  vec3 lit = col*(uAmb*uSkyCol + uDif*lamb*vis*uSunCol) + win*pow(max(dot(reflect(-uSunDir, n), V), 0.0), 30.0)*uSunCol*0.5;',
+    '  vec3 fl = normalize(vec3(-0.55, 0.62, -0.56));',
+    '  col = mix(col*(0.65 + 0.35*max(dot(n, fl), 0.0)), lit, uSunMix);',
+    '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
+    '  gl_FragColor = vec4(col, 1.0);',
+    '}'
+  ].join('\n')
+});
+var trainDepthMat = new THREE.ShaderMaterial({ vertexShader: 'void main(){ gl_Position = projectionMatrix*viewMatrix*modelMatrix*instanceMatrix*vec4(position, 1.0); }', fragmentShader: DEPTH_FS });
+trainDepthMat.colorWrite = false;
+function trainSpec(cat) {
+  if (/^(IC|EC|ICE|TGV|RJX|EN|NJ)$/.test(cat)) return { n: 9, L: 26.4, c: [0.82, 0.08, 0.1] };
+  if (/^(IR|RE|PE)$/.test(cat)) return { n: 6, L: 26.4, c: [0.82, 0.08, 0.1] };
+  return { n: 4, L: 19, c: [0.12, 0.32, 0.68] };
+}
+function ensureTrainMesh(cap) {
+  if (TRN.mesh && TRN.cap >= cap) return;
+  if (TRN.mesh) { scene.remove(TRN.mesh); TRN.mesh.geometry.dispose(); }
+  var g = new THREE.BoxGeometry(1, 1, 1); g.translate(0, 0.5, 0);
+  var col = new Float32Array(cap * 3); g.setAttribute('aCol', new THREE.InstancedBufferAttribute(col, 3));
+  TRN.mesh = new THREE.InstancedMesh(g, trainMat, cap); TRN.mesh.frustumCulled = false; TRN.mesh.count = 0; TRN.cap = cap;
+  scene.add(TRN.mesh);
+  // Schatten der Züge: zweite Instanz mit derselben Matrix-Liste in der Schattenszene
+  var dm = new THREE.InstancedMesh(g, trainDepthMat, cap); dm.instanceMatrix = TRN.mesh.instanceMatrix; dm.frustumCulled = false; dm.count = 0;
+  smScene.add(dm); TRN.depth = dm;
+}
+function loadTrains() {
+  if (TRN.req) return TRN.req;
+  TRN.req = Promise.all([loadRail(), fetch('api/trains', { headers: { Accept: 'application/json' } }).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })])
+    .then(function (r) { TRN.req = null; setTrains(r[1]); }).catch(function () { TRN.req = null; });
+  return TRN.req;
+}
+function journeyPrep(j, ship) {
+  var stops = j.stops.filter(function (s) { return s.E && s.N; });
+  if (!ship) stops.forEach(function (s) { var nv = RAIL.ok ? railNearest(s.E, s.N, 2500) || railNearest(s.E, s.N, 40000) : null; s.v = nv ? nv[0] : -1; s.off = nv ? nv[1] : 1e9; });
+  // Fahrplanminuten sind gerundet, an Zwischenhalten oft An = Ab: Haltezeit um die Minute legen (Schiff 2 min, Zug 30 s)
+  var dw = ship ? 120000 : 30000;
+  for (var k = 1; k < stops.length - 1; k++) {
+    var s = stops[k], h = (dw - (s.d - s.a)) / 2; if (!(h > 0)) continue;
+    var h0 = Math.min(h, (s.a - stops[k - 1].d) / 3), h1 = Math.min(h, (stops[k + 1].a - s.d) / 3);
+    s.a -= Math.max(0, h0); s.d += Math.max(0, h1);
+  }
+  return { line: j.line, cat: j.cat, to: j.to, op: j.op, stops: stops, ship: !!ship, spec: ship ? null : trainSpec(j.cat) };
+}
+function setTrains(d) {
+  TRN.updated = d.updated || ''; TRN.at = Date.now();
+  TRN.trains = (d.trains || []).map(function (j) { return journeyPrep(j, false); });
+  TRN.ships = (d.ships || []).map(function (j) { return journeyPrep(j, true); });
+}
+/* Zustand einer Fahrt zur Zeit now: Index des Halts/Abschnitts, Weg im Abschnitt */
+function journeyState(j, now) {
+  var st = j.stops, n = st.length;
+  if (!n || now < st[0].d - 120000 || now > st[n - 1].a + 90000) return null;
+  for (var i = 0; i < n; i++) {
+    if (now <= st[i].d) return { i: i, at: true };
+    if (i < n - 1 && now < st[i + 1].a) {
+      var T = Math.max(30000, st[i + 1].a - st[i].d), x = (now - st[i].d) / T, acc = Math.min(0.3, 70000 / T);
+      var f = x < acc ? x * x / (2 * acc * (1 - acc)) : x > 1 - acc ? 1 - (1 - x) * (1 - x) / (2 * acc * (1 - acc)) : (x - acc / 2) / (1 - acc);
+      return { i: i, at: false, f: clamp(f, 0, 1) };
+    }
+  }
+  return { i: n - 1, at: true };
+}
+function segPath(a, b) {
+  if (a.v < 0 || b.v < 0) return null;
+  var P = railRoute(a.v, b.v); if (!P) return null;
+  // Halt ausserhalb des Gleisnetzes der Karte: restliche Strecke als Luftlinie anhängen (Zug verschwindet am Kartenrand)
+  return { P: P, extra: Math.max(0, b.off - 300) * 1.15 };
+}
+var tmpP = { E: 0, N: 0, h: 0, t: 0 }, tmpQ = { E: 0, N: 0, h: 0, t: 0 }, tmpM = new THREE.Matrix4(), tmpQt = new THREE.Quaternion(), tmpE3 = new THREE.Euler(), tmpS = new THREE.Vector3(), tmpT = new THREE.Vector3();
+function updateTrains(now) {
+  var show = TRN.on && GL && cam && cam.d < 14000 && !touring;
+  if (RAIL.ribbons) { railMat.uniforms.uRailA.value = lerp(railMat.uniforms.uRailA.value, cam && cam.d < 2600 ? 1 : 0, 0.15); RAIL.ribbons.visible = railMat.uniforms.uRailA.value > 0.01; }
+  if (!show || !RAIL.ok) { if (TRN.mesh) TRN.mesh.count = 0; if (TRN.depth) TRN.depth.count = 0; TRN.shipMeshes.forEach(function (m) { m.visible = false; }); return; }
+  var tnow = Date.now(), cars = 0;
+  ensureTrainMesh(800);
+  var colA = TRN.mesh.geometry.attributes.aCol;
+  TRN.trains.forEach(function (j) {
+    var s = journeyState(j, tnow); if (!s) return;
+    var a = j.stops[s.i], path = null, head = 0;
+    if (s.at) { // am Bahnsteig: Spitze am Halt, Wagen entlang des folgenden oder vorigen Abschnitts
+      var nb = j.stops[s.i + 1], pv = j.stops[s.i - 1];
+      if (nb) { var sp = segPath(a, nb); if (sp) { path = sp.P; head = Math.min(path.L, j.spec.n * j.spec.L * 0.5); } }
+      else if (pv) { var sp2 = segPath(pv, a); if (sp2) { path = sp2.P; head = path.L; } }
+    } else {
+      var spm = segPath(a, j.stops[s.i + 1]); if (spm) { path = spm.P; head = s.f * (spm.P.L + spm.extra); }
+    }
+    if (!path) return;
+    j.pos = null;
+    for (var c = 0; c < j.spec.n && cars < TRN.cap; c++) {
+      var s1 = head - c * (j.spec.L + 0.6), s0 = s1 - j.spec.L;
+      if (s1 > path.L + 1 || s1 < -j.spec.L) continue;
+      pathAt(path, clamp(s1, 0, path.L), tmpP); pathAt(path, clamp(s0, 0, path.L), tmpQ);
+      if (tmpP.t || tmpQ.t) continue;
+      var dx = tmpP.E - tmpQ.E, dn = tmpP.N - tmpQ.N, len = Math.hypot(dx, dn); if (len < 2) continue;
+      if (!j.pos) j.pos = { E: tmpP.E, N: tmpP.N, h: tmpP.h };
+      tmpT.set(X((tmpP.E + tmpQ.E) / 2), ((tmpP.h + tmpQ.h) / 2 - H0 + 0.6) * vz, Z((tmpP.N + tmpQ.N) / 2));
+      tmpE3.set(0, Math.atan2(dn, dx), Math.atan2((tmpP.h - tmpQ.h) * vz, len), 'YZX'); tmpQt.setFromEuler(tmpE3);
+      tmpS.set(j.spec.L, 4.1 * vz, 2.9);
+      tmpM.compose(tmpT, tmpQt, tmpS); TRN.mesh.setMatrixAt(cars, tmpM);
+      colA.setXYZ(cars, j.spec.c[0], j.spec.c[1], j.spec.c[2]); cars++;
+    }
+  });
+  TRN.mesh.count = cars; TRN.mesh.instanceMatrix.needsUpdate = true; colA.needsUpdate = true;
+  if (TRN.depth) { TRN.depth.count = cars; if (cars) smState.need = true; }
+  if (window.__zgFollow) { var fj = TRN.trains.filter(function (j) { return j.pos && j.line === window.__zgFollow; })[0]; if (fj) { ex.E = fj.pos.E; ex.N = fj.pos.N; } }
+  updateShips(tnow);
+}
+/* Schiffe der Zugersee Schifffahrt (MS Zug 45,6 × 9,2 m, MS Rigi 46,5 × 9,5 m): Liegeplatz am Bahnhofsteg entlang der Pfahlreihe */
+var SHIP_BERTH = { E: 2681471.4, N: 1224896.7, az: 74.5 }, SHIP_U = '8502251';
+function shipGeometry() {
+  var Pp = [], Gg = [], Cc = [], Kk = [], Uu = [], Ii = [], g0 = 413.55;
+  function v(x, y, z, c, k) { Pp.push(x, y, z); Gg.push(g0 - H0); Cc.push(c[0], c[1], c[2]); Kk.push(k); Uu.push(x, y); return Pp.length / 3 - 1; }
+  function quad(a, b, c, d) { Ii.push(a, b, c, a, c, d); }
+  // Rumpf: Querschnitte entlang der Länge (x vorne), Bug zugespitzt
+  var WHITE = [0.95, 0.95, 0.94], NAVY = [0.08, 0.16, 0.36], GLASS = [0.16, 0.2, 0.26], DECK = [0.62, 0.55, 0.47];
+  function hullW(x) { var t = (x + 22.8) / 45.6; return t > 0.78 ? 4.6 * Math.sqrt(Math.max(0, (1 - t) / 0.22)) : t < 0.04 ? 4.6 * (0.8 + 5 * t) : 4.6; }
+  var xs = []; for (var x = -22.8; x <= 22.81; x += 2.28) xs.push(x);
+  var rows = [[-0.6, NAVY], [0.4, NAVY], [0.55, WHITE], [2.3, WHITE]], prevL = null, prevR = null;
+  xs.forEach(function (x) {
+    var w = Math.max(0.05, hullW(x)), L = [], R = [];
+    rows.forEach(function (r) { var ww = w * (r[0] < 0 ? 0.85 : 1); L.push(v(x, r[0], ww, r[1], 0)); R.push(v(x, r[0], -ww, r[1], 0)); });
+    if (prevL) for (var k = 0; k < rows.length - 1; k++) { quad(prevL[k], L[k], L[k + 1], prevL[k + 1]); quad(prevR[k], prevR[k + 1], R[k + 1], R[k]); }
+    prevL = L; prevR = R;
+  });
+  // Hauptdeck
+  for (var q = 0; q < xs.length - 1; q++) { var w0 = hullW(xs[q]), w1 = hullW(xs[q + 1]); quad(v(xs[q], 2.3, w0, DECK, 0), v(xs[q + 1], 2.3, w1, DECK, 0), v(xs[q + 1], 2.3, -w1, DECK, 0), v(xs[q], 2.3, -w0, DECK, 0)); }
+  function box(x0, x1, y0, y1, w, c, winBand) {
+    var cs = [[x0, -w], [x1, -w], [x1, w], [x0, w]], lo = [], hi = [], mid0 = [], mid1 = [];
+    cs.forEach(function (p) { lo.push(v(p[0], y0, p[1], c, 0)); hi.push(v(p[0], y1, p[1], c, 0)); });
+    quad(hi[0], hi[1], hi[2], hi[3]);
+    for (var j = 0; j < 4; j++) {
+      var m = (j + 1) % 4;
+      if (winBand) { // Fensterband
+        var ya = y0 + (y1 - y0) * 0.3, yb = y0 + (y1 - y0) * 0.85;
+        var a0 = v(cs[j][0], y0, cs[j][1], c, 0), a1 = v(cs[m][0], y0, cs[m][1], c, 0), b0 = v(cs[j][0], ya, cs[j][1], c, 0), b1 = v(cs[m][0], ya, cs[m][1], c, 0);
+        var g0b = v(cs[j][0], ya, cs[j][1], GLASS, 0), g1b = v(cs[m][0], ya, cs[m][1], GLASS, 0), g0t = v(cs[j][0], yb, cs[j][1], GLASS, 0), g1t = v(cs[m][0], yb, cs[m][1], GLASS, 0);
+        var t0 = v(cs[j][0], yb, cs[j][1], c, 0), t1 = v(cs[m][0], yb, cs[m][1], c, 0), u0 = v(cs[j][0], y1, cs[j][1], c, 0), u1 = v(cs[m][0], y1, cs[m][1], c, 0);
+        quad(a0, a1, b1, b0); quad(g0b, g1b, g1t, g0t); quad(t0, t1, u1, u0);
+      } else quad(lo[j], lo[m], hi[m], hi[j]);
+    }
+  }
+  box(-18.5, 13.5, 2.3, 4.9, 4.15, WHITE, true);   // Salon Hauptdeck
+  box(-15.5, 9.5, 4.9, 7.3, 3.9, WHITE, true);     // Oberdeck
+  box(4.5, 9.0, 7.3, 9.4, 2.2, WHITE, true);       // Steuerhaus
+  box(-17.5, -16.9, 4.9, 6.0, 4.0, NAVY, false);   // Reling hinten (vereinfacht)
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(Pp, 3));
+  geo.setAttribute('aG', new THREE.Float32BufferAttribute(Gg, 1));
+  geo.setAttribute('aCol', new THREE.Float32BufferAttribute(Cc, 3));
+  geo.setAttribute('aK', new THREE.Float32BufferAttribute(Kk, 1));
+  geo.setAttribute('aU', new THREE.Float32BufferAttribute(Uu, 2));
+  geo.setIndex(Ii);
+  return geo;
+}
+function shipBerth(u, E, N) { return u === SHIP_U ? SHIP_BERTH : (RAIL.berth && RAIL.berth[u]) || { E: E, N: N, az: null }; }
+function azNear(az, ref) { if (az == null) return ref; if (ref == null) return az; var d = ((az - ref) % 360 + 540) % 360 - 180; return Math.abs(d) > 90 ? az + 180 : az; }
+function shipPose(j, now) {
+  var st = j.stops, s = journeyState(j, now); if (!s) return null;
+  var a = st[s.i], A = shipBerth(a.u, a.E, a.N);
+  if (s.at) return { E: A.E, N: A.N, az: A.az, at: true };
+  var b = st[s.i + 1], B = shipBerth(b.u, b.E, b.N), P = RAIL.ferry && RAIL.ferry[a.u + '_' + b.u];
+  if (!P) P = RAIL.ferry[a.u + '_' + b.u] = ferryPath([[A.E, A.N], [B.E, B.N]]);
+  var L = P.L, sp = s.f * L, p = pathAt(P, sp, tmpP), E = p.E, N = p.N, q = pathAt(P, Math.min(L, sp + 25), tmpQ);
+  var az = Math.atan2(q.E - E, q.N - N) / DEG;
+  if (sp > L - 26) { var r = pathAt(P, Math.max(0, sp - 25), tmpQ); az = Math.atan2(E - r.E, N - r.N) / DEG; }
+  // An- und Ablegen: Kurs gleitet in die Richtung des Stegs
+  var w0 = clamp(1 - sp / 70, 0, 1), w1 = clamp(1 - (L - sp) / 70, 0, 1), d;
+  if (w0 > 0 && A.az != null) { d = ((azNear(A.az, az) - az) % 360 + 540) % 360 - 180; az += d * w0 * w0; }
+  if (w1 > 0 && B.az != null) { d = ((azNear(B.az, az) - az) % 360 + 540) % 360 - 180; az += d * w1 * w1; }
+  return { E: E, N: N, az: az, at: false };
+}
+function updateShips(now) {
+  var poses = [];
+  TRN.ships.forEach(function (j) { var p = shipPose(j, now); if (p) poses.push(p); });
+  if (!poses.length && TRN.ships.length) { // zwischen den Fahrten: am letzten Ziel, sonst am Bahnhofsteg
+    var last = null; TRN.ships.forEach(function (j) { var e = j.stops[j.stops.length - 1]; if (e.a <= now && (!last || e.a > last.a)) last = e; });
+    var first = TRN.ships.reduce(function (m, j) { return !m || j.stops[0].d < m.d ? j.stops[0] : m; }, null);
+    var at = last || first; if (at) { var B0 = shipBerth(at.u, at.E, at.N); poses.push({ E: B0.E, N: B0.N, az: B0.az == null ? 74.5 : B0.az, at: true }); }
+  }
+  while (TRN.shipMeshes.length < poses.length) {
+    var sg = shipGeometry(), m = new THREE.Mesh(sg, sbzMat), md = new THREE.Mesh(sg, sbzDepthMat);
+    m.frustumCulled = md.frustumCulled = false; scene.add(m); smScene.add(md); m.userData.depth = md; TRN.shipMeshes.push(m);
+  }
+  TRN.shipMeshes.forEach(function (m, k) {
+    var p = poses[k]; m.visible = !!p; if (!p) return;
+    if (p.az != null) m.userData.az = p.at ? azNear(p.az, m.userData.az) : p.az;
+    var az = (m.userData.az != null ? m.userData.az : 74.5) * DEG;
+    m.position.set(X(p.E), 0, Z(p.N)); m.rotation.set(0, Math.PI / 2 - az, 0);
+    m.userData.depth.position.copy(m.position); m.userData.depth.rotation.copy(m.rotation); m.userData.E = p.E; m.userData.N = p.N;
+  });
+  TRN.shipMeshes.forEach(function (m) { m.userData.depth.visible = m.visible; });
+  if (window.__zgFollow === 'ship' && TRN.shipMeshes[0] && TRN.shipMeshes[0].visible) { ex.E = TRN.shipMeshes[0].userData.E; ex.N = TRN.shipMeshes[0].userData.N; }
+}
+$('#tTrain').addEventListener('click', function () {
+  TRN.on = !TRN.on; this.setAttribute('aria-pressed', String(TRN.on)); lastInteract = performance.now();
+  if (TRN.on) startTrains(); else clearInterval(TRN.timer);
+});
+function startTrains() { clearInterval(TRN.timer); loadTrains(); TRN.timer = setInterval(function () { if (!document.hidden) loadTrains(); }, 180000); }
 
 /* ---------------- sun shadow map ---------------- */
 var smScene = new THREE.Scene();
@@ -4044,6 +4440,7 @@ function frame(now) {
   updateTrees();
   updateOrtho(now);
   updateSb3(now);
+  updateTrains(now);
   U.uHeatOn.value += ((tempOn && TEMP.city.length ? 1 : 0) - U.uHeatOn.value) * Math.min(1, dt * 4);
   updateShadow(now);
 
@@ -4151,6 +4548,8 @@ function frame(now) {
   if (!TEST) requestAnimationFrame(frame);
 }
 if (/[?&]debug\b/.test(location.search)) window.__zgFly = function (o) { flyTo(o); };
+if (/[?&]debug\b/.test(location.search)) window.__zgSun = function (t) { setSunT(t); };
+if (/[?&]debug\b/.test(location.search)) window.__zgTrains = function () { return { shipStops: TRN.ships.map(function (j) { return j.stops.map(function (x) { return [x.u, x.n, x.a, x.d]; }); }), berth: RAIL.berth, shipPos: TRN.shipMeshes.filter(function (m) { return m.visible; }).map(function (m) { return [Math.round(m.userData.E), Math.round(m.userData.N), Math.round(m.userData.az)]; }), pos: TRN.trains.filter(function (j) { return j.pos; }).map(function (j) { return [j.line, Math.round(j.pos.E), Math.round(j.pos.N)]; }), n: TRN.trains.length, ships: TRN.ships.length, cars: TRN.mesh ? TRN.mesh.count : -1, rail: RAIL.ok, sample: TRN.trains.slice(0, 3).map(function (j) { var s = journeyState(j, Date.now()); return [j.line, j.stops.map(function (x) { return x.n + ':' + x.v + ':' + Math.round(x.off); }).join(' / '), s && JSON.stringify(s)]; }) }; };
 if (/[?&]debug\b/.test(location.search)) window.__zgState = function () { return { ex: Object.assign({}, ex), cam: cam && Object.assign({}, cam), flight: flight && flight.to, mode: MODE, sel: SEL && [SEL.id, SEL.E, SEL.N] }; };
 if (TEST) {
   window.__frame = function () { frame(performance.now()); return true; }; window.__R = R;
@@ -4229,6 +4628,7 @@ loadEvents();
     var tb2 = await gunzip(b64(D.treesData));
     canvas.dataset.trees = String(buildTrees(tb2));
     try { buildStrandbad(); } catch (e) { console.warn('Strandbad', e); }
+    if (TRN.on) startTrains();
   } catch (err) {
     console.error(err);
     fail('Das Relief konnte nicht aufgebaut werden. Listen und Texte bleiben nutzbar.');
