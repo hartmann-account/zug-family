@@ -162,7 +162,7 @@ function resolveDay(k, dt) {
   if (k === 'winter') return { k: 'winter', y: 2026, m: 11, d: 21 };
   return { k: 'sommer', y: 2026, m: 6, d: 21 };
 }
-var sunDay = resolveDay('sommer');
+var sunDay = resolveDay('heute');
 function sunpos(hours, day) {
   day = day || sunDay;
   var off = tzOff(day);
@@ -207,7 +207,8 @@ function fail(msg) {
 }
 
 /* ---------------- sun UI (built before WebGL so it works without 3D) ---------------- */
-var sunT = 15, sun = sunpos(15), sunUIs = [], playing = false, playLast = 0;
+function nowHours() { var p = fmtHM.format(new Date()).split(':'); return +p[0] + (+p[1]) / 60; }
+var sunT = (function () { var t = clamp(Math.round(nowHours() * 4) / 4, 7, 21); return sunpos(t).alt > 3 ? t : 13; })(), sun = sunpos(sunT), sunUIs = [], playing = false, playLast = 0;
 function arcPts() { var pts = [], t; for (t = 5; t <= 22.001; t += 0.25) pts.push([t, sunpos(t).alt]); return pts; }
 var ARC = arcPts();
 function arcX(t) { return (t - 5) / 17 * 300; } function arcY(a) { return 42 - clamp(a, -12, 66) / 66 * 38; }
@@ -269,7 +270,7 @@ function setSunT(t, src) {
   listDirty = true; markerShadeDirty = true;
   if (!GL) { updateDetailLive(); if (MODE === 'familie') renderList(); }
 }
-function setSunDay(k, dt) {
+function setSunDay(k, dt, noHead) {
   sunDay = resolveDay(k, dt);
   ARC = arcPts();
   var ap = arcPaths();
@@ -280,7 +281,7 @@ function setSunDay(k, dt) {
   if (GL) smState.need = true;
   setSunT(sunT, 'force');
   markerVisDirty = true;
-  if (MODE === 'familie') renderHead();
+  if (MODE === 'familie' && !noHead) renderHead();
   if (SEL) updateDetailLive(true);
 }
 /* small bar chart: playgrounds with at least half of the area in shade */
@@ -369,6 +370,7 @@ function applyRoute() {
   if (r.mode === 'familie' && !r.id) {
     var ff = filt.familie; ff.gem = gemFromSlug(r.q.g); ff.cats = catsFromQ(r.q.c, CATS.length); ff.zt = r.q.t === '1';
     var sm = /^(\d+)(t?)$/.exec(r.q.s || ''); ff.sunMax = sm ? clamp(+sm[1], 0, 100) : 100; ff.sunScope = sm && sm[2] ? 'day' : 'now';
+    if (ff.sunMax < 100 && sunDay.k !== 'sommer') setSunDay('sommer', null, true);
   }
   if (r.mode === 'events' && !r.id) { filt.events.gem = gemFromSlug(r.q.g); filt.events.win = r.q.w || 'alle'; filt.events.cat = r.q.k ? decodeURIComponent(r.q.k) : ''; }
   var qkey = r.mode + JSON.stringify(r.q);
@@ -444,9 +446,9 @@ function renderHead() {
       '<button type="button" class="chip morebtn" id="fMore" aria-expanded="' + ff.more + '" aria-controls="fBox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3zm4 6h10v2H7zm3 6h4v2h-4z"/></svg>Filter' + (nMore ? ' <small class="badge">' + nMore + '</small>' : '') + '</button></div>' +
       '<div class="fbox" id="fBox"' + (ff.more ? '' : ' hidden') + '>' +
         '<div class="sunflt"><div class="sf-top"><label for="fSun">Sonne höchstens</label><b id="fSunV">' + (ff.sunMax >= 100 ? 'alle Orte' : ff.sunMax + '&nbsp;%') + '</b></div>' +
-        '<input type="range" id="fSun" min="0" max="100" step="10" value="' + ff.sunMax + '"' + (summer ? '' : ' disabled') + ' aria-describedby="fSunH">' +
+        '<input type="range" id="fSun" min="0" max="100" step="10" value="' + ff.sunMax + '" aria-describedby="fSunH">' +
         '<div class="seg" role="group" aria-label="Zeitraum für den Sonnenanteil"><button type="button" data-scope="now" aria-pressed="' + (ff.sunScope === 'now') + '"' + (summer ? '' : ' disabled') + '>Zur Uhrzeit</button><button type="button" data-scope="day" aria-pressed="' + (ff.sunScope === 'day') + '"' + (summer ? '' : ' disabled') + '>Tagesmittel 10–17 Uhr</button></div>' +
-        '<p class="fhint" id="fSunH">' + (summer ? 'Anteil der Fläche in der Sonne, berechnet für den 21. Juli. Nach links schieben zeigt schattigere Orte; Orte ohne Schattenberechnung werden dann ausgeblendet.' : 'Sonnen- und Schattenwerte gibt es für den 21. Juli. Wählen Sie dieses Datum, um den Filter zu nutzen.') + '</p>' +
+        '<p class="fhint" id="fSunH">' + (summer ? 'Anteil der Fläche in der Sonne, berechnet für den 21. Juli. Nach links schieben zeigt schattigere Orte; Orte ohne Schattenberechnung werden dann ausgeblendet.' : 'Der Schatten jedes Spielplatzes ist für den 21. Juli berechnet. Wer den Regler bewegt, stellt das Datum auf diesen Tag.') + '</p>' +
         '<div class="fdate"><span>Datum</span><div class="seg" role="group" aria-label="Datum für Sonnenstand">' + ['sommer', 'heute', 'winter'].map(function (k) { return '<button type="button" data-day="' + k + '" aria-pressed="' + (sunDay.k === k) + '">' + (k === 'sommer' ? '21. Juli' : k === 'heute' ? 'Heute' : '21. Dez.') + '</button>'; }).join('') + '</div></div></div>' +
         '<div class="flt">' +
         '<button type="button" class="chip" id="fZT" aria-pressed="' + ff.zt + '">Tipps von Zug Tourismus</button>' +
@@ -496,7 +498,15 @@ function wireHead() {
     var ff = filt.familie;
     $('#fMore').addEventListener('click', function () { ff.more = !ff.more; this.setAttribute('aria-expanded', String(ff.more)); $('#fBox').hidden = !ff.more; });
     var fs = $('#fSun');
-    fs.addEventListener('input', function () { ff.sunMax = +fs.value; $('#fSunV').innerHTML = ff.sunMax >= 100 ? 'alle Orte' : ff.sunMax + '&nbsp;%'; updMoreBadge(); listDirty = true; markerVisDirty = true; renderList(); });
+    fs.addEventListener('input', function () {
+      if (sunDay.k !== 'sommer') {
+        // Schattenwerte gibt es für den 21. Juli: Datum dorthin wechseln, ohne den Regler neu aufzubauen
+        setSunDay('sommer', null, true);
+        Array.prototype.forEach.call(document.querySelectorAll('#fBox .fdate button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.day === 'sommer')); });
+        Array.prototype.forEach.call(document.querySelectorAll('#fBox .sunflt .seg button'), function (b) { b.disabled = false; });
+        var hh = $('#fSunH'); if (hh) hh.textContent = 'Datum auf den 21. Juli gestellt: Für diesen Tag ist der Schatten jedes Spielplatzes berechnet. Nach links schieben zeigt schattigere Orte.';
+      }
+      ff.sunMax = +fs.value; $('#fSunV').innerHTML = ff.sunMax >= 100 ? 'alle Orte' : ff.sunMax + '&nbsp;%'; updMoreBadge(); listDirty = true; markerVisDirty = true; renderList(); });
     fs.addEventListener('change', syncHash);
     Array.prototype.forEach.call(document.querySelectorAll('#fBox .fdate button'), function (b) { b.addEventListener('click', function () { setSunDay(b.dataset.day); }); });
     Array.prototype.forEach.call(document.querySelectorAll('#fBox .sunflt > .seg button'), function (b) {
@@ -1003,6 +1013,7 @@ var U = {
   uOrthoF: { value: blank }, uOrthoC: { value: blank }, uOrthoFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uOrthoCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uOrthoMix: { value: 0 }, uOrthoDim: { value: 1 },
   uHeat: { value: blank }, uHeatRect: { value: new THREE.Vector4(0, 0, 1, 1) }, uHeatOn: { value: 0 },
+  uCov: { value: blank },
   uWaterF: { value: blank }, uWaterC: { value: blank }, uWaterFRect: { value: new THREE.Vector4(0, 0, 1, 0) }, uWaterCRect: { value: new THREE.Vector4(0, 0, 1, 0) },
   uHgt: { value: blank }, uHgtSize: { value: new THREE.Vector2(nx, ny) }
 };
@@ -1187,11 +1198,13 @@ var dropMat = new THREE.ShaderMaterial({
 
 /* buildings */
 var BLD_VS = [
-  'attribute vec4 aB; uniform float uGrow, uVZ, uBZ;',
+  'attribute vec4 aB; attribute vec2 aT; uniform float uGrow, uVZ, uBZ; uniform sampler2D uCov;',
   'varying vec3 vW; varying float vRel; varying float vDist; varying float vSeed;',
   'void main(){',
   '  vSeed = fract(sin(dot(vec2(aB.x + aB.z*3.1, aB.y*7.3 + aB.w*91.0), vec2(12.9898, 78.233)))*43758.5453);',
   '  float g = smoothstep(aB.w, aB.w + 0.16, uGrow);',
+  // Gebäude, deren Kachel als echtes 3D-Modell (swissBUILDINGS3D) geladen ist, verschwinden unter dem Gelände
+  '  if(aT.x >= 0.0 && texture2D(uCov, (aT + 0.5)/256.0).r > 0.5) g = 0.0;',
   '  float base = aB.x*uVZ - 2.5;',
   '  float top = aB.x*uVZ + aB.y*uVZ + aB.z*uBZ;',
   '  float H = max(top - base, 2.0);',
@@ -1339,7 +1352,7 @@ function ribbonMat(colorKey, widthPx, opacity, opts) {
 /* depth-only materials for the sun's shadow map */
 var DEPTH_FS = 'void main(){ gl_FragColor = vec4(1.0); }';
 var terrainDepthMat = new THREE.ShaderMaterial({ uniforms: { uVZ: U.uVZ }, vertexShader: 'uniform float uVZ; void main(){ vec3 p=position; p.y*=uVZ; gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(p,1.0); }', fragmentShader: DEPTH_FS });
-var bldDepthMat = new THREE.ShaderMaterial({ uniforms: { uVZ: U.uVZ, uBZ: U.uBZ, uGrow: bldMat.uniforms.uGrow }, vertexShader: BLD_VS, fragmentShader: DEPTH_FS });
+var bldDepthMat = new THREE.ShaderMaterial({ uniforms: { uVZ: U.uVZ, uBZ: U.uBZ, uGrow: bldMat.uniforms.uGrow, uCov: U.uCov }, vertexShader: BLD_VS, fragmentShader: DEPTH_FS });
 var treeDepthMat = new THREE.ShaderMaterial({ uniforms: { uVZ: U.uVZ, uTreeGrow: treeMat.uniforms.uTreeGrow }, vertexShader: TREE_VS, fragmentShader: DEPTH_FS });
 [terrainDepthMat, bldDepthMat, treeDepthMat].forEach(function (m) { m.colorWrite = false; m.side = THREE.DoubleSide; });
 
@@ -1465,12 +1478,12 @@ function buildBuildings(bb) {
     var d = (v % 2) ? -(v + 1) / 2 : v / 2;
     if (k & 1) { ay += d; XY[k] = BN0 + ay / 2; } else { ax += d; XY[k] = BE0 + ax / 2; }
   }
-  var maxV = nV * 5, POS = new Float32Array(maxV * 3), AB = new Float32Array(maxV * 4), IDX = new Uint32Array(nV * 9 + nR * 6 + 64);
+  var maxV = nV * 5, POS = new Float32Array(maxV * 3), AB = new Float32Array(maxV * 4), AT = new Float32Array(maxV * 2), IDX = new Uint32Array(nV * 9 + nR * 6 + 64);
   var vi = 0, ii = 0, rp = 0, vp = 0, b = 0;
   var zE = D.zyt[0], zN = D.zyt[1];
   var V2 = []; for (k = 0; k < 300; k++) V2.push(new THREE.Vector2());
-  var cb, cr, ch, cd;
-  function pushV(x, top, z) { POS[vi * 3] = x; POS[vi * 3 + 1] = top; POS[vi * 3 + 2] = z; AB[vi * 4] = cb; AB[vi * 4 + 1] = cr; AB[vi * 4 + 2] = ch; AB[vi * 4 + 3] = cd; return vi++; }
+  var cb, cr, ch, cd, ctx_ = -1, cty = -1;
+  function pushV(x, top, z) { POS[vi * 3] = x; POS[vi * 3 + 1] = top; POS[vi * 3 + 2] = z; AB[vi * 4] = cb; AB[vi * 4 + 1] = cr; AB[vi * 4 + 2] = ch; AB[vi * 4 + 3] = cd; AT[vi * 2] = ctx_; AT[vi * 2 + 1] = cty; return vi++; }
   function tri(a, bq, c) {
     var ny_ = (POS[bq * 3 + 2] - POS[a * 3 + 2]) * (POS[c * 3] - POS[a * 3]) - (POS[bq * 3] - POS[a * 3]) * (POS[c * 3 + 2] - POS[a * 3 + 2]);
     if (ny_ >= 0) { IDX[ii++] = a; IDX[ii++] = bq; IDX[ii++] = c; } else { IDX[ii++] = a; IDX[ii++] = c; IDX[ii++] = bq; }
@@ -1484,7 +1497,8 @@ function buildBuildings(bb) {
           for (var q = 0; q < n; q++) { var E = XY[(vp + q) * 2], N = XY[(vp + q) * 2 + 1], hh = hAt(E, N); if (hh < minH) minH = hh; sumH += hh; cnt++; sE += E; sN += N; }
           vp += n; }
         rp += rings;
-        var cE = sE / cnt, cN = sN / cnt;
+        var cE = sE / cnt, cN = sN / cnt, tl = sb3Tile(cE, cN);
+        ctx_ = tl[0] - SB3_X0; cty = tl[1] - SB3_Y0; if (ctx_ < 0 || cty < 0 || ctx_ > 255 || cty > 255) { ctx_ = -1; cty = -1; }
         cb = minH - H0; cr = sumH / cnt - minH; ch = h;
         cd = clamp(Math.hypot(cE - zE, cN - zN) / 15000, 0, 1) * 0.8 + ((b * 2654435761 >>> 0) % 1000) / 1000 * 0.05;
         for (r = 0; r < rings; r++) {
@@ -1522,6 +1536,7 @@ function buildBuildings(bb) {
       var geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(POS.subarray(0, vi * 3), 3));
       geo.setAttribute('aB', new THREE.BufferAttribute(AB.subarray(0, vi * 4), 4));
+      geo.setAttribute('aT', new THREE.BufferAttribute(AT.subarray(0, vi * 2), 2));
       geo.setIndex(new THREE.BufferAttribute(IDX.subarray(0, ii), 1));
       geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 40000);
       bldMesh = new THREE.Mesh(geo, bldMat); bldMesh.frustumCulled = false;
@@ -1778,6 +1793,258 @@ function buildStrandbad() {
   sbzMesh = new THREE.Mesh(geo, sbzMat); sbzMesh.frustumCulled = false; scene.add(sbzMesh);
   var dm = new THREE.Mesh(geo, sbzDepthMat); dm.frustumCulled = false; smScene.add(dm); sbzMesh.userData.depth = dm;
   smState.need = true;
+}
+
+/* ---------------- swissBUILDINGS3D: echte Gebäudeformen mit Dächern in der Nahansicht ----------------
+   3D Tiles von swisstopo (b3dm, Geometrie Draco-komprimiert, CORS offen). Kachelraster in Länge/Breite (z 11, ca. 168 × 108 m);
+   Formel für die Kachelnummer empirisch aus dem Tileset bestimmt. Dächer zeigen das Luftbild, Wände Putz mit Fenstern;
+   Kirchen, Türme und das Regierungsgebäude bekommen eigene Fassaden. Wo eine Kachel geladen ist, verschwinden die einfachen Klötze. */
+var SB3_LON0 = 5.959438729981432, SB3_LAT0 = 45.817679342818934, SB3_DLON = 0.002213278199409854, SB3_DLAT = 0.0009687133361346023, SB3_X0 = 1024, SB3_Y0 = 1280;
+var SB3_URL = 'https://3d.geo.admin.ch/ch.swisstopo.swissbuildings3d.3d/v1/';
+var DRACO_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/draco/gltf/';
+function lv95ToWgs(E, N) {
+  var y = (E - 2600000) / 1e6, x = (N - 1200000) / 1e6;
+  var lam = 2.6779094 + 4.728982 * y + 0.791484 * y * x + 0.1306 * y * x * x - 0.0436 * y * y * y;
+  var phi = 16.9023892 + 3.238272 * x - 0.270978 * y * y - 0.002528 * x * x - 0.0447 * y * y * x - 0.0140 * x * x * x;
+  return [phi * 100 / 36, lam * 100 / 36];
+}
+function sb3Tile(E, N) { var w = lv95ToWgs(E, N); return [Math.floor((w[1] - SB3_LON0) / SB3_DLON), Math.floor((w[0] - SB3_LAT0) / SB3_DLAT)]; }
+var WA = 6378137, WF = 1 / 298.257223563, WE2 = WF * (2 - WF), WB = WA * (1 - WF), WEP2 = (WA * WA - WB * WB) / (WB * WB);
+function ecefToLV95(X, Y, Zc) {
+  var p = Math.hypot(X, Y), th = Math.atan2(Zc * WA, p * WB), st = Math.sin(th), ct = Math.cos(th);
+  var lat = Math.atan2(Zc + WEP2 * WB * st * st * st, p - WE2 * WA * ct * ct * ct), lon = Math.atan2(Y, X), sl = Math.sin(lat);
+  var h = p / Math.cos(lat) - WA / Math.sqrt(1 - WE2 * sl * sl), en = window.ZGEvents.toLV95(lat / DEG, lon / DEG);
+  return [en[0], en[1], h];
+}
+var SB3 = { folder: null, folderP: null, draco: null, dracoP: null, tiles: {}, queue: [], inflight: 0, active: 0, on: false, last: 0, covData: new Uint8Array(256 * 256), covTex: null, failed: 0 };
+SB3.covTex = new THREE.DataTexture(SB3.covData, 256, 256, THREE.RedFormat, THREE.UnsignedByteType);
+SB3.covTex.magFilter = SB3.covTex.minFilter = THREE.NearestFilter; SB3.covTex.needsUpdate = true; U.uCov.value = SB3.covTex;
+var SB3_LANDMARKS = [{ E: 2681586, N: 1224659, r: 28, kind: 4 }]; // Regierungsgebäude: Sandstein, hohe Geschosse
+function sb3Folder() {
+  if (!SB3.folderP) SB3.folderP = fetch(SB3_URL + 'tileset.json').then(function (r) { return r.json(); }).then(function (j) {
+    var uri = j.root && j.root.children && j.root.children[0] && j.root.children[0].content && j.root.children[0].content.uri || '';
+    SB3.folder = (uri.split('/')[0] || '20260520'); return SB3.folder;
+  }).catch(function () { SB3.folder = '20260520'; return SB3.folder; });
+  return SB3.folderP;
+}
+function sb3Draco() {
+  if (SB3.dracoP) return SB3.dracoP;
+  SB3.dracoP = new Promise(function (resolve, reject) {
+    var sc = document.createElement('script'); sc.src = DRACO_URL + 'draco_wasm_wrapper.js'; sc.crossOrigin = 'anonymous';
+    sc.onerror = function () { reject(new Error('draco')); };
+    sc.onload = function () {
+      fetch(DRACO_URL + 'draco_decoder.wasm').then(function (r) { return r.arrayBuffer(); }).then(function (wasm) {
+        window.DracoDecoderModule({ wasmBinary: wasm, onModuleLoaded: function (d) { SB3.draco = d; resolve(d); } });
+      }).catch(reject);
+    };
+    document.head.appendChild(sc);
+  });
+  return SB3.dracoP;
+}
+function dracoDecode(dm, bytes, ids) {
+  var dec = new dm.Decoder(), mesh = new dm.Mesh(), out = {};
+  try {
+    var st = dec.DecodeArrayToMesh(bytes, bytes.byteLength, mesh);
+    if (!st.ok() || mesh.ptr === 0) throw new Error('draco decode');
+    var np = mesh.num_points(); out.count = np;
+    Object.keys(ids).forEach(function (name) {
+      var att = dec.GetAttributeByUniqueId(mesh, ids[name]); if (!att) return;
+      var nc = att.num_components(), nv = np * nc, bl = nv * 4, ptr = dm._malloc(bl);
+      dec.GetAttributeDataArrayForAllPoints(mesh, att, dm.DT_FLOAT32, bl, ptr);
+      out[name] = new Float32Array(dm.HEAPF32.buffer, ptr, nv).slice(); dm._free(ptr);
+    });
+    var ni = mesh.num_faces() * 3, ib = ni * 4, ip = dm._malloc(ib);
+    dec.GetTrianglesUInt32Array(mesh, ib, ip);
+    out.index = new Uint32Array(dm.HEAPF32.buffer, ip, ni).slice(); dm._free(ip);
+  } finally { dm.destroy(mesh); dm.destroy(dec); }
+  return out;
+}
+var SB3_KIND = { 'Sakrales Gebaeude': 1, 'Sakraler Turm': 1, 'Turm': 1, 'Mauer gross': 2, 'Mauer gross gedeckt': 2, 'Flugdach': 3, 'Offenes Gebaeude': 3 };
+/* b3dm lesen: Feature-Tabelle (RTC_CENTER), Batch-Tabelle (Objektart je Gebäude), glTF mit Draco-Primitiven */
+function sb3Parse(buf) {
+  var dv = new DataView(buf), td = new TextDecoder();
+  var ftj = dv.getUint32(12, true), ftb = dv.getUint32(16, true), btj = dv.getUint32(20, true), btb = dv.getUint32(24, true);
+  var ft = JSON.parse(td.decode(new Uint8Array(buf, 28, ftj))), rtc = ft.RTC_CENTER || [0, 0, 0];
+  var bt = btj ? JSON.parse(td.decode(new Uint8Array(buf, 28 + ftj + ftb, btj))) : {};
+  var g0 = 28 + ftj + ftb + btj + btb, jl = dv.getUint32(g0 + 12, true);
+  var gj = JSON.parse(td.decode(new Uint8Array(buf, g0 + 20, jl))), binOff = g0 + 20 + jl + 8;
+  // Knoten-Transformationen (glTF ist y-oben; 3D Tiles drehen nach z-oben)
+  var prims = [], mtmp = new THREE.Matrix4();
+  function visit(ni, parent) {
+    var n = gj.nodes[ni], m = new THREE.Matrix4();
+    if (n.matrix) m.fromArray(n.matrix);
+    else m.compose(new THREE.Vector3().fromArray(n.translation || [0, 0, 0]), new THREE.Quaternion().fromArray(n.rotation || [0, 0, 0, 1]), new THREE.Vector3().fromArray(n.scale || [1, 1, 1]));
+    var w = parent ? mtmp.multiplyMatrices(parent, m).clone() : m;
+    if (n.mesh != null) gj.meshes[n.mesh].primitives.forEach(function (p) { prims.push({ p: p, m: w }); });
+    (n.children || []).forEach(function (c) { visit(c, w); });
+  }
+  ((gj.scenes && gj.scenes[gj.scene || 0] && gj.scenes[gj.scene || 0].nodes) || gj.nodes.map(function (_, k) { return k; })).forEach(function (k) { visit(k, null); });
+  return { rtc: rtc, bt: bt, gj: gj, bin: new Uint8Array(buf, binOff), prims: prims };
+}
+function sb3Build(t, data) {
+  var dm = SB3.draco, gj = data.gj, rtc = data.rtc, bt = data.bt;
+  // lineare Abbildung ECEF -> LV95 um das Kachelzentrum (Kachel < 200 m, Fehler im Millimeterbereich)
+  var f0 = ecefToLV95(rtc[0], rtc[1], rtc[2]), J = [], S = 50;
+  for (var k = 0; k < 3; k++) { var q = rtc.slice(); q[k] += S; var f = ecefToLV95(q[0], q[1], q[2]); J.push([(f[0] - f0[0]) / S, (f[1] - f0[1]) / S, (f[2] - f0[2]) / S]); }
+  var nB = (bt.OBJEKTART || []).length, kindB = new Float32Array(nB), seedB = new Float32Array(nB), baseB = new Float32Array(nB).fill(1e9);
+  for (var b = 0; b < nB; b++) {
+    kindB[b] = SB3_KIND[bt.OBJEKTART[b]] || 0; seedB[b] = ((b * 2654435761 + t.x * 97 + t.y * 13) >>> 0) % 1000 / 1000;
+    if (!kindB[b] && bt.Height && bt.Height[b] > 16) kindB[b] = 5; // hohe Bauten: moderne Fassade
+    if (bt.Latitude && bt.Longitude) {
+      var en = window.ZGEvents.toLV95(bt.Latitude[b], bt.Longitude[b]);
+      SB3_LANDMARKS.forEach(function (L) { if (Math.hypot(en[0] - L.E, en[1] - L.N) < L.r) kindB[b] = L.kind; });
+    }
+  }
+  var parts = [], tot = 0, v = new THREE.Vector3();
+  data.prims.forEach(function (pr) {
+    var ext = pr.p.extensions && pr.p.extensions.KHR_draco_mesh_compression; if (!ext) return;
+    var bv = gj.bufferViews[ext.bufferView], bytes = new Int8Array(data.bin.buffer, data.bin.byteOffset + (bv.byteOffset || 0), bv.byteLength);
+    var ids = { pos: ext.attributes.POSITION }; if (ext.attributes._BATCHID != null) ids.bid = ext.attributes._BATCHID;
+    var d = dracoDecode(dm, bytes, ids), mat = gj.materials && gj.materials[pr.p.material], cf = mat && mat.pbrMetallicRoughness && mat.pbrMetallicRoughness.baseColorFactor || [1, 1, 1];
+    var roof = cf[0] > cf[1] * 1.6 ? 1 : 0, P = new Float32Array(d.count * 3);
+    for (var i = 0; i < d.count; i++) {
+      v.set(d.pos[i * 3], d.pos[i * 3 + 1], d.pos[i * 3 + 2]).applyMatrix4(pr.m);
+      var ex = v.x, ey = -v.z, ez = v.y; // y-oben -> z-oben, relativ zu RTC_CENTER
+      var E = f0[0] + J[0][0] * ex + J[1][0] * ey + J[2][0] * ez, N = f0[1] + J[0][1] * ex + J[1][1] * ey + J[2][1] * ez, h = f0[2] + J[0][2] * ex + J[1][2] * ey + J[2][2] * ez;
+      P[i * 3] = X(E); P[i * 3 + 1] = h - H0; P[i * 3 + 2] = Z(N);
+      var bi = d.bid ? Math.round(d.bid[i]) : 0; if (bi < nB && h - H0 < baseB[bi]) baseB[bi] = h - H0;
+    }
+    parts.push({ P: P, I: d.index, bid: d.bid, roof: roof, n: d.count }); tot += d.count;
+  });
+  if (!tot) return null;
+  var POS = new Float32Array(tot * 3), INF = new Float32Array(tot * 4), IDX = [], off = 0;
+  parts.forEach(function (pt) {
+    POS.set(pt.P, off * 3);
+    for (var i = 0; i < pt.n; i++) { var bi = pt.bid ? Math.round(pt.bid[i]) : 0, ok = bi < nB; INF[(off + i) * 4] = ok ? seedB[bi] : 0.5; INF[(off + i) * 4 + 1] = ok && baseB[bi] < 1e8 ? baseB[bi] : pt.P[i * 3 + 1]; INF[(off + i) * 4 + 2] = ok ? kindB[bi] : 0; INF[(off + i) * 4 + 3] = pt.roof; }
+    for (var j = 0; j < pt.I.length; j++) IDX.push(pt.I[j] + off);
+    off += pt.n;
+  });
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(POS, 3));
+  geo.setAttribute('aInfo', new THREE.BufferAttribute(INF, 4));
+  geo.setIndex(new THREE.BufferAttribute(new Uint32Array(IDX), 1));
+  geo.computeBoundingSphere();
+  return geo;
+}
+var SB3_VS = [
+  'attribute vec4 aInfo; uniform float uVZ;',
+  'varying vec3 vW; varying float vSeed, vRel, vKind, vRoof, vDist;',
+  'void main(){ vec3 p = position; vRel = p.y - aInfo.y; p.y *= uVZ; vec4 w = modelMatrix*vec4(p, 1.0);',
+  '  vW = w.xyz; vSeed = aInfo.x; vKind = aInfo.z; vRoof = aInfo.w; vDist = distance(w.xyz, cameraPosition); gl_Position = projectionMatrix*viewMatrix*w; }'
+].join('\n');
+var sb3Mat = new THREE.ShaderMaterial({
+  side: THREE.DoubleSide,
+  uniforms: Object.assign({}, U),
+  vertexShader: SB3_VS,
+  fragmentShader: [
+    'uniform vec3 uFog; uniform float uDark, uFogNear, uFogFar;',
+    LIGHT, SHADOW, ORTHO, COMMON,
+    'varying vec3 vW; varying float vSeed, vRel, vKind, vRoof, vDist;',
+    'void main(){',
+    '  vec3 n = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW); if(dot(n, V) < 0.0) n = -n;',
+    '  float roof = step(0.5, vRoof)*step(0.12, abs(n.y)) + step(0.92, n.y)*(1.0 - step(0.5, vRoof));',
+    '  roof = min(roof, 1.0);',
+    // Fassaden: Putz je Gebäude leicht verschieden; Kirchen und Türme weiss mit hohen, wenigen Fenstern; Regierungsgebäude Sandstein
+    // Putzfarben wie in der Altstadt: weiss, crème, hellgelb, zartrosa, hellgrau
+    '  float ps = fract(vSeed*5.31); vec3 wallc = ps < 0.3 ? vec3(0.95, 0.94, 0.90) : ps < 0.5 ? vec3(0.95, 0.90, 0.80) : ps < 0.66 ? vec3(0.95, 0.89, 0.70) : ps < 0.8 ? vec3(0.93, 0.84, 0.80) : vec3(0.86, 0.87, 0.86);',
+    '  wallc *= 0.94 + 0.08*fract(vSeed*7.13);',
+    '  float fh = 3.0, cw = 2.7;',
+    '  if(vKind > 0.5 && vKind < 1.5) wallc = vec3(0.94, 0.93, 0.89);',
+    '  else if(vKind > 1.5 && vKind < 2.5) wallc = vec3(0.80, 0.78, 0.73);',
+    '  else if(vKind > 2.5 && vKind < 3.5) wallc = vec3(0.72, 0.74, 0.76);',
+    '  else if(vKind > 3.5 && vKind < 4.5){ wallc = vec3(0.86, 0.81, 0.70); fh = 4.6; cw = 3.4; }',
+    '  else if(vKind > 4.5){ float ms = fract(vSeed*3.3); wallc = ms < 0.4 ? vec3(0.90, 0.90, 0.88) : ms < 0.7 ? vec3(0.78, 0.79, 0.80) : vec3(0.84, 0.80, 0.72); fh = 3.4; cw = 1.6; }',
+    '  float u = abs(n.x) > abs(n.z) ? vW.z : vW.x;',
+    '  float fl = (vRel - 1.0)/fh, cu = u/cw + vSeed*5.0; vec2 f = vec2(fract(cu), fract(fl));',
+    // Fenster mit geglätteten Kanten; sobald ein Fenster nur noch wenige Pixel misst, wird es ausgeblendet (kein Flimmern)
+    '  vec2 fw = max(fwidth(vec2(cu, fl)), vec2(1e-4)); float far = smoothstep(0.07, 0.2, max(fw.x, fw.y));',
+    '  float wx0 = 0.34, wx1 = 0.66, wy0 = 0.3, wy1 = 0.8;',
+    '  if(vKind > 3.5 && vKind < 4.5){ wx0 = 0.37; wx1 = 0.63; wy0 = 0.16; wy1 = 0.86; }',
+    '  if(vKind > 4.5){ wx0 = 0.06; wx1 = 0.94; wy0 = 0.28; wy1 = 0.86; }',
+    '  float win = smoothstep(wx0 - fw.x, wx0 + fw.x, f.x)*(1.0 - smoothstep(wx1 - fw.x, wx1 + fw.x, f.x))*smoothstep(wy0 - fw.y, wy0 + fw.y, f.y)*(1.0 - smoothstep(wy1 - fw.y, wy1 + fw.y, f.y));',
+    '  win *= step(0.0, fl)*step(1.2, vRel)*(vKind > 4.5 ? 1.0 : step(0.18, fract(vSeed*13.7 + floor(cu)*0.618)));',
+    '  if(vKind > 0.5 && vKind < 1.5){ float cu2 = u/4.2; vec2 f2 = vec2(fract(cu2), fract((vRel - 2.0)/9.0)); vec2 fw2 = max(fwidth(vec2(cu2, (vRel - 2.0)/9.0)), vec2(1e-4)); far = smoothstep(0.07, 0.2, max(fw2.x, fw2.y));',
+    '    win = smoothstep(0.44 - fw2.x, 0.44 + fw2.x, f2.x)*(1.0 - smoothstep(0.56 - fw2.x, 0.56 + fw2.x, f2.x))*step(0.25, f2.y)*step(f2.y, 0.85)*step(2.0, vRel)*step(0.45, fract(floor(cu2)*0.37 + vSeed)); }',
+    '  if(vKind > 1.5 && vKind < 3.5) win = 0.0;',
+    // Glas mit etwas Himmelsspiegelung, heller Rahmen innen am Fensterrand
+    '  float frame = win*(1.0 - smoothstep(0.035, 0.07, min(min(f.x - wx0, wx1 - f.x), min(f.y - wy0, wy1 - f.y))));',
+    '  vec3 glass = mix(vec3(0.20, 0.24, 0.29), mix(uFog, uSkyCol, 0.5)*0.7, 0.25 + 0.35*(1.0 - abs(dot(n, V))));',
+    '  wallc = mix(wallc, glass, (win - frame*0.85)*(1.0 - far)*0.75);',
+    '  wallc = mix(wallc, vec3(0.97, 0.97, 0.95), frame*(1.0 - far)*0.5);',
+    '  wallc *= mix(1.0, 0.95, far*step(vKind, 0.5))*mix(0.82, 1.0, smoothstep(0.0, 3.0, vRel));',
+    // Dächer: Luftbild, wo vorhanden; steile Flächen bekommen weniger davon, weil das Bild senkrecht von oben kommt
+    '  vec3 roofc = mix(vec3(0.56, 0.34, 0.27), vec3(0.43, 0.41, 0.39), fract(vSeed*3.7));',
+    '  vec4 oc = orthoAt(vW.xz);',
+    '  roofc = mix(roofc, oc.rgb*1.08, oc.a*uOrthoMix*smoothstep(0.2, 0.55, abs(n.y)));',
+    '  vec3 alb = mix(wallc, roofc, roof);',
+    '  vec3 col;',
+    '  if(uSunMix > 0.001){',
+    '    float lamb = max(dot(n, uSunDir), 0.0);',
+    '    float vis = lamb > 0.0 ? shadowVis(vW, n, lamb) : 0.0;',
+    '    vec3 sky = uDark < 0.5 ? mix(uSkyCol, vec3(1.0, 0.97, 0.92), 0.55*(1.0 - roof)) : uSkyCol;',
+    '    col = alb*(uAmb*sky + uDif*lamb*vis*uSunCol);',
+    '  } else { vec3 fl2 = normalize(vec3(-0.55, 0.62, -0.56)); col = alb*(0.64 + 0.36*max(dot(n, fl2), 0.0)); }',
+    '  col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDist));',
+    '  gl_FragColor = vec4(col, 1.0);',
+    '}'
+  ].join('\n')
+});
+var sb3DepthMat = new THREE.ShaderMaterial({ uniforms: { uVZ: U.uVZ }, vertexShader: SB3_VS, fragmentShader: DEPTH_FS, side: THREE.DoubleSide });
+sb3DepthMat.colorWrite = false;
+function sb3SetCov(t, on) {
+  var cx = t.x - SB3_X0, cy = t.y - SB3_Y0; if (cx < 0 || cy < 0 || cx > 255 || cy > 255) return;
+  SB3.covData[cy * 256 + cx] = on ? 255 : 0; SB3.covTex.needsUpdate = true;
+}
+function sb3Show(t, on) {
+  if (!t.geo || t.shown === on) return;
+  t.shown = on;
+  if (on) {
+    if (!t.mesh) { t.mesh = new THREE.Mesh(t.geo, sb3Mat); t.depth = new THREE.Mesh(t.geo, sb3DepthMat); t.mesh.frustumCulled = t.depth.frustumCulled = true; }
+    scene.add(t.mesh); smScene.add(t.depth);
+  } else { scene.remove(t.mesh); smScene.remove(t.depth); }
+  sb3SetCov(t, on); smState.need = true;
+}
+function sb3Load(t) {
+  t.state = 'loading'; SB3.inflight++;
+  Promise.all([sb3Folder(), sb3Draco()]).then(function (r) {
+    return fetch(SB3_URL + r[0] + '/11/' + t.x + '/' + t.y + '.b3dm').then(function (res) {
+      if (res.status === 403 || res.status === 404) return null; // keine Gebäude in dieser Kachel
+      if (!res.ok) throw new Error('http ' + res.status);
+      return res.arrayBuffer();
+    });
+  }).then(function (buf) {
+    SB3.inflight--;
+    if (!buf) { t.state = 'empty'; return; }
+    try { t.geo = sb3Build(t, sb3Parse(buf)); } catch (e) { t.geo = null; SB3.failed++; }
+    t.state = t.geo ? 'ready' : 'empty';
+    if (t.geo && t.want) sb3Show(t, true);
+  }).catch(function () { SB3.inflight--; t.state = 'error'; SB3.failed++; });
+}
+function updateSb3(now) {
+  if (!GL || !cam || now - SB3.last < 350) return;
+  SB3.last = now;
+  var on = cam.d < (SB3.on ? 2600 : 2000) && SB3.failed < 12;
+  var keys = Object.keys(SB3.tiles);
+  if (!on) { if (SB3.on) { SB3.on = false; keys.forEach(function (k) { SB3.tiles[k].want = false; sb3Show(SB3.tiles[k], false); }); } return; }
+  SB3.on = true;
+  var R = clamp(cam.d * 0.85, 320, small ? 600 : 950), c = sb3Tile(cam.E, cam.N), rx = Math.ceil(R / 160) + 1, ry = Math.ceil(R / 105) + 1, wantK = {};
+  for (var x = c[0] - rx; x <= c[0] + rx; x++) for (var y = c[1] - ry; y <= c[1] + ry; y++) {
+    var lat = SB3_LAT0 + (y + 0.5) * SB3_DLAT, lon = SB3_LON0 + (x + 0.5) * SB3_DLON, en = window.ZGEvents.toLV95(lat, lon), dd = Math.hypot(en[0] - cam.E, en[1] - cam.N);
+    if (dd > R) continue;
+    var k = x + '_' + y; wantK[k] = dd;
+    var t = SB3.tiles[k] || (SB3.tiles[k] = { x: x, y: y, state: 'new', want: false, shown: false, used: 0 });
+    t.want = true; t.used = now; t.dist = dd;
+    if (t.state === 'ready') sb3Show(t, true);
+  }
+  keys.forEach(function (k) { var t = SB3.tiles[k]; if (!(k in wantK)) { t.want = false; sb3Show(t, false); } });
+  // laden: nächste zuerst, höchstens 4 gleichzeitig
+  var todo = Object.keys(wantK).map(function (k) { return SB3.tiles[k]; }).filter(function (t) { return t.state === 'new' || (t.state === 'error' && now - t.used > 20000); })
+    .sort(function (a, b) { return a.dist - b.dist; });
+  while (SB3.inflight < 4 && todo.length) sb3Load(todo.shift());
+  // Speicher begrenzen
+  var all = Object.keys(SB3.tiles);
+  if (all.length > 260) all.map(function (k) { return [k, SB3.tiles[k]]; }).filter(function (e) { return !e[1].want; }).sort(function (a, b) { return a[1].used - b[1].used; })
+    .slice(0, all.length - 220).forEach(function (e) { if (e[1].geo) e[1].geo.dispose(); delete SB3.tiles[e[0]]; });
 }
 
 /* ---------------- sun shadow map ---------------- */
@@ -2205,6 +2472,7 @@ function flyContext() {
   var g = MODE === 'sights' ? filt.sights.gem : MODE === 'familie' ? filt.familie.gem : MODE === 'events' ? filt.events.gem : '';
   if (g && MUNI[g]) flyToMuni(MUNI[g]); else flyOverview();
 }
+var flightEnd = 0;
 function stepFlight(now) {
   if (!flight) return;
   var u = clamp((now - flight.t0) / flight.dur, 0, 1), e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
@@ -2212,7 +2480,7 @@ function stepFlight(now) {
   ex.E = lerp(f.E, t.E, e); ex.N = lerp(f.N, t.N, e);
   ex.d = Math.exp(lerp(Math.log(f.d), Math.log(t.d), e)) * (1 + hop);
   ex.hd = angLerp(f.hd, t.hd, e); ex.p = lerp(f.p, t.p, e);
-  if (u >= 1) flight = null;
+  if (u >= 1) { flight = null; flightEnd = now; }
 }
 function placeCamera(c, W, H) {
   var th = c.hd * DEG, ph = c.p * DEG, cp = Math.cos(ph), sp = Math.sin(ph);
@@ -2672,6 +2940,8 @@ function frame(now) {
   stepFlight(now); stepTour(now);
   if (playing) { var nt = sunT + (now - playLast) / 1000 * 1.1; playLast = now; if (nt > 21) nt = 7; setSunT(nt, 'play'); }
   if (MODE === 'home' && !touring && !drag.mode && !flight && now - lastInteract > 2500 && !reduce && !TEST) ex.hd += dt * 2.4;
+  // gewählter Ort: Karte dreht sich langsam um ihn, bis jemand die Karte bewegt
+  else if (SEL && SEL.E && (SEL.type !== 'event' || SEL.exact) && !touring && !drag.mode && !flight && ex.d < 6000 && now - Math.max(lastInteract, flightEnd) > 1800 && !reduce && !TEST) ex.hd += dt * 4;
   var off = viewOffsets(W, H);
   if (!cam) {
     cam = { E: ex.E, N: ex.N, d: ex.d, hd: ex.hd, p: ex.p, ox: off.ox, oy: off.oy };
@@ -2719,6 +2989,7 @@ function frame(now) {
 
   updateTrees();
   updateOrtho(now);
+  updateSb3(now);
   U.uHeatOn.value += ((tempOn && TEMP.city.length ? 1 : 0) - U.uHeatOn.value) * Math.min(1, dt * 4);
   updateShadow(now);
 
